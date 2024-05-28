@@ -1,0 +1,11 @@
+- name: "Mystic Grove"
+  color: "#1DB954"
+  imageURL: "http://example.com/mystic-grove.jpg"
+  
+- name: "Bass Haven"
+  color: "#FF5733"
+  imageURL: "http://example.com/bass-haven.jpg"
+  
+- name: "Tranquil Meadow"
+  color: "#4287f5"
+  imageURL: "http://example.com/tranquil-meadow.jpg"

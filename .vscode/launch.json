@@ -1,0 +1,76 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:OpenFestival}",
+            "name": "Debug OpenFestivalParserCLI",
+            "program": "${workspaceFolder:OpenFestival}/.build/debug/OpenFestivalParserCLI",
+            "preLaunchTask": "swift: Build Debug OpenFestivalParserCLI"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:OpenFestival}",
+            "name": "Release OpenFestivalParserCLI",
+            "program": "${workspaceFolder:OpenFestival}/.build/release/OpenFestivalParserCLI",
+            "preLaunchTask": "swift: Build Release OpenFestivalParserCLI"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:OpenFestival}",
+            "name": "Debug OpenFestivalCLI",
+            "program": "${workspaceFolder:OpenFestival}/.build/debug/OpenFestivalCLI",
+            "preLaunchTask": "swift: Build Debug OpenFestivalCLI"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:OpenFestival}",
+            "name": "Release OpenFestivalCLI",
+            "program": "${workspaceFolder:OpenFestival}/.build/release/OpenFestivalCLI",
+            "preLaunchTask": "swift: Build Release OpenFestivalCLI"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:OpenFestival}",
+            "name": "Debug openfestival",
+            "program": "${workspaceFolder:OpenFestival}/.build/debug/openfestival",
+            "preLaunchTask": "swift: Build Debug openfestival"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder:OpenFestival}",
+            "name": "Release openfestival",
+            "program": "${workspaceFolder:OpenFestival}/.build/release/openfestival",
+            "preLaunchTask": "swift: Build Release openfestival"
+        }
+    ]
+}
