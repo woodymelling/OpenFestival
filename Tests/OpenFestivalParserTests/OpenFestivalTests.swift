@@ -2,6 +2,7 @@ import XCTest
 @testable import OpenFestivalParser
 import Yams
 import CustomDump
+import OpenFestivalModels
 
 final class YamlDecodingTests: XCTestCase {
     func testDecodingSimpleEventInfo() throws {
@@ -25,11 +26,11 @@ final class YamlDecodingTests: XCTestCase {
         
         let encoder = YAMLDecoder()
         
-        let dto = try encoder.decode(EventDTO.self, from: yaml)
+        let dto = try encoder.decode(EventInfoDTO.self, from: yaml)
 
         XCTAssertNoDifference(
             dto,
-            EventDTO(
+            EventInfoDTO(
                 name: "Testival",
                 address: "123 Festival Road, Music City",
                 timeZone: "America/Seattle",
@@ -56,14 +57,14 @@ final class YamlDecodingTests: XCTestCase {
         
         let encoder = YAMLDecoder()
         
-        let dto = try encoder.decode([Stage].self, from: yaml)
+        let dto = try encoder.decode([StageDTO].self, from: yaml)
 
         XCTAssertNoDifference(
             dto,
             [
-                Stage(name: "Mystic Grove", color: "#1DB954", imageURL: URL(string: "http://example.com/mystic-grove.jpg")!),
-                Stage(name: "Bass Haven", color: "#FF5733", imageURL: URL(string: "http://example.com/bass-haven.jpg")!),
-                Stage(name: "Tranquil Meadow", color: "#4287f5", imageURL: nil)
+                StageDTO(name: "Mystic Grove", color: "#1DB954", imageURL: URL(string: "http://example.com/mystic-grove.jpg")!),
+                StageDTO(name: "Bass Haven", color: "#FF5733", imageURL: URL(string: "http://example.com/bass-haven.jpg")!),
+                StageDTO(name: "Tranquil Meadow", color: "#4287f5", imageURL: nil)
             ]
         )
     }
@@ -80,13 +81,13 @@ final class YamlDecodingTests: XCTestCase {
         
         let encoder = YAMLDecoder()
         
-        let dto = try encoder.decode([ContactInfo].self, from: yaml)
+        let dto = try encoder.decode([ContactInfoDTO].self, from: yaml)
 
         XCTAssertNoDifference(
             dto,
             [
-                ContactInfo(phoneNumber: "+1234567890", title: "General Info", description: nil),
-                ContactInfo(phoneNumber: "+0987654321", title: "Emergency", description: "For emergencies only")
+                ContactInfoDTO(phoneNumber: "+1234567890", title: "General Info", description: nil),
+                ContactInfoDTO(phoneNumber: "+0987654321", title: "Emergency", description: "For emergencies only")
             ]
         )
     }
@@ -140,25 +141,25 @@ final class YamlDecodingTests: XCTestCase {
         """
 
         let encoder = YAMLDecoder()
-        let dto = try encoder.decode([String: [Performance]].self, from: yaml)
+        let dto = try encoder.decode([String: [PerformanceDTO]].self, from: yaml)
 
         XCTAssertNoDifference(dto, [
             "Bass Haven": [
-                Performance(title: nil, artist: "Prism Sound", artists: nil, time: "10:00 PM"),
-                Performance(title: "Subsonic B2B Sylvan", artist: nil, artists: ["Subsonic", "Sylvan Beats"], time: "11:30 PM"),
-                Performance(title: nil, artist: "Space Chunk", artists: nil, time: "12:30 AM", endTime: "2:00 AM")
+                PerformanceDTO(title: nil, artist: "Prism Sound", artists: nil, time: "10:00 PM"),
+                PerformanceDTO(title: "Subsonic B2B Sylvan", artist: nil, artists: ["Subsonic", "Sylvan Beats"], time: "11:30 PM"),
+                PerformanceDTO(title: nil, artist: "Space Chunk", artists: nil, time: "12:30 AM", endTime: "2:00 AM")
             ],
             "Mystic Grove": [
-                Performance(title: nil, artist: "Sunspear", artists: nil, time: "4:30 PM"),
-                Performance(title: nil, artist: "Phantom Groove", artists: nil, time: "6:30 PM"),
-                Performance(title: nil, artist: "Oaktrail", artists: nil, time: "10:30 PM"),
-                Performance(title: nil, artist: "Rhythmbox", artists: nil, time: "12:00 AM", endTime: "4:00 AM")
+                PerformanceDTO(title: nil, artist: "Sunspear", artists: nil, time: "4:30 PM"),
+                PerformanceDTO(title: nil, artist: "Phantom Groove", artists: nil, time: "6:30 PM"),
+                PerformanceDTO(title: nil, artist: "Oaktrail", artists: nil, time: "10:30 PM"),
+                PerformanceDTO(title: nil, artist: "Rhythmbox", artists: nil, time: "12:00 AM", endTime: "4:00 AM")
             ],
             "Tranquil Meadow": [
-                Performance(title: nil, artist: "Float On", artists: nil, time: "3:00 PM"),
-                Performance(title: nil, artist: "Floods", artists: nil, time: "4:30 PM"),
-                Performance(title: nil, artist: "Overgrowth", artists: nil, time: "04:00 PM", endTime: "6:00 PM"),
-                Performance(title: "The Wind Down", artist: "The Sleepies", artists: nil, time: "1:00 AM", endTime: "2:00 AM")
+                PerformanceDTO(title: nil, artist: "Float On", artists: nil, time: "3:00 PM"),
+                PerformanceDTO(title: nil, artist: "Floods", artists: nil, time: "4:30 PM"),
+                PerformanceDTO(title: nil, artist: "Overgrowth", artists: nil, time: "04:00 PM", endTime: "6:00 PM"),
+                PerformanceDTO(title: "The Wind Down", artist: "The Sleepies", artists: nil, time: "1:00 AM", endTime: "2:00 AM")
             ]
         ])
     }
