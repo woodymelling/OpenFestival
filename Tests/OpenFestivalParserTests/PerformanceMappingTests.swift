@@ -14,7 +14,7 @@ class PerformanceMappingTests: XCTestCase {
 
         XCTAssertValidAndEqual(
             dto.toPartialPerformance,
-            PartialPerformance(
+            TimelessStagelessPerformance(
                 startTime: Date(hour: 22)!,
                 endTime: nil,
                 artistIDs: [Event.Artist.ID("Prism Sound")]
@@ -31,7 +31,7 @@ class PerformanceMappingTests: XCTestCase {
 
         XCTAssertValidAndEqual(
             dto.toPartialPerformance,
-            PartialPerformance(
+            TimelessStagelessPerformance(
                 startTime: Date(hour: 22)!,
                 endTime: Date(hour: 23)!,
                 artistIDs: [Event.Artist.ID("Prism Sound")]
@@ -48,7 +48,7 @@ class PerformanceMappingTests: XCTestCase {
 
         XCTAssertValidAndEqual(
             dto.toPartialPerformance,
-            PartialPerformance(
+            TimelessStagelessPerformance(
                 startTime: Date(hour: 23, minute: 30)!,
                 customTitle: "Subsonic B2B Sylvan",
                 artistIDs: [

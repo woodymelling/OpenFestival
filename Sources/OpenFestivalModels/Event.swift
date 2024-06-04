@@ -29,7 +29,6 @@ public struct Event: Identifiable, Equatable, Hashable {
 }
 
 public extension Event {
-
     @MemberwiseInit(.public)
     struct ContactNumber: Identifiable, Equatable, Codable, Hashable {
         public var id: String = UUID().uuidString
@@ -57,15 +56,17 @@ public extension Event {
 }
 
 public extension Event {
-    typealias ScheduleDay = [Stage.ID: IdentifiedArrayOf<Performance>]
-    typealias Schedule = [CalendarDate: ScheduleDay]
+    typealias StageDaySchedule = IdentifiedArrayOf<Performance>
+    typealias DaySchedule = [Stage.ID: IdentifiedArrayOf<Performance>]
+    typealias Schedule = [CalendarDate: DaySchedule]
 
     @MemberwiseInit(.public)
     struct Performance: Identifiable, Equatable, Hashable {
         public var id: Tagged<Performance, OpenFestivalIDType>
+        public var customTitle: String?
+        public var artistIDs: OrderedSet<Artist.ID>
         public var startTime: Date
         public var endTime: Date
-        public var artistIDs: OrderedSet<Artist.ID>
         public var stageID: Stage.ID
     }
 }

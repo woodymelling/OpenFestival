@@ -30,18 +30,18 @@ extension Validation.ScheduleError {
 
 
 @MemberwiseInit
-struct PartialPerformance: Equatable {
+struct TimelessStagelessPerformance: Equatable {
     var startTime: Date
     var endTime: Date?
     var customTitle: String?
-    var artistIDs: NonEmpty<OrderedSet<Event.Artist.ID>>?
+    var artistIDs: OrderedSet<Event.Artist.ID>
 }
 
 extension PerformanceDTO {
-    var toPartialPerformance: Validated<PartialPerformance, Validation.ScheduleError.PerformanceError> {
+    var toPartialPerformance: Validated<TimelessStagelessPerformance, Validation.ScheduleError.PerformanceError> {
         typealias PerformanceError = Validation.ScheduleError.PerformanceError
         typealias ArtistID = Event.Artist.ID
-        typealias ArtistCollection = NonEmpty<OrderedSet<ArtistID>>
+        typealias ArtistCollection = OrderedSet<ArtistID>
 
         let startTime = Validated {
             try parseTimeString(self.time)
@@ -57,20 +57,21 @@ extension PerformanceDTO {
             PerformanceError.invalidEndTime(self.endTime ?? "")
         }
 
-        let artistIDs = Validated {
+        let artistIDs: Validated<ArtistCollection, PerformanceError> = Validated {
             switch (self.artist, self.artists) {
-            case (.none, .none): return ArtistCollection?.none
+            case (.none, .none): return []
             case (.some, .some): throw PerformanceError.artistAndArtists
             case (.some(let artistName), .none):
-                guard !artistName.isEmpty
+                guard artistName.hasElements
                 else { throw PerformanceError.emptyArtist }
-                return NonEmpty(arrayLiteral: Event.Artist.ID(artistName))
+
+                return OrderedSet([Event.Artist.ID(artistName)])
 
             case (.none, .some(let artists)):
-                guard let artists = NonEmpty(rawValue: OrderedSet(artists.map(ArtistID.init(rawValue:))))
+                guard artists.hasElements
                 else { throw PerformanceError.emptyArtists  }
 
-                return artists
+                return OrderedSet(artists.map(ArtistID.init(rawValue:)))
             }
         } mappingError: { error in
             (error as? PerformanceError) ?? .unknownError
@@ -78,10 +79,10 @@ extension PerformanceDTO {
 
 
         return zip(startTime, endTime, artistIDs).flatMap { startTime, endTime, artists in
-            guard !(artists == nil && self.title == nil)
+            guard !(artists.isEmpty && self.title == nil)
             else { return .error(.noArtistsOrTitle) }
 
-            return .valid(PartialPerformance(
+            return .valid(TimelessStagelessPerformance(
                 startTime: startTime,
                 endTime: endTime,
                 customTitle: self.title,
@@ -97,10 +98,7 @@ func parseTimeString(_ time: String) throws ->  Date {
     let formatter = DateFormatter()
     let formats = ["h:mm a", "HH:mm", "h a", "h:mm", "h"]
 
-    // Ensure the formatter uses UTC time zone for consistency
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
-//    formatter.defaultDate = .distantPast
-
 
     for format in formats {
         formatter.dateFormat = format
@@ -111,7 +109,6 @@ func parseTimeString(_ time: String) throws ->  Date {
 
     throw TimeParsingError()
 }
-
 
 extension Validated {
     func flatMap<U>(_ transform: (Value) -> Validated<U, Error>) -> Validated<U, Error> {

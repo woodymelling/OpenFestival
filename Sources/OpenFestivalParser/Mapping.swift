@@ -78,7 +78,7 @@ fileprivate extension EventDTO {
             else { return .error(.invalidScheduleDayName(scheduleDay.key)) }
 
 
-            var scheduleDayDict: Event.ScheduleDay = [:]
+            var scheduleDayDict: Event.DaySchedule = [:]
 
             for stageSchedule in scheduleDay.value {
 //                let stageID = Event.Stage.ID(stageSchedule.key)

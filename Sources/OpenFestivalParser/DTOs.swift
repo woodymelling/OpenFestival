@@ -8,8 +8,9 @@
 import Foundation
 
 struct EventDTO {
-    typealias ScheduleDay = [String: [PerformanceDTO]]
-    typealias Schedule = [String: ScheduleDay]
+    typealias StageDaySchedule = [PerformanceDTO]
+    typealias DaySchedule = [String: StageDaySchedule] // [Stage:...]
+    typealias Schedule = [String: DaySchedule] // [Date:...]
 
     var eventInfo: EventInfoDTO
     var stages: [StageDTO]

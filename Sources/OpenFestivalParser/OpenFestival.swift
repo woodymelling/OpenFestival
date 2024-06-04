@@ -70,7 +70,7 @@ extension OpenFestivalParser {
         let performances: EventDTO.Schedule = try Dictionary(
             uniqueKeysWithValues: urls.map { url in
                 let data = try Data(contentsOf: url)
-                let performances = try YAMLDecoder().decode(EventDTO.ScheduleDay.self, from: data)
+                let performances = try YAMLDecoder().decode(EventDTO.DaySchedule.self, from: data)
 
                 return (url.lastPathComponent, performances)
             }
