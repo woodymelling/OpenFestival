@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Woodrow Melling on 6/3/24.
 //
@@ -37,23 +37,23 @@ class StageScheduleDayMappingTests: XCTestCase {
             [
                 StagelessPerformance(
                     artistIDs: ["Sunspear"],
-                    startTime: Date(hour: 16, minute: 30)!,
-                    endTime: Date(hour: 18, minute: 30)!
+                    startTime: ScheduleTime(hour: 16, minute: 30)!,
+                    endTime: ScheduleTime(hour: 18, minute: 30)!
                 ),
                 StagelessPerformance(
                     artistIDs: ["Phantom Groove"],
-                    startTime: Date(hour: 18, minute: 30)!,
-                    endTime: Date(hour: 20)!
+                    startTime: ScheduleTime(hour: 18, minute: 30)!,
+                    endTime: ScheduleTime(hour: 20)!
                 ),
                 StagelessPerformance(
                     artistIDs: ["Oaktrail"],
-                    startTime: Date(hour: 20)!,
-                    endTime: Date(hour: 22)!
+                    startTime: ScheduleTime(hour: 20)!,
+                    endTime: ScheduleTime(hour: 22)!
                 ),
                 StagelessPerformance(
                     artistIDs: ["Rhythmbox"],
-                    startTime: Date(hour: 22)!,
-                    endTime: Date(hour: 23, minute: 30)!
+                    startTime: ScheduleTime(hour: 22)!,
+                    endTime: ScheduleTime(hour: 23, minute: 30)!
                 )
             ]
         )
@@ -85,23 +85,23 @@ class StageScheduleDayMappingTests: XCTestCase {
             [
                 StagelessPerformance(
                     artistIDs: ["Sunspear"],
-                    startTime: Date(hour: 22, minute: 30)!,
-                    endTime: Date(hour: 0, minute: 30)!
+                    startTime: ScheduleTime(hour: 22, minute: 30)!,
+                    endTime: ScheduleTime(hour: 24, minute: 30)!
                 ),
                 StagelessPerformance(
                     artistIDs: ["Phantom Groove"],
-                    startTime: Date(hour: 0, minute: 30)!,
-                    endTime: Date(hour: 2)!
+                    startTime: ScheduleTime(hour: 24, minute: 30)!,
+                    endTime: ScheduleTime(hour: 26)!
                 ),
                 StagelessPerformance(
                     artistIDs: ["Oaktrail"],
-                    startTime: Date(hour: 2)!,
-                    endTime: Date(hour: 4)!
+                    startTime: ScheduleTime(hour: 26)!,
+                    endTime: ScheduleTime(hour: 28)!
                 ),
                 StagelessPerformance(
                     artistIDs: ["Rhythmbox"],
-                    startTime: Date(hour: 4)!,
-                    endTime: Date(hour: 5, minute: 30)!
+                    startTime: ScheduleTime(hour: 28)!,
+                    endTime: ScheduleTime(hour: 29, minute: 30)!
                 )
             ]
         )
@@ -136,7 +136,7 @@ class StageScheduleDayMappingTests: XCTestCase {
             ),
             PerformanceDTO(
                 artist: "Rhythmbox",
-                time: "11:45 AM",
+                time: "11:45 PM",
                 endTime: "1:30 AM"
             )
         ]
@@ -146,4 +146,86 @@ class StageScheduleDayMappingTests: XCTestCase {
             [.overlappingPerformances]
         )
     }
+
+    func testParsingScheduleWithNoEndTime() {
+        let dto: EventDTO.StageDaySchedule = [
+            PerformanceDTO(
+                artist: "Sunspear",
+                time: "4:30 PM"
+            ),
+            PerformanceDTO(
+                artist: "Phantom Groove",
+                time: "6:30 PM"
+            ),
+            PerformanceDTO(
+                artist: "Oaktrail",
+                time: "8:00 PM"
+            )
+        ]
+
+        XCTAssertInvalidWithErrors(
+            dto.toStageDaySchedule,
+            [.cannotDetermineEndTimeForPerformance]
+        )
+    }
+
+
+    func testParsingScheduleWithEndTimeBeforeStartTime() {
+        let dto: EventDTO.StageDaySchedule = [
+            PerformanceDTO(
+                artist: "Rhythmbox",
+                time: "4:00 AM",
+                endTime: "3:30 AM"
+            )
+        ]
+
+        XCTExpectFailure("Trying to figure this out while also parsing out midnight stuff is pretty tought") {
+            XCTAssertInvalidWithErrors(
+                dto.toStageDaySchedule,
+                [.endTimeBeforeStartTime]
+            )
+        }
+
+    }
+
+    func testParsingScheduleWithNoPerformances() {
+        let dto: EventDTO.StageDaySchedule = []
+
+        XCTAssertValidAndEqual(
+            dto.toStageDaySchedule,
+            []
+        )
+    }
+
+    func testParsingScheduleWithBackToBackPerformances() {
+        let dto: EventDTO.StageDaySchedule = [
+            PerformanceDTO(
+                artist: "Sunspear",
+                time: "4:30 PM",
+                endTime: "5:30 PM"
+            ),
+            PerformanceDTO(
+                artist: "Phantom Groove",
+                time: "5:30 PM",
+                endTime: "6:30 PM"
+            )
+        ]
+
+        XCTAssertValidAndEqual(
+            dto.toStageDaySchedule,
+            [
+                StagelessPerformance(
+                    artistIDs: ["Sunspear"],
+                    startTime: ScheduleTime(hour: 16, minute: 30)!,
+                    endTime: ScheduleTime(hour: 17, minute: 30)!
+                ),
+                StagelessPerformance(
+                    artistIDs: ["Phantom Groove"],
+                    startTime: ScheduleTime(hour: 17, minute: 30)!,
+                    endTime: ScheduleTime(hour: 18, minute: 30)!
+                )
+            ]
+        )
+    }
 }
+

@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Woodrow Melling on 6/3/24.
 //
@@ -16,6 +16,7 @@ extension Validation.ScheduleError {
         case unimplemented
         case performanceError(Validation.ScheduleError.PerformanceError)
         case cannotDetermineEndTimeForPerformance
+        case endTimeBeforeStartTime
         case overlappingPerformances
     }
 }
@@ -23,8 +24,8 @@ extension Validation.ScheduleError {
 struct StagelessPerformance: Equatable {
     var customTitle: String?
     var artistIDs: OrderedSet<Event.Artist.ID>
-    var startTime: Date
-    var endTime: Date
+    var startTime: ScheduleTime
+    var endTime: ScheduleTime
 }
 
 extension EventDTO.StageDaySchedule {
@@ -37,44 +38,84 @@ extension EventDTO.StageDaySchedule {
             .map(\.toPartialPerformance)
             .sequence()
             .mapErrors { Validation.ScheduleError.StageDayScheduleError.performanceError($0) }
-            .flatMap { determineEndTimes(for: $0) }
+            .flatMapish { determineEndTimes(for: $0) }
     }
 
     private func determineEndTimes(for partialPerformances: [TimelessStagelessPerformance]) -> ValidatedStageDaySchedule {
         var schedule: [StagelessPerformance] = []
+        var scheduleStartTime: ScheduleTime?
 
         for (index, performance) in partialPerformances.enumerated() {
-            var endTime: Date
+            var startTime = performance.startTime
+            var endTime: ScheduleTime
 
             // End times can be manually set
             if let staticEndTime = performance.endTime {
-
-                // But they shouldn't overlap with the next set
-                if let nextPerformance = partialPerformances[safe: index + 1],
-                   nextPerformance.startTime < staticEndTime
-                {
-                    return .error(Validation.ScheduleError.StageDayScheduleError.overlappingPerformances)
-                }
-
                 endTime = staticEndTime
 
-            // If they aren't, find the next performance, and make the endtime but up against it
+                // If they aren't, find the next performance, and make the endtime but up against it
             } else if let nextPerformance = partialPerformances[safe: index + 1] {
                 endTime = nextPerformance.startTime
 
-            // If there isn't any performances after this, we can't determine the endtime
+                // If there isn't any performances after this, we can't determine the endtime
             } else {
                 return .error(Validation.ScheduleError.StageDayScheduleError.cannotDetermineEndTimeForPerformance)
+            }
+
+            if let scheduleStartTime {
+                if startTime < scheduleStartTime {
+                    startTime.hour += 24
+                }
+
+                if endTime < scheduleStartTime {
+                    endTime.hour += 24
+                }
+            } else {
+                scheduleStartTime = startTime
+                if endTime < startTime {
+                    endTime.hour += 24
+                }
             }
 
             schedule.append(StagelessPerformance(
                 customTitle: performance.customTitle,
                 artistIDs: performance.artistIDs,
-                startTime: performance.startTime,
+                startTime: startTime,
                 endTime: endTime
             ))
         }
+
+        for (index, performance) in schedule.enumerated() {
+            guard let nextPerformance = schedule[safe: index + 1]
+            else { continue }
+
+            guard performance.endTime <= nextPerformance.startTime
+            else { return .error(.overlappingPerformances) }
+
+            guard performance.startTime < performance.endTime
+            else { return .error(.endTimeBeforeStartTime)}
+        }
+
         return .valid(schedule)
+    }
+}
+
+
+struct OvernightScheduleTime: Equatable {
+    var time: ScheduleTime
+    var isPastMidnight: Bool
+
+    init(time: ScheduleTime, isPastMidnight: Bool) {
+        self.time = time
+        self.isPastMidnight = isPastMidnight
+    }
+
+    init?(hour: Int = 0, minute: Int = 0, isPastMidnight: Bool = false) {
+        guard let time = ScheduleTime(hour: hour, minute: minute)
+        else { return nil }
+
+        self.time = time
+        self.isPastMidnight = isPastMidnight
     }
 }
 

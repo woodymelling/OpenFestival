@@ -15,7 +15,7 @@ class PerformanceMappingTests: XCTestCase {
         XCTAssertValidAndEqual(
             dto.toPartialPerformance,
             TimelessStagelessPerformance(
-                startTime: Date(hour: 22)!,
+                startTime: ScheduleTime(hour: 22)!,
                 endTime: nil,
                 artistIDs: [Event.Artist.ID("Prism Sound")]
             )
@@ -32,8 +32,8 @@ class PerformanceMappingTests: XCTestCase {
         XCTAssertValidAndEqual(
             dto.toPartialPerformance,
             TimelessStagelessPerformance(
-                startTime: Date(hour: 22)!,
-                endTime: Date(hour: 23)!,
+                startTime: ScheduleTime(hour: 22)!,
+                endTime: ScheduleTime(hour: 23)!,
                 artistIDs: [Event.Artist.ID("Prism Sound")]
             )
         )
@@ -49,7 +49,7 @@ class PerformanceMappingTests: XCTestCase {
         XCTAssertValidAndEqual(
             dto.toPartialPerformance,
             TimelessStagelessPerformance(
-                startTime: Date(hour: 23, minute: 30)!,
+                startTime: ScheduleTime(hour: 23, minute: 30)!,
                 customTitle: "Subsonic B2B Sylvan",
                 artistIDs: [
                     "Subsonic", "Sylvan Beats"
@@ -163,30 +163,30 @@ extension XCTestCase {
         }
     }
 }
-
-extension Date {
-    // Create a date from specified parameters
-    ///
-    /// - Parameters:
-    ///   - year: The desired year
-    ///   - month: The desired month
-    ///   - day: The desired day
-    /// - Returns: A `Date` object
-    init?(year: Int = 2000, month: Int = 1, day: Int = 1, hour: Int = 0, minute: Int = 0) {
-        let calendar = Calendar.current
-        var dateComponents = DateComponents()
-
-        dateComponents.year = year
-        dateComponents.month = month
-        dateComponents.day = day
-        dateComponents.hour = hour
-        dateComponents.minute = minute
-        dateComponents.timeZone = .gmt
-
-        if let date = calendar.date(from: dateComponents) {
-            self = date
-        } else {
-            return nil
-        }
-    }
-}
+//
+//extension Time {
+//    // Create a date from specified parameters
+//    ///
+//    /// - Parameters:
+//    ///   - year: The desired year
+//    ///   - month: The desired month
+//    ///   - day: The desired day
+//    /// - Returns: A `Time` object
+//    init?(year: Int = 2000, month: Int = 1, day: Int = 1, hour: Int = 0, minute: Int = 0) {
+//        let calendar = Calendar.current
+//        var dateComponents = DateComponents()
+//
+//        dateComponents.year = year
+//        dateComponents.month = month
+//        dateComponents.day = day
+//        dateComponents.hour = hour
+//        dateComponents.minute = minute
+//        dateComponents.timeZone = .gmt
+//
+//        if let date = calendar.date(from: dateComponents) {
+//            self = date
+//        } else {
+//            return nil
+//        }
+//    }
+//}

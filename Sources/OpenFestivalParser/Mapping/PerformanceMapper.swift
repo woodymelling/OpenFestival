@@ -29,10 +29,11 @@ extension Validation.ScheduleError {
 }
 
 
+
 @MemberwiseInit
 struct TimelessStagelessPerformance: Equatable {
-    var startTime: Date
-    var endTime: Date?
+    var startTime: ScheduleTime
+    var endTime: ScheduleTime?
     var customTitle: String?
     var artistIDs: OrderedSet<Event.Artist.ID>
 }
@@ -78,7 +79,7 @@ extension PerformanceDTO {
         }
 
 
-        return zip(startTime, endTime, artistIDs).flatMap { startTime, endTime, artists in
+        return zip(startTime, endTime, artistIDs).flatMapish { startTime, endTime, artists in
             guard !(artists.isEmpty && self.title == nil)
             else { return .error(.noArtistsOrTitle) }
 
@@ -92,7 +93,7 @@ extension PerformanceDTO {
     }
 }
 
-func parseTimeString(_ time: String) throws ->  Date {
+func parseTimeString(_ time: String) throws -> ScheduleTime {
     struct TimeParsingError: Error {}
 
     let formatter = DateFormatter()
@@ -102,8 +103,8 @@ func parseTimeString(_ time: String) throws ->  Date {
 
     for format in formats {
         formatter.dateFormat = format
-        if let date = formatter.date(from: time) {
-            return date
+        if let time = ScheduleTime(from: time, using: formatter) {
+            return time
         }
     }
 
@@ -111,7 +112,7 @@ func parseTimeString(_ time: String) throws ->  Date {
 }
 
 extension Validated {
-    func flatMap<U>(_ transform: (Value) -> Validated<U, Error>) -> Validated<U, Error> {
+    func flatMapish<U>(_ transform: (Value) -> Validated<U, Error>) -> Validated<U, Error> {
         switch self {
         case .valid(let value): return transform(value)
         case .invalid(let error): return .invalid(error)
