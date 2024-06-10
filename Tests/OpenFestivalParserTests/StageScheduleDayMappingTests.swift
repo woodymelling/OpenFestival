@@ -4,13 +4,14 @@
 //
 //  Created by Woodrow Melling on 6/3/24.
 //
-import XCTest
+import Testing
 import Foundation
 @testable import OpenFestivalParser
 import Validated
 
 
-class StageScheduleDayMappingTests: XCTestCase {
+struct StageScheduleDayMappingTests {
+    @Test
     func testParsingScheduleSimpleBeforeMidnight() {
         let dto: EventDTO.StageDaySchedule = [
             PerformanceDTO(
@@ -32,9 +33,8 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTAssertValidAndEqual(
-            dto.toStageDaySchedule,
-            [
+        #expect(
+            dto.toStageDaySchedule == .valid([
                 StagelessPerformance(
                     artistIDs: ["Sunspear"],
                     startTime: ScheduleTime(hour: 16, minute: 30)!,
@@ -55,10 +55,11 @@ class StageScheduleDayMappingTests: XCTestCase {
                     startTime: ScheduleTime(hour: 22)!,
                     endTime: ScheduleTime(hour: 23, minute: 30)!
                 )
-            ]
+            ])
         )
     }
 
+    @Test
     func testParsingScheduleSimpleThroughMidnight() {
         let dto: EventDTO.StageDaySchedule = [
             PerformanceDTO(
@@ -80,9 +81,8 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTAssertValidAndEqual(
-            dto.toStageDaySchedule,
-            [
+        #expect(
+            dto.toStageDaySchedule == .valid([
                 StagelessPerformance(
                     artistIDs: ["Sunspear"],
                     startTime: ScheduleTime(hour: 22, minute: 30)!,
@@ -103,10 +103,11 @@ class StageScheduleDayMappingTests: XCTestCase {
                     startTime: ScheduleTime(hour: 28)!,
                     endTime: ScheduleTime(hour: 29, minute: 30)!
                 )
-            ]
+            ])
         )
     }
 
+    @Test
     func testParsingScheduleWithOverlappingPerformances() {
         let dto: EventDTO.StageDaySchedule = [
             PerformanceDTO(
@@ -121,12 +122,13 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTAssertInvalidWithErrors(
-            dto.toStageDaySchedule,
-            [.overlappingPerformances]
+        #expect(
+            dto.toStageDaySchedule ==
+            .error(.overlappingPerformances)
         )
     }
 
+    @Test
     func testParsingScheduleOverlappingAtMidnight() {
         let dto: EventDTO.StageDaySchedule = [
             PerformanceDTO(
@@ -141,9 +143,9 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTAssertInvalidWithErrors(
-            dto.toStageDaySchedule,
-            [.overlappingPerformances]
+        #expect(
+            dto.toStageDaySchedule ==
+            .error(.overlappingPerformances)
         )
     }
 
@@ -163,13 +165,13 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTAssertInvalidWithErrors(
-            dto.toStageDaySchedule,
-            [.cannotDetermineEndTimeForPerformance]
-        )
+        #expect(dto.toStageDaySchedule == .error(.cannotDetermineEndTimeForPerformance))
     }
 
 
+    @Test(
+        .disabled("Trying to figure this out while also parsing out midnight stuff is pretty tought")
+    )
     func testParsingScheduleWithEndTimeBeforeStartTime() {
         let dto: EventDTO.StageDaySchedule = [
             PerformanceDTO(
@@ -179,22 +181,14 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTExpectFailure("Trying to figure this out while also parsing out midnight stuff is pretty tought") {
-            XCTAssertInvalidWithErrors(
-                dto.toStageDaySchedule,
-                [.endTimeBeforeStartTime]
-            )
-        }
-
+        #expect(dto.toStageDaySchedule == .error(.endTimeBeforeStartTime))
     }
 
+    @Test()
     func testParsingScheduleWithNoPerformances() {
         let dto: EventDTO.StageDaySchedule = []
 
-        XCTAssertValidAndEqual(
-            dto.toStageDaySchedule,
-            []
-        )
+        #expect(dto.toStageDaySchedule == .valid([]))
     }
 
     func testParsingScheduleWithBackToBackPerformances() {
@@ -211,20 +205,21 @@ class StageScheduleDayMappingTests: XCTestCase {
             )
         ]
 
-        XCTAssertValidAndEqual(
-            dto.toStageDaySchedule,
-            [
-                StagelessPerformance(
-                    artistIDs: ["Sunspear"],
-                    startTime: ScheduleTime(hour: 16, minute: 30)!,
-                    endTime: ScheduleTime(hour: 17, minute: 30)!
-                ),
-                StagelessPerformance(
-                    artistIDs: ["Phantom Groove"],
-                    startTime: ScheduleTime(hour: 17, minute: 30)!,
-                    endTime: ScheduleTime(hour: 18, minute: 30)!
-                )
-            ]
+        #expect(
+            dto.toStageDaySchedule == .valid(
+                [
+                    StagelessPerformance(
+                        artistIDs: ["Sunspear"],
+                        startTime: ScheduleTime(hour: 16, minute: 30)!,
+                        endTime: ScheduleTime(hour: 17, minute: 30)!
+                    ),
+                    StagelessPerformance(
+                        artistIDs: ["Phantom Groove"],
+                        startTime: ScheduleTime(hour: 17, minute: 30)!,
+                        endTime: ScheduleTime(hour: 18, minute: 30)!
+                    )
+                ]
+            )
         )
     }
 }

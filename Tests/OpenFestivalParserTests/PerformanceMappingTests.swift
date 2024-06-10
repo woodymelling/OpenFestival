@@ -1,27 +1,31 @@
-import XCTest
+import Testing
 @testable import OpenFestivalParser
 import CustomDump
 import OpenFestivalModels
 import Validated
 import Dependencies
 
-class PerformanceMappingTests: XCTestCase {
+struct PerformanceMappingTests {
+
+    @Test
     func testMappingSimplestPerformance() {
         let dto = PerformanceDTO(
             artist: "Prism Sound",
             time: "10:00 PM"
         )
 
-        XCTAssertValidAndEqual(
-            dto.toPartialPerformance,
-            TimelessStagelessPerformance(
-                startTime: ScheduleTime(hour: 22)!,
-                endTime: nil,
-                artistIDs: [Event.Artist.ID("Prism Sound")]
+        #expect(
+            dto.toPartialPerformance == .valid(
+                TimelessStagelessPerformance(
+                    startTime: ScheduleTime(hour: 22)!,
+                    endTime: nil,
+                    artistIDs: [Event.Artist.ID("Prism Sound")]
+                )
             )
         )
     }
 
+    @Test
     func testMappingSimplestPerformanceWithEndTime() {
         let dto = PerformanceDTO(
             artist: "Prism Sound",
@@ -29,16 +33,18 @@ class PerformanceMappingTests: XCTestCase {
             endTime: "11:00 PM"
         )
 
-        XCTAssertValidAndEqual(
-            dto.toPartialPerformance,
-            TimelessStagelessPerformance(
-                startTime: ScheduleTime(hour: 22)!,
-                endTime: ScheduleTime(hour: 23)!,
-                artistIDs: [Event.Artist.ID("Prism Sound")]
+        #expect(
+            dto.toPartialPerformance == .valid(
+                TimelessStagelessPerformance(
+                    startTime: ScheduleTime(hour: 22)!,
+                    endTime: ScheduleTime(hour: 23)!,
+                    artistIDs: [Event.Artist.ID("Prism Sound")]
+                )
             )
         )
     }
 
+    @Test
     func testMappingMultiArtistPerformanceWithTitle() {
         let dto = PerformanceDTO(
             title: "Subsonic B2B Sylvan",
@@ -46,30 +52,33 @@ class PerformanceMappingTests: XCTestCase {
             time: "11:30 PM"
         )
 
-        XCTAssertValidAndEqual(
-            dto.toPartialPerformance,
-            TimelessStagelessPerformance(
-                startTime: ScheduleTime(hour: 23, minute: 30)!,
-                customTitle: "Subsonic B2B Sylvan",
-                artistIDs: [
-                    "Subsonic", "Sylvan Beats"
-                ]
+        #expect(
+            dto.toPartialPerformance == .valid(
+                TimelessStagelessPerformance(
+                    startTime: ScheduleTime(hour: 23, minute: 30)!,
+                    customTitle: "Subsonic B2B Sylvan",
+                    artistIDs: [
+                        "Subsonic", "Sylvan Beats"
+                    ]
+                )
             )
         )
     }
 
+    @Test
     func testMappingFailureInvalidStartTime() {
         let dto = PerformanceDTO(
             artist: "Prism Sound",
             time: "Blen PM"
         )
 
-        XCTAssertInvalidWithErrors(
-            dto.toPartialPerformance,
-            [Validation.ScheduleError.PerformanceError.invalidStartTime("Blen PM")]
+        #expect(
+            dto.toPartialPerformance ==
+            .invalid([.invalidStartTime("Blen PM")])
         )
     }
 
+    @Test
     func testMappingFailureInvalidEndTime() {
         let dto = PerformanceDTO(
             artist: "Prism Sound",
@@ -77,24 +86,26 @@ class PerformanceMappingTests: XCTestCase {
             endTime: "Blen PM"
         )
 
-        XCTAssertInvalidWithErrors(
-            dto.toPartialPerformance,
-            [Validation.ScheduleError.PerformanceError.invalidEndTime("Blen PM")]
+        #expect(
+            dto.toPartialPerformance ==
+            .invalid([Validation.ScheduleError.PerformanceError.invalidEndTime("Blen PM")])
         )
     
     }
 
+    @Test
     func testMappingFailureNoArtistsOrTitle() {
         let dto = PerformanceDTO(
             time: "10:00 PM"
         )
 
-        XCTAssertInvalidWithErrors(
-            dto.toPartialPerformance,
-            [Validation.ScheduleError.PerformanceError.noArtistsOrTitle]
+        #expect(
+            dto.toPartialPerformance ==
+            .invalid([Validation.ScheduleError.PerformanceError.noArtistsOrTitle])
         )
     }
 
+    @Test
     func testMappingFailureArtistAndArtists() {
         let dto = PerformanceDTO(
             artist: "Prism Sound",
@@ -102,67 +113,69 @@ class PerformanceMappingTests: XCTestCase {
             time: "10:00 PM"
         )
 
-        XCTAssertInvalidWithErrors(
-            dto.toPartialPerformance,
-            [Validation.ScheduleError.PerformanceError.artistAndArtists]
+        #expect(
+            dto.toPartialPerformance ==
+            .invalid([Validation.ScheduleError.PerformanceError.artistAndArtists])
         )
     }
 
+    @Test
     func testMappingFailureEmptyArtist() {
         let dto = PerformanceDTO(
             artist: "",
             time: "10:00 PM"
         )
 
-        XCTAssertInvalidWithErrors(
-            dto.toPartialPerformance,
-            [Validation.ScheduleError.PerformanceError.emptyArtist]
+        #expect(
+            dto.toPartialPerformance ==
+            .invalid([Validation.ScheduleError.PerformanceError.emptyArtist])
         )
     }
 
+    @Test
     func testMappingFailureEmptyArtists() {
         let dto = PerformanceDTO(
             artists: [],
             time: "10:00 PM"
         )
 
-        XCTAssertInvalidWithErrors(
-            dto.toPartialPerformance,
-            [Validation.ScheduleError.PerformanceError.emptyArtists]
+        #expect(
+            dto.toPartialPerformance ==
+            .invalid([Validation.ScheduleError.PerformanceError.emptyArtists])
         )
     }
 }
 
-
-extension XCTestCase {
-    func XCTAssertValidAndEqual<T, E>(
-        _ validated: Validated<T, E>,
-        _ expected: T,
-        file: StaticString = #file,
-        line: UInt = #line
-    ) where T: Equatable {
-        switch validated {
-        case .valid(let item):
-            XCTAssertNoDifference(item, expected, file: file, line: line)
-        case .invalid(let errors):
-            XCTFail("Expected valid, got error: \(errors)", file: file, line: line)
-        }
-    }
-
-    func XCTAssertInvalidWithErrors<T, E>(
-        _ validated: Validated<T, E>,
-        _ expectedErrors: NonEmptyArray<E>,
-        file: StaticString = #file,
-        line: UInt = #line
-    ) where E: Equatable {
-        switch validated {
-        case .valid(let item):
-            XCTFail("Expected invalid, got: \(item)", file: file, line: line)
-        case .invalid(let errors):
-            XCTAssertNoDifference(errors, expectedErrors, file: file, line: line)
-        }
-    }
-}
+//
+//extension XCTestCase {
+//    func XCTAssertValidAndEqual<T, E>(
+//        _ validated: Validated<T, E>,
+//        _ expected: T,
+//        file: StaticString = #file,
+//        line: UInt = #line
+//    ) where T: Equatable {
+//        switch validated {
+//        case .valid(let item):
+//            XCTAssertNoDifference(item, expected, file: file, line: line)
+//        case .invalid(let errors):
+//            XCTFail("Expected valid, got error: \(errors)", file: file, line: line)
+//        }
+//    }
+//
+//    func XCTAssertInvalidWithErrors<T, E>(
+//        _ validated: Validated<T, E>,
+//        _ expectedErrors: NonEmptyArray<E>,
+//        file: StaticString = #file,
+//        line: UInt = #line
+//    ) where E: Equatable {
+//        switch validated {
+//        case .valid(let item):
+//            XCTFail("Expected invalid, got: \(item)", file: file, line: line)
+//        case .invalid(let errors):
+//            XCTAssertNoDifference(errors, expectedErrors, file: file, line: line)
+//        }
+//    }
+//}
 //
 //extension Time {
 //    // Create a date from specified parameters

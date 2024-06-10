@@ -1,10 +1,13 @@
-import XCTest
+import Testing
+import Foundation
 @testable import OpenFestivalParser
 import Yams
 import CustomDump
 import OpenFestivalModels
 
-final class YamlDecodingTests: XCTestCase {
+@Suite("YamlDecoding")
+struct YamlDecodingTests {
+    @Test
     func testDecodingSimpleEventInfo() throws {
         let yaml = """
         version: "0.1.0" # Schema Version
@@ -28,9 +31,8 @@ final class YamlDecodingTests: XCTestCase {
         
         let dto = try encoder.decode(EventInfoDTO.self, from: yaml)
 
-        XCTAssertNoDifference(
-            dto,
-            EventInfoDTO(
+        #expect(
+            dto == EventInfoDTO(
                 name: "Testival",
                 address: "123 Festival Road, Music City",
                 timeZone: "America/Seattle",
@@ -41,6 +43,7 @@ final class YamlDecodingTests: XCTestCase {
         )
     }
 
+    @Test
     func testDecodingSimpleStageInfo() throws {
         let yaml = """
         - name: "Mystic Grove"
@@ -59,9 +62,8 @@ final class YamlDecodingTests: XCTestCase {
         
         let dto = try encoder.decode([StageDTO].self, from: yaml)
 
-        XCTAssertNoDifference(
-            dto,
-            [
+        #expect(
+            dto == [
                 StageDTO(name: "Mystic Grove", color: "#1DB954", imageURL: URL(string: "http://example.com/mystic-grove.jpg")!),
                 StageDTO(name: "Bass Haven", color: "#FF5733", imageURL: URL(string: "http://example.com/bass-haven.jpg")!),
                 StageDTO(name: "Tranquil Meadow", color: "#4287f5", imageURL: nil)
@@ -69,6 +71,7 @@ final class YamlDecodingTests: XCTestCase {
         )
     }
 
+    @Test
     func testDecodingSimpleContactInfo() throws {
         let yaml = """
         - phoneNumber: "+1234567890" 
@@ -83,16 +86,15 @@ final class YamlDecodingTests: XCTestCase {
         
         let dto = try encoder.decode([ContactInfoDTO].self, from: yaml)
 
-        XCTAssertNoDifference(
-            dto,
-            [
+        #expect(
+            dto == [
                 ContactInfoDTO(phoneNumber: "+1234567890", title: "General Info", description: nil),
                 ContactInfoDTO(phoneNumber: "+0987654321", title: "Emergency", description: "For emergencies only")
             ]
         )
     }
-    
 
+    @Test
     func testDecodingSimpleSchedule() throws {
         let yaml = """
         Bass Haven:
@@ -143,7 +145,7 @@ final class YamlDecodingTests: XCTestCase {
         let encoder = YAMLDecoder()
         let dto = try encoder.decode([String: [PerformanceDTO]].self, from: yaml)
 
-        XCTAssertNoDifference(dto, [
+        #expect(dto == [
             "Bass Haven": [
                 PerformanceDTO(title: nil, artist: "Prism Sound", artists: nil, time: "10:00 PM"),
                 PerformanceDTO(title: "Subsonic B2B Sylvan", artist: nil, artists: ["Subsonic", "Sylvan Beats"], time: "11:30 PM"),
