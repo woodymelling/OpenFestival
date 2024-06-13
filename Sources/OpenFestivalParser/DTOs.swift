@@ -6,16 +6,45 @@
 //
 
 import Foundation
+import OpenFestivalModels
+import MemberwiseInit
 
 struct EventDTO {
-    typealias StageDaySchedule = [PerformanceDTO]
-    typealias DaySchedule = [String: StageDaySchedule] // [Stage:...]
-    typealias Schedule = [String: DaySchedule] // [Date:...]
-
     var eventInfo: EventInfoDTO
     var stages: [StageDTO]
     var contactInfo: [ContactInfoDTO]?
     var schedule: Schedule
+}
+
+
+extension EventDTO {
+
+    struct Schedule: Decodable, Equatable {
+        var daySchedules: [DaySchedule]
+    }
+    @MemberwiseInit
+    struct DaySchedule: Decodable, Equatable {
+        var date: CalendarDate? // This could be defined in the yaml, or from the title of the file
+        var performances: [String: [PerformanceDTO]]
+        
+        init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            
+            if let rawPerformances = try? container.decode([String: [PerformanceDTO]].self) {
+                self.date = nil
+                self.performances = rawPerformances
+            } else {
+                let keyedContainer = try decoder.container(keyedBy: CodingKeys.self)
+                self.date = try? keyedContainer.decode(CalendarDate.self, forKey: .date)
+                self.performances = try keyedContainer.decode([String: [PerformanceDTO]].self, forKey: .performances)
+            }
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case date
+            case performances
+        }
+    }
 }
 
 struct EventInfoDTO: Decodable, Equatable {

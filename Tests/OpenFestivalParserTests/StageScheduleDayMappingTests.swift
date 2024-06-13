@@ -12,7 +12,7 @@ import Validated
 
 class StageScheduleDayMappingTests: XCTestCase {
     func testParsingScheduleSimpleBeforeMidnight() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Sunspear",
                 time: "4:30 PM"
@@ -60,7 +60,7 @@ class StageScheduleDayMappingTests: XCTestCase {
     }
 
     func testParsingScheduleSimpleThroughMidnight() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Sunspear",
                 time: "10:30 PM"
@@ -108,7 +108,7 @@ class StageScheduleDayMappingTests: XCTestCase {
     }
 
     func testParsingScheduleWithOverlappingPerformances() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Rhythmbox",
                 time: "4 AM",
@@ -128,7 +128,7 @@ class StageScheduleDayMappingTests: XCTestCase {
     }
 
     func testParsingScheduleOverlappingAtMidnight() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Rhythmbox",
                 time: "11:30 PM",
@@ -148,7 +148,7 @@ class StageScheduleDayMappingTests: XCTestCase {
     }
 
     func testParsingScheduleWithNoEndTime() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Sunspear",
                 time: "4:30 PM"
@@ -171,7 +171,7 @@ class StageScheduleDayMappingTests: XCTestCase {
 
 
     func testParsingScheduleWithEndTimeBeforeStartTime() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Rhythmbox",
                 time: "4:00 AM",
@@ -182,23 +182,21 @@ class StageScheduleDayMappingTests: XCTestCase {
         XCTExpectFailure("Trying to figure this out while also parsing out midnight stuff is pretty tought") {
             XCTAssertInvalidWithErrors(
                 dto.toStageDaySchedule,
-                [.endTimeBeforeStartTime]
+                [.endTimeBeforeStartTime(ScheduleTime(hour: 4)!, ScheduleTime(hour: 3, minute: 30)!)]
             )
         }
 
     }
 
     func testParsingScheduleWithNoPerformances() {
-        let dto: EventDTO.StageDaySchedule = []
-
         XCTAssertValidAndEqual(
-            dto.toStageDaySchedule,
+            [].toStageDaySchedule,
             []
         )
     }
 
     func testParsingScheduleWithBackToBackPerformances() {
-        let dto: EventDTO.StageDaySchedule = [
+        let dto = [
             PerformanceDTO(
                 artist: "Sunspear",
                 time: "4:30 PM",

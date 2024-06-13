@@ -12,12 +12,27 @@ import Collections
 
 
 extension Validation.ScheduleError {
-    enum StageDayScheduleError: Equatable {
+    enum StageDayScheduleError: Equatable, Error {
         case unimplemented
         case performanceError(Validation.ScheduleError.PerformanceError)
         case cannotDetermineEndTimeForPerformance
-        case endTimeBeforeStartTime
+        case endTimeBeforeStartTime(ScheduleTime, ScheduleTime)
         case overlappingPerformances
+
+        var localizedDescription: String {
+            switch self {
+            case .unimplemented:
+                return "This feature is not yet implemented"
+            case .performanceError(let error):
+                return error.localizedDescription
+            case .cannotDetermineEndTimeForPerformance:
+                return "Cannot determine end time for performance"
+            case .endTimeBeforeStartTime(let startTime, let endTime):
+                return "End time \(endTime) is before start time \(startTime)"
+            case .overlappingPerformances:
+                return "Performances are overlapping"
+            }
+        }
     }
 }
 
@@ -28,11 +43,13 @@ struct StagelessPerformance: Equatable {
     var endTime: ScheduleTime
 }
 
-extension EventDTO.StageDaySchedule {
-    typealias ValidatedStageDaySchedule = Validated<
-        [StagelessPerformance],
-        Validation.ScheduleError.StageDayScheduleError
-    >
+typealias ValidatedStageDaySchedule = Validated<
+    [StagelessPerformance],
+    Validation.ScheduleError.StageDayScheduleError
+>
+
+extension Collection<PerformanceDTO> {
+
     var toStageDaySchedule: ValidatedStageDaySchedule {
         self
             .map(\.toPartialPerformance)
@@ -93,7 +110,7 @@ extension EventDTO.StageDaySchedule {
             else { return .error(.overlappingPerformances) }
 
             guard performance.startTime < performance.endTime
-            else { return .error(.endTimeBeforeStartTime)}
+            else { return .error(.endTimeBeforeStartTime(performance.startTime, performance.endTime))}
         }
 
         return .valid(schedule)

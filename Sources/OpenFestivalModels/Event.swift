@@ -14,7 +14,7 @@ import Collections
 public typealias OpenFestivalIDType = String
 
 @MemberwiseInit(.public)
-public struct Event: Identifiable, Equatable, Hashable {
+public struct Event: Identifiable, Equatable {
     public var id: Tagged<Event, OpenFestivalIDType> //
     public var name: String //
     public var timeZone: TimeZone
@@ -58,7 +58,11 @@ public extension Event {
 public extension Event {
     typealias StageDaySchedule = IdentifiedArrayOf<Performance>
     typealias DaySchedule = [Stage.ID: IdentifiedArrayOf<Performance>]
-    typealias Schedule = [CalendarDate: DaySchedule]
+
+    @MemberwiseInit(.public)
+    struct Schedule: Equatable, Hashable {
+        public let days: [DaySchedule]
+    }
 
     @MemberwiseInit(.public)
     struct Performance: Identifiable, Equatable, Hashable {

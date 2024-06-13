@@ -12,8 +12,6 @@ public struct OpenFestivalParser {
 }
 
 extension OpenFestivalParser {
-    
-
     enum ValidationFailure: Error, CustomStringConvertible {
         case noEventInfoFile
         case noSchedulesDirectory
@@ -46,7 +44,7 @@ extension OpenFestivalParser {
         
         print("Properly parsed files, attempting to extract schedule info...")
 
-        switch eventDTO.extractedEvent {
+        switch EventMapper().map(eventDTO) {
         case let .valid(event): return event
         case let .invalid(errors): throw errors.first // TODO
         }
@@ -67,16 +65,15 @@ extension OpenFestivalParser {
 
         let urls = try fileManager.contentsOfDirectory(in: url.appendingPathComponent("schedule"))
        
-        let performances: EventDTO.Schedule = try Dictionary(
-            uniqueKeysWithValues: urls.map { url in
-                let data = try Data(contentsOf: url)
-                let performances = try YAMLDecoder().decode(EventDTO.DaySchedule.self, from: data)
+       let schedule = try EventDTO.Schedule(daySchedules: urls.map { url in
+               let data = try Data(contentsOf: url)
+               let daySchedule = try YAMLDecoder().decode(EventDTO.DaySchedule.self, from: data)
 
-                return (url.lastPathComponent, performances)
-            }
-        ) 
+               return daySchedule
+           }
+        )
 
-        return performances
+        return schedule
     }   
 
     private static func parseStages(fromDirectory url: URL) async throws -> [StageDTO] {
@@ -89,8 +86,6 @@ extension OpenFestivalParser {
 
         let data = try Data(contentsOf: stagesURL)
         let stages = try YAMLDecoder().decode([StageDTO].self, from: data)
-
-        customDump(stages)
 
         return stages
     }
@@ -108,12 +103,10 @@ extension OpenFestivalParser {
         let data = try Data(contentsOf: eventInfoURL)
         let eventDTO = try YAMLDecoder().decode(EventInfoDTO.self, from: data)
 
-        customDump(eventDTO)
-
         return eventDTO
     }
 
     private static func parseContactInfo(fromDirectory url: URL) async throws -> [ContactInfoDTO] {
-        throw ValidationFailure.noEventInfoFile
+       []
     }
 }

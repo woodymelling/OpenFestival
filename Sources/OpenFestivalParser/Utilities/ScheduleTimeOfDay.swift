@@ -78,6 +78,13 @@ struct ScheduleTime: Codable {
     }
 }
 
+extension ScheduleTime: CustomStringConvertible {
+    var description: String {
+        
+        "\(hour):\(minute == 0 ? "00" : String(minute))"
+    }
+}
+
 extension ScheduleTime: Comparable {
 
     static func < (lhs: ScheduleTime, rhs: ScheduleTime) -> Bool {

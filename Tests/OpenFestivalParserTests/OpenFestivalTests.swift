@@ -141,9 +141,9 @@ final class YamlDecodingTests: XCTestCase {
         """
 
         let encoder = YAMLDecoder()
-        let dto = try encoder.decode([String: [PerformanceDTO]].self, from: yaml)
+        let dto = try encoder.decode(EventDTO.DaySchedule.self, from: yaml)
 
-        XCTAssertNoDifference(dto, [
+        XCTAssertNoDifference(dto, .init(performances: [
             "Bass Haven": [
                 PerformanceDTO(title: nil, artist: "Prism Sound", artists: nil, time: "10:00 PM"),
                 PerformanceDTO(title: "Subsonic B2B Sylvan", artist: nil, artists: ["Subsonic", "Sylvan Beats"], time: "11:30 PM"),
@@ -161,6 +161,6 @@ final class YamlDecodingTests: XCTestCase {
                 PerformanceDTO(title: nil, artist: "Overgrowth", artists: nil, time: "04:00 PM", endTime: "6:00 PM"),
                 PerformanceDTO(title: "The Wind Down", artist: "The Sleepies", artists: nil, time: "1:00 AM", endTime: "2:00 AM")
             ]
-        ])
+        ]))
     }
 }
