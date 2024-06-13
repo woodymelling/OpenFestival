@@ -68,6 +68,9 @@ let package = Package(
                  "OpenFestivalParser",
                  "Yams",
                  .product(name: "CustomDump", package: "swift-custom-dump"),
+            ],
+            resources: [
+                .copy("ExampleFestivals")
             ]
         ),
     ]

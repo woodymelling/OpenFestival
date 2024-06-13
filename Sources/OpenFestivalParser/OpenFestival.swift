@@ -8,8 +8,14 @@ import DependenciesMacros
 
 @DependencyClient
 public struct OpenFestivalParser {
-    public var parse: (_ from: String) async throws -> Event
+    public var parse: (_ from: URL) async throws -> Event
+
+    public func parse(from path: String) async throws -> Event {
+        try await self.parse(from: URL(fileURLWithPath: path))
+    }
 }
+
+
 
 extension OpenFestivalParser {
     enum ValidationFailure: Error, CustomStringConvertible {
@@ -36,12 +42,9 @@ extension OpenFestivalParser: DependencyKey {
 }
 
 extension OpenFestivalParser {
-    private static func parseEvent(from path: String) async throws -> Event {
-        let url = URL(fileURLWithPath: path)
+    private static func parseEvent(from path: URL) async throws -> Event {
+        let eventDTO = try await parseEventDTO(fromPath: path)
 
-
-        let eventDTO = try await parseEventDTO(fromPath: url)
-        
         print("Properly parsed files, attempting to extract schedule info...")
 
         switch EventMapper().map(eventDTO) {

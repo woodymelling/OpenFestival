@@ -116,25 +116,3 @@ extension Collection<PerformanceDTO> {
         return .valid(schedule)
     }
 }
-
-
-struct OvernightScheduleTime: Equatable {
-    var time: ScheduleTime
-    var isPastMidnight: Bool
-
-    init(time: ScheduleTime, isPastMidnight: Bool) {
-        self.time = time
-        self.isPastMidnight = isPastMidnight
-    }
-
-    init?(hour: Int = 0, minute: Int = 0, isPastMidnight: Bool = false) {
-        guard let time = ScheduleTime(hour: hour, minute: minute)
-        else { return nil }
-
-        self.time = time
-        self.isPastMidnight = isPastMidnight
-    }
-}
-
-
-

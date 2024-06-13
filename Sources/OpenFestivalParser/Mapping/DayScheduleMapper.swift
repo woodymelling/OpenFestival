@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Woodrow Melling on 6/11/24.
 //
@@ -36,8 +36,11 @@ struct DayScheduleMapper: ValidatedMapper {
             .map { // [String: [StagelessPerformance] -> [Stage.ID: IdentifiedArrayOf<Performance>]]
                 $0.reduce(into: [:]) { (partialResult: inout Event.DaySchedule, tuple: (key: String, value: [StagelessPerformance])) in
                     let stageID = Event.Stage.ID(rawValue: tuple.key)
+
+
+
                     partialResult[stageID] = IdentifiedArray(
-                        uniqueElements: tuple.value.map { 
+                        uniqueElements: tuple.value.map {
                             $0.toPerformance(at: stageID, on: value.date)
                         }
                     )
@@ -77,11 +80,24 @@ protocol ValidatedMapper {
 }
 
 
+import Dependencies
 extension CalendarDate {
     func atTime(_ time: ScheduleTime) -> Date {
-        self.atTimeOfDay(
-            hour: time.hour,
-            minute: time.minute
-        )
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        components.hour = time.hour % 24
+        components.minute = time.minute
+        components.second = 0
+        @Dependency(\.calendar) var calendar
+        var date = calendar.date(from: components)!
+
+        if time.hour >= 24 {
+            date.addTimeInterval(24 * 60 * 60)
+        }
+
+        return date
     }
 }
+

@@ -15,7 +15,9 @@ class DayScheduleMappingTests: XCTestCase {
 
     override func perform(_ run: XCTestRun) {
         withDependencies {
-            $0.calendar = .current
+            var calendar = Calendar.current
+            calendar.timeZone = .init(secondsFromGMT: 0)!
+            $0.calendar = calendar
         } operation: {
             super.perform(run)
         }
@@ -103,4 +105,69 @@ class DayScheduleMappingTests: XCTestCase {
         ])
         
     }
+
+    func testMappingOvernightSchedule() {
+        let day = CalendarDate(year: 2024, month: 6, day: 12)
+        let dto = EventDTO.DaySchedule(
+            date: day,
+            performances: [
+                "Bass Haven": [
+                    PerformanceDTO(
+                        artist: "Sunspear",
+                        time: "6:30 PM"
+                    ),
+                    PerformanceDTO(
+                        artist: "Phantom Groove",
+                        time: "10:30 PM"
+                    ),
+                    PerformanceDTO(
+                        artist: "Oaktrail",
+                        time: "12:30 AM"
+                    ),
+                    PerformanceDTO(
+                        artist: "Rhythmbox",
+                        time: "4 AM",
+                        endTime: "7:30 AM"
+                    )
+                ]
+            ]
+        )
+        XCTAssertValidAndEqual(DayScheduleMapper().map(dto), [
+            "Bass Haven": [
+                Event.Performance(
+                    id: .init("Sunspear-18:30-Bass Haven"),
+                    customTitle: nil,
+                    artistIDs: ["Sunspear"],
+                    startTime: day.atTime(ScheduleTime(hour: 18, minute: 30)!),
+                    endTime: day.atTime(ScheduleTime(hour: 22, minute: 30)!),
+                    stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                ),
+                Event.Performance(
+                    id: .init("Phantom Groove-22:30-Bass Haven"),
+                    customTitle: nil,
+                    artistIDs: ["Phantom Groove"],
+                    startTime: day.atTime(ScheduleTime(hour: 22, minute: 30)!),
+                    endTime: day.atTime(ScheduleTime(hour: 24, minute: 30)!),
+                    stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                ),
+                Event.Performance(
+                    id: .init("Oaktrail-24:30-Bass Haven"),
+                    customTitle: nil,
+                    artistIDs: ["Oaktrail"],
+                    startTime: day.atTime(ScheduleTime(hour: 24, minute: 30)!),
+                    endTime: day.atTime(ScheduleTime(hour: 28)!),
+                    stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                ),
+                Event.Performance(
+                    id: .init("Rhythmbox-28:00-Bass Haven"),
+                    customTitle: nil,
+                    artistIDs: ["Rhythmbox"],
+                    startTime: day.atTime(ScheduleTime(hour: 28)!),
+                    endTime: day.atTime(ScheduleTime(hour: 31, minute: 30)!),
+                    stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                )
+            ]
+        ])
+    }
 }
+

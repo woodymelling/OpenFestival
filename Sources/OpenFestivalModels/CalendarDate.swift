@@ -99,7 +99,14 @@ public extension CalendarDate {
 
     func atTimeOfDay(hour: Int? = nil, minute: Int? = nil, seconds: Int? = nil) -> Date {
         @Dependency(\.calendar) var calendar
-        let components = DateComponents(hour: hour, minute: minute, second: seconds)
+        let nextDay = (hour ?? 0) > 24
+
+        let components = DateComponents(
+            day: nextDay ? 1 : 0,
+            hour: (hour ?? 0) % 24,
+            minute: minute,
+            second: seconds
+        )
 
         return calendar.date(byAdding: components, to: self.date)!
     }
