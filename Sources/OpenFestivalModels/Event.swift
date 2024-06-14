@@ -24,6 +24,7 @@ public struct Event: Identifiable, Equatable {
     public var address: String? = nil
 
     public var contactNumbers: IdentifiedArrayOf<ContactNumber> = []
+    public var artists: IdentifiedArrayOf<Artist>
     public var stages: Stages
     public var schedule: Schedule
 }
@@ -80,7 +81,15 @@ public extension Event {
     struct Artist: Identifiable, Equatable, Hashable {
         public var id: Tagged<Event, String>
         public var name: String
-        public var bio: String
+        public var bio: String?
+        public var imageURL: URL?
+        public var links: [Link]
+
+        @MemberwiseInit(.public)
+        public struct Link: Equatable, Hashable {
+            public var url: URL
+            public var label: String?
+        }
     }
 }
 

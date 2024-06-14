@@ -16,6 +16,7 @@ enum Validation: Error {
     case stage(Stage)
     case generic
     case schedule(ScheduleError)
+    case artist
 
 
     enum Stage: Error {
@@ -35,22 +36,51 @@ struct EventMapper: ValidatedMapper {
     func map(_ dto: EventDTO) -> Output {
         zip(
             StagesMapper().map(dto.stages).mapErrors { Validation.stage($0) },
+            ArtistsMapper().map(dto.artists).mapErrors { _ in .artist },
             ScheduleMapper().map(dto.schedule).mapErrors { Validation.schedule($0) },
             TimeZoneMapper().map(dto.eventInfo.timeZone).mapErrors { _ in .generic }
         )
-        .map { stages, schedule, timeZone in
-            Event(
+        .map { stages, artists, schedule, timeZone in
+
+            var artists = artists
+            addArtistsFromSchedule(to: &artists, schedule: schedule)
+
+            return Event(
                 id: "TODO",
                 name: dto.eventInfo.name,
                 timeZone: timeZone,
+                artists: artists,
                 stages: stages,
                 schedule: schedule
             )
         }
     }
+
+    private func addArtistsFromSchedule(
+        to artists: inout IdentifiedArrayOf<Event.Artist>,
+        schedule: Event.Schedule
+    ) {
+        let allScheduleArtistIDs = Set(schedule.days.flatMap {
+            $0.values.flatMap {
+                $0.flatMap {
+                    $0.artistIDs
+                }
+            }
+        })
+
+        for artistID in allScheduleArtistIDs {
+            if artists[id: artistID] == nil {
+                artists[id: artistID] = Event.Artist(
+                    id: artistID,
+                    name: artistID.rawValue,
+                    bio: nil,
+                    imageURL: nil,
+                    links: []
+                )
+            }
+        }
+    }
 }
-
-
 
 struct StagesMapper: ValidatedMapper {
     typealias From = [StageDTO]
@@ -88,8 +118,6 @@ struct ScheduleMapper: ValidatedMapper {
     }
 }
 
-
-
 struct TimeZoneMapper: ValidatedMapper {
     typealias From = String?
     typealias To = TimeZone
@@ -102,6 +130,26 @@ struct TimeZoneMapper: ValidatedMapper {
             dto.flatMap(TimeZone.init(identifier:))
             ?? dto.flatMap(TimeZone.init(abbreviation:))
             ?? timeZone
+        )
+    }
+}
+
+struct ArtistsMapper: ValidatedMapper {
+    typealias From = [ArtistDTO]
+    typealias To = IdentifiedArrayOf<Event.Artist>
+    typealias ToError = Error
+
+    func map(_ dtos: [ArtistDTO]) -> Output {
+        .valid(
+            IdentifiedArray(uniqueElements: dtos.map {
+                Event.Artist(
+                    id: .init($0.name),
+                    name: $0.name,
+                    bio: $0.description,
+                    imageURL: $0.imageURL,
+                    links: $0.links.map { Event.Artist.Link(url: $0.url, label: $0.label) }
+                )
+            })
         )
     }
 }

@@ -6,12 +6,13 @@ import PackageDescription
 let package = Package(
     name: "OpenFestival",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v12), .iOS(.v16)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(name: "OpenFestivalParser", targets: ["OpenFestivalParser"]),
         .library(name: "OpenFestivalModels", targets: ["OpenFestivalModels"]),
+        .library(name: "OpenFestivalViewer", targets: ["OpenFestivalViewer"]),
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [

@@ -11,17 +11,17 @@ import MemberwiseInit
 
 struct EventDTO {
     var eventInfo: EventInfoDTO
-    var stages: [StageDTO]
     var contactInfo: [ContactInfoDTO]?
+    var stages: [StageDTO]
+    var artists: [ArtistDTO]
     var schedule: Schedule
 }
 
-
 extension EventDTO {
-
     struct Schedule: Decodable, Equatable {
         var daySchedules: [DaySchedule]
     }
+
     @MemberwiseInit
     struct DaySchedule: Decodable, Equatable {
         var date: CalendarDate? // This could be defined in the yaml, or from the title of the file
@@ -75,11 +75,28 @@ struct ContactInfoDTO: Decodable, Equatable {
     var description: String?
 }
 
-
 struct PerformanceDTO: Decodable, Equatable {
     var title: String?
     var artist: String?
     var artists: [String]?
     var time: String
     var endTime: String?
+}
+
+struct ArtistDTO {
+    var name: String
+    var description: String
+    var imageURL: URL?
+    var links: [Link]
+
+
+    struct Link: Decodable, Equatable {
+        var url: URL
+        var label: String?
+    }
+}
+
+public struct ArtistInfoFrontMatter: Decodable, Equatable {
+    var imageURL: URL?
+    var links: [ArtistDTO.Link]
 }

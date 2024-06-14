@@ -12,7 +12,6 @@ import OpenFestivalModels
 import Dependencies
 
 class DayScheduleMappingTests: XCTestCase {
-
     override func perform(_ run: XCTestRun) {
         withDependencies {
             var calendar = Calendar.current
@@ -23,6 +22,7 @@ class DayScheduleMappingTests: XCTestCase {
         }
 
     }
+    
     func testMappingDaySchedule() {
         let day = CalendarDate(year: 2024, month: 6, day: 12)
         let dto = EventDTO.DaySchedule(
@@ -103,7 +103,6 @@ class DayScheduleMappingTests: XCTestCase {
                 )
             ]
         ])
-        
     }
 
     func testMappingOvernightSchedule() {
