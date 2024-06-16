@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ScheduleTime: Codable {
+public struct ScheduleTime: Codable {
     var hour: Int
     var minute: Int
 
@@ -79,21 +79,42 @@ struct ScheduleTime: Codable {
 }
 
 extension ScheduleTime: CustomStringConvertible {
-    var description: String {
-        
+    public var description: String {
+
         "\(hour):\(minute == 0 ? "00" : String(minute))"
     }
 }
 
 extension ScheduleTime: Comparable {
 
-    static func < (lhs: ScheduleTime, rhs: ScheduleTime) -> Bool {
+    public static func < (lhs: ScheduleTime, rhs: ScheduleTime) -> Bool {
         if lhs.hour != rhs.hour {
             return lhs.hour < rhs.hour
         }
         return lhs.minute < rhs.minute
     }
-
-
 }
+
+import OpenFestivalModels
+import Dependencies
+extension CalendarDate {
+    public func atTime(_ time: ScheduleTime) -> Date {
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        components.hour = time.hour % 24
+        components.minute = time.minute
+        components.second = 0
+        @Dependency(\.calendar) var calendar
+        var date = calendar.date(from: components)!
+
+        if time.hour >= 24 {
+            date.addTimeInterval(24 * 60 * 60)
+        }
+
+        return date
+    }
+}
+
 

@@ -15,8 +15,6 @@ public struct OpenFestivalParser {
     }
 }
 
-
-
 extension OpenFestivalParser {
     enum ValidationFailure: Error, CustomStringConvertible {
         case noEventInfoFile
@@ -74,13 +72,13 @@ extension OpenFestivalParser {
 
         let urls = try fileManager.contentsOfDirectory(in: url.appendingPathComponent("schedule"))
        
-       let schedule = try EventDTO.Schedule(daySchedules: urls.map { url in
-               let data = try Data(contentsOf: url)
-               let daySchedule = try YAMLDecoder().decode(EventDTO.DaySchedule.self, from: data)
+        let schedule = try EventDTO.Schedule(daySchedules: urls.reduce(into: [:]) { partialResults, url in
+            let data = try Data(contentsOf: url)
+            let daySchedule = try YAMLDecoder().decode(EventDTO.DaySchedule.self, from: data)
+            let fileName = url.deletingPathExtension().lastPathComponent
 
-               return daySchedule
-           }
-        )
+            partialResults[fileName] = daySchedule
+        })
 
         return schedule
     }   

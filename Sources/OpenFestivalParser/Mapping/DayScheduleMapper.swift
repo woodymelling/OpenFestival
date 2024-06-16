@@ -10,7 +10,7 @@ import OpenFestivalModels
 import Validated
 
 typealias ValidatedDaySchedule = Validated<
-    Event.DaySchedule,
+    Event.Schedule.Day,
     Validation.ScheduleError.StageDayScheduleError
 >
 
@@ -24,27 +24,34 @@ extension Validation.ScheduleError {
  This is decoding a whole file, so the DTO should have access to the Date, whether encoded in the file or in the file title
  */
 struct DayScheduleMapper: ValidatedMapper {
-    typealias From = EventDTO.DaySchedule
-    typealias To = [Event.Stage.ID: IdentifiedArrayOf<Event.Performance>]
+    typealias From = (fileName: String, body: EventDTO.DaySchedule)
+    typealias To = Event.Schedule.Day
     typealias ToError = Validation.ScheduleError.DayScheduleError
 
-    func map(_ value: EventDTO.DaySchedule) -> Output {
-        value
+    func map(_ fileContents: From) -> Output {
+        fileContents.body
             .performances
             .mapValues(\.toStageDaySchedule)
             .sequence()
             .map { // [String: [StagelessPerformance] -> [Stage.ID: IdentifiedArrayOf<Performance>]]
-                $0.reduce(into: [:]) { (partialResult: inout Event.DaySchedule, tuple: (key: String, value: [StagelessPerformance])) in
-                    let stageID = Event.Stage.ID(rawValue: tuple.key)
+                $0.reduce(into: [:]) { (
+                    partialResult: inout [Event.Stage.ID : [Event.Performance]],
+                    tuple: (key: String, value: [StagelessPerformance])
+                ) in
+                    let stageID: Event.Stage.ID = .init(tuple.key)
 
-
-
-                    partialResult[stageID] = IdentifiedArray(
-                        uniqueElements: tuple.value.map {
-                            $0.toPerformance(at: stageID, on: value.date)
-                        }
-                    )
+                    partialResult[stageID] = tuple.value.map {
+                        $0.toPerformance(at: stageID, on: fileContents.body.date)
+                    }
                 }
+            }
+            .map {
+                Event.Schedule.Day(
+                    id: .init(fileContents.fileName),
+                    date: fileContents.body.date,
+                    customTitle: fileContents.body.customTitle,
+                    performances: $0
+                )
             }
             .mapErrors { ToError.scheduleDayError($0) }
     }
@@ -79,25 +86,4 @@ protocol ValidatedMapper {
     func map(_ from: From) -> Output
 }
 
-
-import Dependencies
-extension CalendarDate {
-    func atTime(_ time: ScheduleTime) -> Date {
-        var components = DateComponents()
-        components.year = year
-        components.month = month
-        components.day = day
-        components.hour = time.hour % 24
-        components.minute = time.minute
-        components.second = 0
-        @Dependency(\.calendar) var calendar
-        var date = calendar.date(from: components)!
-
-        if time.hour >= 24 {
-            date.addTimeInterval(24 * 60 * 60)
-        }
-
-        return date
-    }
-}
 

@@ -19,11 +19,12 @@ struct EventDTO {
 
 extension EventDTO {
     struct Schedule: Decodable, Equatable {
-        var daySchedules: [DaySchedule]
+        var daySchedules: [String : DaySchedule]
     }
 
     @MemberwiseInit
     struct DaySchedule: Decodable, Equatable {
+        var customTitle: String?
         var date: CalendarDate? // This could be defined in the yaml, or from the title of the file
         var performances: [String: [PerformanceDTO]]
         
@@ -36,12 +37,14 @@ extension EventDTO {
             } else {
                 let keyedContainer = try decoder.container(keyedBy: CodingKeys.self)
                 self.date = try? keyedContainer.decode(CalendarDate.self, forKey: .date)
+                self.customTitle = try? keyedContainer.decode(String.self, forKey: .date)
                 self.performances = try keyedContainer.decode([String: [PerformanceDTO]].self, forKey: .performances)
             }
         }
 
         enum CodingKeys: String, CodingKey {
             case date
+            case customTitle
             case performances
         }
     }

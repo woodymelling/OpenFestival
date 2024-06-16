@@ -6,7 +6,8 @@ import PackageDescription
 let package = Package(
     name: "OpenFestival",
     platforms: [
-        .macOS(.v12), .iOS(.v16)
+        .macOS(.v13),
+        .iOS(.v16)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -16,8 +17,8 @@ let package = Package(
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
-
+        
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.11.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "1.0.0"),
@@ -27,8 +28,10 @@ let package = Package(
 
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
-        
-        .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0")
+
+            .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
+        .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0"),
+        .package(url: "https://github.com/lorenzofiamingo/swiftui-cached-async-image", from: "2.1.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -54,7 +57,20 @@ let package = Package(
                 .product(name: "MemberwiseInit", package: "swift-memberwise-init-macro"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "Tagged", package: "swift-tagged")
-        ]),
+            ]
+        ),
+        .target(
+            name: "OpenFestivalViewer",
+            dependencies: [
+                "OpenFestivalModels",
+                "OpenFestivalParser",
+                .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+                .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image")
+            ],
+            resources: [
+                .process("Media")
+            ]
+        ),
         .executableTarget(
             name: "OpenFestivalCLI",
              dependencies: [

@@ -1,5 +1,6 @@
 import XCTest
 @testable import OpenFestivalParser
+import OpenFestivalModels
 import Dependencies
 import CustomDump
 
@@ -13,6 +14,10 @@ final class FullDecodingTest: XCTestCase {
             withExtension: nil,
             subdirectory: "ExampleFestivals"
         )
+    }
+
+    func testPreview() async throws {
+        let preview = Event.testival
     }
 
     func testExampleFestival() async throws {

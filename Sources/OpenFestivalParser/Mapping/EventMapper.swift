@@ -18,7 +18,6 @@ enum Validation: Error {
     case schedule(ScheduleError)
     case artist
 
-
     enum Stage: Error {
         case generic
     }
@@ -51,7 +50,8 @@ struct EventMapper: ValidatedMapper {
                 timeZone: timeZone,
                 artists: artists,
                 stages: stages,
-                schedule: schedule
+                schedule: schedule,
+                colorScheme: nil // TODO
             )
         }
     }
@@ -60,15 +60,7 @@ struct EventMapper: ValidatedMapper {
         to artists: inout IdentifiedArrayOf<Event.Artist>,
         schedule: Event.Schedule
     ) {
-        let allScheduleArtistIDs = Set(schedule.days.flatMap {
-            $0.values.flatMap {
-                $0.flatMap {
-                    $0.artistIDs
-                }
-            }
-        })
-
-        for artistID in allScheduleArtistIDs {
+        for artistID in schedule.performances.flatMap(\.artistIDs) {
             if artists[id: artistID] == nil {
                 artists[id: artistID] = Event.Artist(
                     id: artistID,
@@ -111,7 +103,7 @@ struct ScheduleMapper: ValidatedMapper {
         let dayScheduleMapper = DayScheduleMapper()
 
        return dto.daySchedules
-            .map { dayScheduleMapper.map($0) }
+            .map { dayScheduleMapper.map((fileName: $0.key, body: $0.value)) }
             .sequence()
             .map { Event.Schedule(days: $0) }
             .mapErrors { .daySchedule($0) }
