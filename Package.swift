@@ -31,7 +31,8 @@ let package = Package(
 
             .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
         .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0"),
-        .package(url: "https://github.com/lorenzofiamingo/swiftui-cached-async-image", from: "2.1.1")
+        .package(url: "https://github.com/lorenzofiamingo/swiftui-cached-async-image", from: "2.1.1"),
+        .package(url: "https://github.com/ryohey/Zoomable", branch: "main")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -65,7 +66,8 @@ let package = Package(
                 "OpenFestivalModels",
                 "OpenFestivalParser",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-                .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image")
+                .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image"),
+                .product(name: "Zoomable", package: "Zoomable")
             ],
             resources: [
                 .process("Media")

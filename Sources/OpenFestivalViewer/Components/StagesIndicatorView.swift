@@ -20,7 +20,8 @@ struct EventColorSchemeEnvironmentKey: EnvironmentKey {
             Event.ColorScheme(
                 mainColor: .accentColor,
                 workshopsColor: .accentColor,
-                stageColors: .init([])
+                stageColors: .init([]),
+                otherColors: []
             )
         }
     }()

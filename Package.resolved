@@ -188,6 +188,15 @@
         "revision" : "9234124cff5e22e178988c18d8b95a8ae8007f76",
         "version" : "5.1.2"
       }
+    },
+    {
+      "identity" : "zoomable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ryohey/Zoomable",
+      "state" : {
+        "branch" : "main",
+        "revision" : "525c0e1784825261b84d21c5cd5a159245a40ea6"
+      }
     }
   ],
   "version" : 2

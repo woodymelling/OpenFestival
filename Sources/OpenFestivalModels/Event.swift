@@ -21,7 +21,10 @@ public struct Event: Identifiable, Equatable {
 
     public var imageURL: URL? = nil
     public var siteMapImageURL: URL? = nil
+
     public var address: String? = nil
+    public var latitude: String? = nil
+    public var longitude: String? = nil
 
     public var contactNumbers: IdentifiedArrayOf<ContactNumber> = []
     public var artists: IdentifiedArrayOf<Artist>
@@ -148,6 +151,7 @@ public extension Event {
         public var mainColor: Color
         public var workshopsColor: Color
         public var stageColors: StageColorStore
+        public var otherColors: [Color]
 
         public struct StageColorStore: Equatable {
             public init(_ colors: [(Stage.ID, Color)]) {
@@ -192,6 +196,8 @@ public extension Event {
             id: .init("testival"),
             name: "Testival",
             timeZone: .current,
+            siteMapImageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSite%20Map.webp?alt=media&token=48272d3c-ace0-4d5b-96a9-a5142f1c744a"),
+            address: "1234 Pine Ave, Somewhere in the forest",
             artists: [
                 Artist(
                     id: Tagged(rawValue: "Subsonic"),
@@ -433,7 +439,15 @@ public extension Event {
                         ("Bass Haven", .orange),
                         ("Tranquil Meadow", .yellow)
                     ]
-                )
+                ),
+                otherColors: [
+                    .blue,
+                    .cyan,
+                    .green,
+                    .yellow,
+                    .orange,
+                    .red
+                ]
             )
         )
     }

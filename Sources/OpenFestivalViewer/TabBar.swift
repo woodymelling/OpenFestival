@@ -19,11 +19,11 @@ struct TabBar {
 
     @ObservableState
     struct State {
-        var selectedTab: Tab
+        var selectedTab: Tab = .schedule
 
-        var schedule: Schedule.State
-        var artistList: ArtistList.State
-        var more: More.State
+        var schedule: Schedule.State = .init()
+        var artistList: ArtistList.State = .init()
+        var more: More.State = .init()
     }
 
     enum Action: BindableAction {
@@ -57,7 +57,29 @@ struct TabBarView: View {
     var body: some View {
         WithPerceptionTracking {
             TabView(selection: $store.selectedTab) {
+                NavigationStack {
+                    Text("Schedule")
+//                    ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
+                }
+                .navigationViewStyle(.stack)
+                .tabItem {
+                    Label("Schedule", systemImage: "calendar")
+                }
+                .tag(TabBar.Tab.schedule)
 
+                NavigationStack {
+                    ArtistListView(store: store.scope(state: \.artistList, action: \.artistList))
+                }
+                .navigationViewStyle(.stack)
+                .tabItem { Label("Artists", systemImage: "person.3") }
+                .tag(TabBar.Tab.artists)
+
+                NavigationStack {
+                    MoreView(store: store.scope(state: \.more, action: \.more))
+                }
+                .navigationViewStyle(.stack)
+                .tabItem { Label("More", systemImage: "ellipsis") }
+                .tag(TabBar.Tab.more)
             }
         }
     }
@@ -67,9 +89,6 @@ struct TabBarView: View {
 @Reducer
 struct Schedule {}
 
-@Reducer
-struct More {}
-
 extension PersistenceKey where Self == PersistenceKeyDefault<InMemoryKey<Event>> {
     static var activeEvent: Self {
         PersistenceKeyDefault(
@@ -78,4 +97,10 @@ extension PersistenceKey where Self == PersistenceKeyDefault<InMemoryKey<Event>>
             previewValue: .testival
         )
     }
+}
+
+#Preview {
+    TabBarView(store: Store(initialState: TabBar.State(), reducer: {
+        TabBar()
+    }))
 }
