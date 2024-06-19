@@ -24,7 +24,7 @@ public struct ArtistDetail {
         public var id: Event.Artist.ID
 
         @Shared(.favoriteArtists) var favoriteArtists
-        @Shared(.activeEvent) var event
+        @Shared(.event) var event
 
         public var artist: Event.Artist? {
             event.artists[id: self.id]
@@ -212,7 +212,7 @@ public struct ArtistDetailView: View {
 
         private let initialHeight = UIScreen.main.bounds.height / 2.5
 
-        @Shared(.activeEvent) var event
+        @Shared(.event) var event
         @Environment(\.showingArtistImages) var showingArtistImages
 
         public var body: some View {

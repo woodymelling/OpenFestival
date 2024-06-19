@@ -20,7 +20,7 @@ public struct StageIconView: View {
 
     @Environment(\.colorScheme) var colorScheme
 
-    @Shared(.activeEvent) var event
+    @Shared(.event) var event
 
     @Environment(\.eventColorScheme) var eventColorScheme
     var stageColor: Color {
@@ -72,7 +72,7 @@ public struct CachedAsyncIcon<Content: View>: View {
     var contentMode: SwiftUI.ContentMode
     @ViewBuilder var placeholder: () -> Content
 
-    @State var hasTransparency = false
+    @State var hasTransparency = true
 
     public var body: some View {
         GeometryReader { _ in

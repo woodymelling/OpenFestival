@@ -19,7 +19,7 @@ public struct ArtistList {
 
         public init() {}
 
-        @SharedReader(.activeEvent) var event
+        @SharedReader(.event) var event
 
         var artists: [Event.Artist] {
             event.artists
@@ -94,7 +94,7 @@ public struct ArtistListView: View {
     public struct ArtistRow: View {
         var artist: Event.Artist
 
-        @SharedReader(.activeEvent) var activeEvent
+        @SharedReader(.event) var activeEvent
         @SharedReader(.favoriteArtists) var favoriteArtists
         @Environment(\.showingArtistImages) var showArtistImage
 

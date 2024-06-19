@@ -17,7 +17,7 @@ public struct More {
     public struct State: Equatable {
         public init() {}
 
-        @Shared(.activeEvent) var event
+        @Shared(.event) var event
 
         @Presents var destination: Destination.State?
     }

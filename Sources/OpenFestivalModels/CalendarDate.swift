@@ -88,7 +88,8 @@ extension CalendarDate: Codable {
 /// Date calculations
 public extension CalendarDate {
     static var today: CalendarDate {
-        CalendarDate(date: Date())
+        @Dependency(\.date) var date
+        return CalendarDate(date: date())
     }
 
     func adding(years: Int? = nil, months: Int? = nil, weeks: Int? = nil, days: Int? = nil) -> CalendarDate {
@@ -158,6 +159,10 @@ extension CalendarDate: CustomDumpStringConvertible {
 }
 
 extension CalendarDate: CustomStringConvertible {}
+
+#if canImport(Dependencies)
+
+#endif
 
 public extension Date {
     var calendarDate: CalendarDate {

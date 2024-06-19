@@ -10,15 +10,50 @@ import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
 
+@Reducer
+public struct EventViewer {
+    public init() {}
+    public struct State {
+        public init() {}
+        var tabBar: TabBar.State = .init()
+    }
+
+    public enum Action {
+        case tabBar(TabBar.Action)
+    }
+
+    public var body: some ReducerOf<Self> {
+        Scope(state: \.tabBar, action: \.tabBar) {
+            TabBar()
+        }
+    }
+}
+
+public struct EventViewerView: View {
+    public init(store: StoreOf<EventViewer>) {
+        self.store = store
+    }
+    let store: StoreOf<EventViewer>
+    public var body: some View {
+        TabBarView(store: store.scope(state: \.tabBar, action: \.tabBar))
+    }
+}
+
+#Preview("Event Viewer", body: {
+    EventViewerView(store: Store(initialState: EventViewer.State(), reducer: {
+        EventViewer()
+    }))
+})
+
 
 @Reducer
-struct TabBar {
+public struct TabBar {
     enum Tab {
         case schedule, artists, more
     }
 
     @ObservableState
-    struct State {
+    public struct State {
         var selectedTab: Tab = .schedule
 
         var schedule: Schedule.State = .init()
@@ -26,7 +61,7 @@ struct TabBar {
         var more: More.State = .init()
     }
 
-    enum Action: BindableAction {
+    public enum Action: BindableAction {
         case binding(BindingAction<State>)
 
         case schedule(Schedule.Action)
@@ -34,7 +69,7 @@ struct TabBar {
         case more(More.Action)
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         BindingReducer()
 
         Scope(state: \.artistList, action: \.artistList) {
@@ -58,10 +93,8 @@ struct TabBarView: View {
         WithPerceptionTracking {
             TabView(selection: $store.selectedTab) {
                 NavigationStack {
-                    Text("Schedule")
-//                    ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
+                    ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
                 }
-                .navigationViewStyle(.stack)
                 .tabItem {
                     Label("Schedule", systemImage: "calendar")
                 }
@@ -86,11 +119,9 @@ struct TabBarView: View {
 }
 
 
-@Reducer
-struct Schedule {}
 
-extension PersistenceKey where Self == PersistenceKeyDefault<InMemoryKey<Event>> {
-    static var activeEvent: Self {
+public extension PersistenceReaderKey where Self == PersistenceKeyDefault<InMemoryKey<Event>> {
+    static var event: Self {
         PersistenceKeyDefault(
             .inMemory("activeEvent"),
             .empty,
@@ -98,6 +129,7 @@ extension PersistenceKey where Self == PersistenceKeyDefault<InMemoryKey<Event>>
         )
     }
 }
+
 
 #Preview {
     TabBarView(store: Store(initialState: TabBar.State(), reducer: {

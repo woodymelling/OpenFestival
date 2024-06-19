@@ -50,7 +50,7 @@ struct DayScheduleMapper: ValidatedMapper {
                     id: .init(fileContents.fileName),
                     date: fileContents.body.date,
                     customTitle: fileContents.body.customTitle,
-                    performances: $0
+                    stageSchedules: $0
                 )
             }
             .mapErrors { ToError.scheduleDayError($0) }

@@ -68,23 +68,38 @@ public extension Event {
         private let store: UnderlyingStore
 
         public init(days: [Day]) {
-//            var pagesIndex: [Day.ID: [Stage.ID: [Performance.ID]]] = [:]
             var artistIndex: ArtistIndex = [:]
+            var pageIndex: PageIndex = [:]
             var performances: UnderlyingStore = [:]
+            var dayMetadatas: [Day.Metadata] = []
 
             for day in days {
-                for performance in day.performances.values.flatMap({ $0 }) {
-                    performances[performance.id] = performance
+                var stageSchedulesIndex: [Stage.ID : [Performance.ID]] = [:]
 
-                    for artistID in performance.artistIDs {
-                        artistIndex[artistID].appendOrCreate(value: performance.id)
+                dayMetadatas.append(day.metadata)
+
+                for (stage, stageSchedule) in day.stageSchedules {
+                    for performance in stageSchedule {
+                        performances[performance.id] = performance
+                        stageSchedulesIndex[stage].appendOrCreate(value: performance.id)
+
+                        for artistID in performance.artistIDs {
+                            artistIndex[artistID].appendOrCreate(value: performance.id)
+                        }
                     }
                 }
+
+                pageIndex[day.id] = stageSchedulesIndex
             }
 
             self.store = performances
             self.artistIndex = artistIndex
-//            self.pagesIndex = pagesIndex
+            self.pageIndex = pageIndex
+            self.dayMetadatas = IdentifiedArray(uniqueElements: dayMetadatas)
+        }
+
+        public subscript(id performanceID: Performance.ID) -> Performance? {
+            self.store[performanceID]
         }
 
         typealias ArtistIndex = [Artist.ID : [Performance.ID]]
@@ -94,21 +109,58 @@ public extension Event {
                 .compactMap { store[$0] }
         }
 
-//        var pagesIndex: [Day.ID: [Stage.ID: [Performance.ID]]] = [:]
+        typealias PageIndex = [Day.ID: [Stage.ID: [Performance.ID]]]
+        private let pageIndex: PageIndex
+        public subscript(on day: Day.ID, at stage: Stage.ID) -> [Performance] {
+            let result = (pageIndex[day]?[stage] ?? [])
+                .compactMap { store[$0] }
+
+            return result
+        }
+
+        public subscript(on day: Day.ID) -> [Performance] {
+            (pageIndex[day] ?? [:])
+                .flatMap { $0.value }
+                .compactMap { store[$0] }
+        }
 
         public var performances: Set<Performance> {
             Set(self.store.values)
         }
 
-        @MemberwiseInit(.public)
         public struct Day: Identifiable, Equatable {
-            public var id: Tagged<Day, OpenFestivalIDType>
-            public var date: CalendarDate?
-            public var customTitle: String?
-            public var performances: [Stage.ID : [Performance]]
-        }
-    }
+            public init(
+                id: Tagged<Day, OpenFestivalIDType>,
+                date: CalendarDate? = nil,
+                customTitle: String? = nil,
+                stageSchedules: [Stage.ID : [Performance]]
+            ) {
+                self.metadata = Metadata(
+                    id: id,
+                    date: date,
+                    customTitle: customTitle
+                )
 
+                self.stageSchedules = stageSchedules
+            }
+
+            public struct Metadata: Identifiable, Equatable, Hashable {
+                public var id: Tagged<Day, OpenFestivalIDType>
+                public var date: CalendarDate?
+                public var customTitle: String?
+            }
+
+            public var id: Metadata.ID { metadata.id }
+            public var metadata: Metadata
+
+            public var stageSchedules: [Stage.ID : [Performance]]
+        }
+
+        public let dayMetadatas: IdentifiedArrayOf<Day.Metadata>
+    }
+}
+
+public extension Event {
     @MemberwiseInit(.public)
     struct Performance: Identifiable, Equatable, Hashable {
         public var id: Tagged<Performance, OpenFestivalIDType>
@@ -169,7 +221,6 @@ public extension Event {
             private let stageColors: [Stage.ID : Color]
 
             public subscript(stageID: Stage.ID) -> Color {
-                print(stageID)
                 return self.stageColors[stageID] ?? .blue
             }
         }
@@ -286,7 +337,14 @@ public extension Event {
                 bio: nil,
                 imageURL: nil,
                 links: []
-              )
+              ),
+                Artist(
+                    id: Tagged(rawValue: "Caribou State"),
+                    name: "Caribou State",
+                    bio: nil,
+                    imageURL: nil,
+                    links: []
+                )
             ],
             stages: [
                 Stage(
@@ -311,119 +369,119 @@ public extension Event {
                         days: [
                             Schedule.Day(
                                 id: .init("FileName"),
-                                date: CalendarDate(year: 2024, month: 6, day: 12),
+                                date: CalendarDate(year: 2024, month: 6, day: 16),
                                 customTitle: nil,
-                                performances: [
-                                    "Bass Haven": [
+                                stageSchedules: [
+                                    "Fractal Forest": [
                                         Event.Performance(
-                                            id: .init("Sunspear-16:30-Bass Haven"),
+                                            id: .init("Sunspear-16:30-Fractal Forest"),
                                             customTitle: nil,
                                             artistIDs: ["Sunspear"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 16, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 18, minute: 30)!,
-                                            stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                                            stageID: Event.Stage.ID(rawValue: "Fractal Forest")
                                         ),
                                         Event.Performance(
-                                            id: .init("Phantom Groove-18:30-Bass Haven"),
+                                            id: .init("Phantom Groove-18:30-Fractal Forest"),
                                             customTitle: nil,
                                             artistIDs: ["Phantom Groove"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 18, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
-                                            stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                                            stageID: Event.Stage.ID(rawValue: "Fractal Forest")
                                         ),
                                         Event.Performance(
-                                            id: .init("Caribou State-20:00-Bass Haven"),
+                                            id: .init("Caribou State-20:00-Fractal Forest"),
                                             customTitle: nil,
                                             artistIDs: ["Caribou State"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
-                                            stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                                            stageID: Event.Stage.ID(rawValue: "Fractal Forest")
                                         ),
                                         // Additional performances for other artists
                                         Event.Performance(
-                                            id: .init("Subsonic-21:30-Bass Haven"),
+                                            id: .init("Subsonic-21:30-Fractal Forest"),
                                             customTitle: nil,
                                             artistIDs: ["Subsonic"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 23)!,
-                                            stageID: Event.Stage.ID(rawValue: "Bass Haven")
+                                            stageID: Event.Stage.ID(rawValue: "Fractal Forest")
                                         )
                                     ],
-                                    "Mystic Grove": [
+                                    "Pagoda": [
                                         Event.Performance(
-                                            id: .init("Oaktrail-20:00-Mystic Grove"),
+                                            id: .init("Oaktrail-20:00-Pagoda"),
                                             customTitle: nil,
                                             artistIDs: ["Oaktrail"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 22)!,
-                                            stageID: Event.Stage.ID(rawValue: "Mystic Grove")
+                                            stageID: Event.Stage.ID(rawValue: "Pagoda")
                                         ),
                                         Event.Performance(
-                                            id: .init("Rhythmbox-22:00-Mystic Grove"),
+                                            id: .init("Rhythmbox-22:00-Pagoda"),
                                             customTitle: nil,
                                             artistIDs: ["Rhythmbox"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 22)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 23, minute: 30)!,
-                                            stageID: Event.Stage.ID(rawValue: "Mystic Grove")
+                                            stageID: Event.Stage.ID(rawValue: "Pagoda")
                                         ),
                                         Event.Performance(
-                                            id: .init("Prism Sound-23:30-Mystic Grove"),
+                                            id: .init("Prism Sound-23:30-Pagoda"),
                                             customTitle: nil,
                                             artistIDs: ["Prism Sound"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 23, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 13, hour: 1)!,
-                                            stageID: Event.Stage.ID(rawValue: "Mystic Grove")
+                                            stageID: Event.Stage.ID(rawValue: "Pagoda")
                                         )
                                     ],
-                                    "Tranquil Meadow": [
-                                        // Performances for artists on Tranquil Meadow stage
+                                    "Village": [
+                                        // Performances for artists on Village stage
                                         Event.Performance(
-                                            id: .init("Space Chunk-17:00-Tranquil Meadow"),
+                                            id: .init("Space Chunk-17:00-Village"),
                                             customTitle: nil,
                                             artistIDs: ["Space Chunk"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 17)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 18, minute: 30)!,
-                                            stageID: Event.Stage.ID(rawValue: "Tranquil Meadow")
+                                            stageID: Event.Stage.ID(rawValue: "Village")
                                         ),
                                         Event.Performance(
-                                            id: .init("The Sleepies-18:30-Tranquil Meadow"),
+                                            id: .init("The Sleepies-18:30-Village"),
                                             customTitle: nil,
                                             artistIDs: ["The Sleepies"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 18, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
-                                            stageID: Event.Stage.ID(rawValue: "Tranquil Meadow")
+                                            stageID: Event.Stage.ID(rawValue: "Village")
                                         ),
                                         Event.Performance(
-                                            id: .init("Sylvan Beats-20:00-Tranquil Meadow"),
+                                            id: .init("Sylvan Beats-20:00-Village"),
                                             customTitle: nil,
                                             artistIDs: ["Sylvan Beats"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
-                                            stageID: Event.Stage.ID(rawValue: "Tranquil Meadow")
+                                            stageID: Event.Stage.ID(rawValue: "Village")
                                         ),
                                         Event.Performance(
-                                            id: .init("Overgrowth-21:30-Tranquil Meadow"),
+                                            id: .init("Overgrowth-21:30-Village"),
                                             customTitle: nil,
                                             artistIDs: ["Overgrowth"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 12, hour: 23)!,
-                                            stageID: Event.Stage.ID(rawValue: "Tranquil Meadow")
+                                            stageID: Event.Stage.ID(rawValue: "Village")
                                         ),
                                         Event.Performance(
-                                            id: .init("Floods-23:00-Tranquil Meadow"),
+                                            id: .init("Floods-23:00-Village"),
                                             customTitle: nil,
                                             artistIDs: ["Floods"],
                                             startTime: Date(year: 2024, month: 6, day: 12, hour: 23)!,
                                             endTime: Date(year: 2024, month: 6, day: 13, hour: 0, minute: 30)!,
-                                            stageID: Event.Stage.ID(rawValue: "Tranquil Meadow")
+                                            stageID: Event.Stage.ID(rawValue: "Village")
                                         ),
                                         Event.Performance(
-                                            id: .init("Float On-0:30-Tranquil Meadow"),
+                                            id: .init("Float On-0:30-Village"),
                                             customTitle: nil,
                                             artistIDs: ["Float On"],
                                             startTime: Date(year: 2024, month: 6, day: 13, hour: 0, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 13, hour: 2)!,
-                                            stageID: Event.Stage.ID(rawValue: "Tranquil Meadow")
+                                            stageID: Event.Stage.ID(rawValue: "Village")
                                         )
                                     ]
                                 ]
@@ -435,9 +493,9 @@ public extension Event {
                 workshopsColor: .accentColor,
                 stageColors: .init(
                     [
-                        ("Mystic Grove", .red),
-                        ("Bass Haven", .orange),
-                        ("Tranquil Meadow", .yellow)
+                        ("Pagoda", .red),
+                        ("Fractal Forest", .orange),
+                        ("Village", .yellow)
                     ]
                 ),
                 otherColors: [

@@ -60,7 +60,7 @@ public struct PerformanceDetails: View {
 import ComposableArchitecture
 extension Event.Performance {
     var title: String {
-        @Shared(.activeEvent) var event
+        @Shared(.event) var event
 
         func name(for id: Event.Artist.ID) -> String {
             event.artists[id: id]?.name ?? id.rawValue

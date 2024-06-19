@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "OpenFestivalParser", targets: ["OpenFestivalParser"]),
         .library(name: "OpenFestivalModels", targets: ["OpenFestivalModels"]),
         .library(name: "OpenFestivalViewer", targets: ["OpenFestivalViewer"]),
+        .library(name: "ScheduleComponents", targets: ["ScheduleComponents"]),
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
@@ -65,14 +66,16 @@ let package = Package(
             dependencies: [
                 "OpenFestivalModels",
                 "OpenFestivalParser",
+                "ScheduleComponents",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
                 .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image"),
-                .product(name: "Zoomable", package: "Zoomable")
+                .product(name: "Zoomable", package: "Zoomable"),
             ],
             resources: [
                 .process("Media")
             ]
         ),
+        .target(name: "ScheduleComponents"),
         .executableTarget(
             name: "OpenFestivalCLI",
              dependencies: [

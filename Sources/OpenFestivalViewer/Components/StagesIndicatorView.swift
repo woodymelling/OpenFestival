@@ -28,7 +28,7 @@ struct EventColorSchemeEnvironmentKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    var eventColorScheme: Event.ColorScheme {
+    public var eventColorScheme: Event.ColorScheme {
         get { self[EventColorSchemeEnvironmentKey.self] }
         set { self[EventColorSchemeEnvironmentKey.self] = newValue }
     }
