@@ -122,7 +122,6 @@ struct ContactInfoView_Previews: PreviewProvider {
                     reducer: ContactInfoFeature.init
                 )
             )
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

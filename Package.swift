@@ -14,7 +14,7 @@ let package = Package(
         .library(name: "OpenFestivalParser", targets: ["OpenFestivalParser"]),
         .library(name: "OpenFestivalModels", targets: ["OpenFestivalModels"]),
         .library(name: "OpenFestivalViewer", targets: ["OpenFestivalViewer"]),
-        .library(name: "ScheduleComponents", targets: ["ScheduleComponents"]),
+        .library(name: "OpenFestivalDownloader", targets: ["OpenFestivalDownloader"]),
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
@@ -30,10 +30,11 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
 
-            .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
+        .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
         .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0"),
         .package(url: "https://github.com/lorenzofiamingo/swiftui-cached-async-image", from: "2.1.1"),
-        .package(url: "https://github.com/ryohey/Zoomable", branch: "main")
+        .package(url: "https://github.com/ryohey/Zoomable", branch: "main"),
+        .package(url: "https://github.com/bdewey/static-libgit2", from: "0.1.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -66,7 +67,6 @@ let package = Package(
             dependencies: [
                 "OpenFestivalModels",
                 "OpenFestivalParser",
-                "ScheduleComponents",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
                 .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image"),
                 .product(name: "Zoomable", package: "Zoomable"),
@@ -75,11 +75,19 @@ let package = Package(
                 .process("Media")
             ]
         ),
-        .target(name: "ScheduleComponents"),
+        .target(
+            name: "OpenFestivalDownloader",
+            dependencies: [
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "DependenciesMacros", package: "swift-dependencies"),
+                .product(name: "static-libgit2", package: "static-libgit2")
+            ]
+        ),
         .executableTarget(
             name: "OpenFestivalCLI",
              dependencies: [
                 "OpenFestivalParser",
+                "OpenFestivalDownloader",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Dependencies", package: "swift-dependencies")
             ]

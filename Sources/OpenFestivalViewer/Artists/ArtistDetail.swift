@@ -103,7 +103,7 @@ public struct ArtistDetailView: View {
                             Button {
                                 store.send(.didTapPerformance(performance.id))
                             } label: {
-                                PerformanceDetails(for: performance)
+                                PerformanceDetailRow(for: performance)
                             }
                             .buttonStyle(.navigationLink)
                         }

@@ -15,9 +15,9 @@ extension Validation.ScheduleError {
     enum StageDayScheduleError: Equatable, Error {
         case unimplemented
         case performanceError(Validation.ScheduleError.PerformanceError)
-        case cannotDetermineEndTimeForPerformance
-        case endTimeBeforeStartTime(ScheduleTime, ScheduleTime)
-        case overlappingPerformances
+        case cannotDetermineEndTimeForPerformance(TimelessStagelessPerformance)
+        case endTimeBeforeStartTime(StagelessPerformance)
+        case overlappingPerformances(StagelessPerformance, StagelessPerformance)
 
         var localizedDescription: String {
             switch self {
@@ -27,8 +27,8 @@ extension Validation.ScheduleError {
                 return error.localizedDescription
             case .cannotDetermineEndTimeForPerformance:
                 return "Cannot determine end time for performance"
-            case .endTimeBeforeStartTime(let startTime, let endTime):
-                return "End time \(endTime) is before start time \(startTime)"
+            case .endTimeBeforeStartTime(let performance):
+                return "End time \(performance.endTime) is before start time \(performance.startTime)"
             case .overlappingPerformances:
                 return "Performances are overlapping"
             }
@@ -76,7 +76,7 @@ extension Collection<PerformanceDTO> {
 
                 // If there isn't any performances after this, we can't determine the endtime
             } else {
-                return .error(Validation.ScheduleError.StageDayScheduleError.cannotDetermineEndTimeForPerformance)
+                return .error(Validation.ScheduleError.StageDayScheduleError.cannotDetermineEndTimeForPerformance(performance))
             }
 
             if let scheduleStartTime {
@@ -107,10 +107,10 @@ extension Collection<PerformanceDTO> {
             else { continue }
 
             guard performance.endTime <= nextPerformance.startTime
-            else { return .error(.overlappingPerformances) }
+            else { return .error(.overlappingPerformances(performance, nextPerformance)) }
 
             guard performance.startTime < performance.endTime
-            else { return .error(.endTimeBeforeStartTime(performance.startTime, performance.endTime))}
+            else { return .error(.endTimeBeforeStartTime(performance))}
         }
 
         return .valid(schedule)

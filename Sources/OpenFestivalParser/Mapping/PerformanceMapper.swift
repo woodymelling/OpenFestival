@@ -51,7 +51,7 @@ extension PerformanceDTO {
         }
 
         let endTime = Validated {
-            try self.endTime.map {
+            try (self.endTime ?? self.endtime).map {
                 try parseTimeString($0)
             }
         } mappingError: { _ in

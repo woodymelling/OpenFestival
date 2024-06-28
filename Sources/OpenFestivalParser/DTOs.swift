@@ -84,6 +84,7 @@ struct PerformanceDTO: Decodable, Equatable {
     var artists: [String]?
     var time: String
     var endTime: String?
+    var endtime: String?
 }
 
 struct ArtistDTO {

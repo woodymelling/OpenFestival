@@ -13,17 +13,47 @@ import SwiftUI
 @Reducer
 public struct EventViewer {
     public init() {}
+
+    @ObservableState
     public struct State {
-        public init() {}
-        var tabBar: TabBar.State = .init()
+        public init(_ eventSource: Shared<Event>) {
+            self._eventSource = eventSource
+            @Shared(.event) var event
+            event = eventSource.wrappedValue
+        }
+
+        @Shared var eventSource: Event
+        @Shared(.event) var event
+
+        var tabBar: TabBar.State?
     }
 
     public enum Action {
         case tabBar(TabBar.Action)
+
+        case onAppear
+        case sourceEventDidUpdate(Event)
     }
 
     public var body: some ReducerOf<Self> {
-        Scope(state: \.tabBar, action: \.tabBar) {
+        Reduce { state, action in
+            switch action {
+            case .onAppear:
+                state.tabBar = .init()
+
+                return .publisher {
+                    state.$eventSource.publisher.map { .sourceEventDidUpdate($0) }
+                }
+            case .sourceEventDidUpdate(let event):
+                state.event = event
+                return .none
+
+            case .tabBar:
+                return .none
+            }
+
+        }
+        .ifLet(\.tabBar, action: \.tabBar) {
             TabBar()
         }
     }
@@ -33,14 +63,19 @@ public struct EventViewerView: View {
     public init(store: StoreOf<EventViewer>) {
         self.store = store
     }
-    let store: StoreOf<EventViewer>
+    @Perception.Bindable var store: StoreOf<EventViewer>
     public var body: some View {
-        TabBarView(store: store.scope(state: \.tabBar, action: \.tabBar))
+        Group {
+            if let store = store.scope(state: \.tabBar, action: \.tabBar) {
+                TabBarView(store: store)
+            }
+        }
+        .onAppear { store.send(.onAppear) }
     }
 }
 
 #Preview("Event Viewer", body: {
-    EventViewerView(store: Store(initialState: EventViewer.State(), reducer: {
+    EventViewerView(store: Store(initialState: EventViewer.State(Shared(.testival)), reducer: {
         EventViewer()
     }))
 })

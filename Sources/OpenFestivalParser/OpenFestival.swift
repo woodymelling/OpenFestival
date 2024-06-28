@@ -20,12 +20,14 @@ extension OpenFestivalParser {
         case noEventInfoFile
         case noSchedulesDirectory
         case noStagesFile
+        case noContactInfoFile
 
         var description: String {
             switch self {
             case .noEventInfoFile: "No event-info.yaml file found in the provided directory"
             case .noSchedulesDirectory: "No schedule directory found in the provided directory"
             case .noStagesFile: "No stages.yaml file found in the provided directory"
+            case .noContactInfoFile: "No contact-info.yaml file found in the provided directory"
             }
         }
     }
@@ -106,7 +108,6 @@ extension OpenFestivalParser {
         guard let eventInfoURL = urls.first(where: { $0.lastPathComponent == "event-info.yaml" })
         else { throw ValidationFailure.noEventInfoFile }
 
-
         let data = try Data(contentsOf: eventInfoURL)
         let eventDTO = try YAMLDecoder().decode(EventInfoDTO.self, from: data)
 
@@ -116,7 +117,12 @@ extension OpenFestivalParser {
     private static func parseArtists(fromDirectory url: URL) async throws -> [ArtistDTO] {
         @Dependency(\.fileManager) var fileManager
         let artistDirectoryURL = url.appendingPathComponent("artists")
-        let fileURLs = try fileManager.contentsOfDirectory(in: artistDirectoryURL)
+        let fileURLs: [URL]
+        do {
+            fileURLs = try fileManager.contentsOfDirectory(in: artistDirectoryURL)
+        } catch {
+            return []
+        }
 
         return try fileURLs.compactMap { fileURL in
             let data = try Data(contentsOf: fileURL)
@@ -140,7 +146,7 @@ extension OpenFestivalParser {
         let urls = try fileManager.contentsOfDirectory(in: url)
 
         guard let contactInfoURL = urls.first(where: { $0.lastPathComponent == "contact-info.yaml" })
-        else { throw ValidationFailure.noEventInfoFile }
+        else { return [] }
 
         let data = try Data(contentsOf: contactInfoURL)
         let contactInfo = try YAMLDecoder().decode([ContactInfoDTO].self, from: data)

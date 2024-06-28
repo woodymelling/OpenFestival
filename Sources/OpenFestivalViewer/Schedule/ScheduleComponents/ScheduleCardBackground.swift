@@ -32,19 +32,25 @@ public struct ScheduleCardBackground<Content: View>: View {
                     .brightness(colorScheme == .light ? -0.2 : 0)
             }
         }
-
         .background {
+            /*
+             We have a few goals for this color:
+                1. We want to derive a few different colors from a single color
+                2. The text color needs to be readable on top of the background color
+                3. The background color should be slightly transparent, allowing the hour lines on the schedule to be visible through the card
+             */
             Rectangle()
                 .fill(color.opacity(isSelected ? 1 : 0.3))
-                .background {
-                    Color(.systemBackground).opacity(0.8)
-                }
+                .background { Color(.systemBackground).opacity(0.8)}
 
         }
         .foregroundStyle(isSelected ? .white : color)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .animation(.easeInOut(duration: 0.2), value: isSelected)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        // This is to give a little bit of space between cards that bump against each other,
+        // It makes it easier to differentiate between the 
+        .padding(.bottom, 0.5)
     }
 }
 
@@ -101,6 +107,37 @@ struct ScheduleCardBackgroundView_Previews: PreviewProvider {
     static var previews: some View {
         Preview()
     }
+}
+
+#Preview {
+
+    struct Preview: View {
+        var body: some View {
+            VStack {
+                ForEach([Color.red, .orange, .yellow, .green, .blue, .purple], id: \.self) {
+                    ScheduleCardBackground(
+                        color: $0,
+                        isSelected: false) {
+                            Text("This is the content")
+                        }
+                }
+
+            }
+        }
+    }
+
+    return HStack {
+        Preview()
+            .padding()
+            .background()
+            .environment(\.colorScheme, .light)
+
+        Preview()
+            .padding()
+            .background()
+            .environment(\.colorScheme, .dark)
+    }
+
 }
 
 //struct ScheduleCardBackgroundView_Previews: PreviewProvider {

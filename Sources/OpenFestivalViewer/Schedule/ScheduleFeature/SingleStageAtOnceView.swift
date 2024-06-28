@@ -7,7 +7,6 @@
 
 import SwiftUI
 import ComposableArchitecture
-import ScheduleComponents
 import OpenFestivalModels
 
 
@@ -33,19 +32,22 @@ extension ScheduleView {
                 ScrollView {
                     TabView(selection: $store.selectedStage) {
                         ForEach(store.event.stages) { stage in
-                            let schedule = store.event.schedule[on: store.selectedDay, at: stage.id]
-                            SchedulePageView(schedule) { performance in
-                                WithPerceptionTracking {
-                                    ScheduleCardView(
-                                        performance,
-                                        isSelected: false,
-                                        isFavorite: false
-                                    )
-                                    .onTapGesture { store.send(.didTapCard(performance.id)) }
-                                    .tag(performance.id)
+                            WithPerceptionTracking {
+                                let schedule = store.event.schedule[on: store.selectedDay, at: stage.id]
+                                SchedulePageView(schedule) { performance in
+                                    WithPerceptionTracking {
+                                        ScheduleCardView(
+                                            performance,
+                                            isSelected: false,
+                                            isFavorite: false
+                                        )
+                                        .onTapGesture { store.send(.didTapCard(performance.id)) }
+                                        .tag(performance.id)
+                                    }
                                 }
+                                .tag(stage.id)
                             }
-                            .tag(stage.id)
+
                         }
                     }
                     .animation(.default, value: store.selectedStage)

@@ -11,7 +11,6 @@ import OpenFestivalModels
 import Combine
 import SwiftUI
 
-
 @Reducer
 public struct Schedule {
     public init() {}

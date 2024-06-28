@@ -10,7 +10,7 @@ import SwiftUI
 import OpenFestivalModels
 import Dependencies
 
-public struct PerformanceDetails: View {
+public struct PerformanceDetailRow: View {
     public init(for performance: Event.Performance) {
         self.performance = performance
     }

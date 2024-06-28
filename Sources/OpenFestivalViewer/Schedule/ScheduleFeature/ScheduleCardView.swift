@@ -7,43 +7,38 @@
 
 import SwiftUI
 import ComposableArchitecture
-import ScheduleComponents
 import OpenFestivalModels
 
 struct ScheduleCardView: View {
-    let card: Event.Performance
+    let performance: Event.Performance
     let isSelected: Bool
-    let isFavorite: Bool
 
     @ScaledMetric var scale: CGFloat = 1
 
-    public init(_ card: Event.Performance, isSelected: Bool, isFavorite: Bool) {
-        self.card = card
+    public init(_ performance: Event.Performance, isSelected: Bool, isFavorite: Bool) {
+        self.performance = performance
         self.isSelected = isSelected
-        self.isFavorite = isFavorite
     }
     
     @Shared(.event) var event
     @Environment(\.eventColorScheme) var eventColorScheme
 
+
+    var isFavorite: Bool {
+        @Shared(.favoriteArtists) var favorites
+
+        return favorites.contains(performance)
+    }
+
     public var body: some View {
-        ScheduleCardBackground(color: eventColorScheme.stageColors[card.stageID], isSelected: isSelected) {
-            HStack(alignment: .center) {
-                
-                GeometryReader { geo in
-                    VStack(alignment: .leading) {
-                        Text(card.title)
-                        Text(card.startTime..<card.endTime, format: .performanceTime)
-                            .font(.caption)
-                        
-//                        if let subtext = card.subtext {
-//                            Text(subtext)
-//                                .font(.caption2)
-//                        }
-                    }
-                    .padding(.top, 2)
+        ScheduleCardBackground(color: eventColorScheme.stageColors[performance.stageID], isSelected: isSelected) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading) {
+                    Text(performance.title)
+                    Text(performance.startTime..<performance.endTime, format: .performanceTime)
+                        .font(.caption)
                 }
-                
+
                 Spacer()
                 
                 if isFavorite {
@@ -51,13 +46,15 @@ struct ScheduleCardView: View {
                         .resizable()
                         .renderingMode(.template)
                         .aspectRatio(contentMode: .fit)
-                        .frame(square: 15)
-                        .padding(.trailing)
+                        .frame(square: 20)
+                        .padding()
                 }
             }
+            .padding(.top, 2)
+
         }
-        .id(card.id)
-        .tag(card.id)
+        .id(performance.id)
+        .tag(performance.id)
     }
  
 }

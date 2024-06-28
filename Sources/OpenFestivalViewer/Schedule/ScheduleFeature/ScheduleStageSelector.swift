@@ -89,7 +89,9 @@ struct ScheduleHeaderButton: View {
             pressing: $press,
             animation: .easeInOut(duration: 0.05),
             onRelease: {
+                #if canImport(UIKit)
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                #endif
                 onSelect(stage.id)
 
             }

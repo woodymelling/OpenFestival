@@ -11,6 +11,7 @@ import Dependencies
 import Combine
 #if canImport(UIKit)
 import UIKit
+#endif
 import ComposableArchitecture
 
 public enum DeviceOrientation {
@@ -18,21 +19,21 @@ public enum DeviceOrientation {
     case landscape
 
     static func deviceOrientationPublisher() -> AnyPublisher<DeviceOrientation, Never> {
+        #if canImport(UIKit)
         NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
             .compactMap { ($0.object as? UIDevice)?.orientation }
             .compactMap { deviceOrientation -> DeviceOrientation? in
-                if deviceOrientation.isPortrait {
-                    return .portrait
-                } else if deviceOrientation.isLandscape {
-                    return .landscape
-                } else {
-                    return nil
-                }
+                DeviceOrientation(deviceOrientation)
             }
             .eraseToAnyPublisher()
 
+        #else
+        Just(DeviceOrientation.landscape).eraseToAnyPublisher()
+        #endif
+
     }
 
+    #if canImport(UIKit)
     init(_ deviceOrientation: UIDeviceOrientation) {
         if deviceOrientation.isLandscape {
             self = .landscape
@@ -40,27 +41,19 @@ public enum DeviceOrientation {
             self = .portrait
         }
     }
+    #endif
 }
-
-private enum DeviceOrientationKey: DependencyKey {
-    public static let liveValue = DeviceOrientation.deviceOrientationPublisher()
-}
-
-public extension DependencyValues {
-    var deviceOrientationPublisher: AnyPublisher<DeviceOrientation, Never> {
-        get { self[DeviceOrientationKey.self] }
-        set { self[DeviceOrientationKey.self] = newValue }
-    }
-}
-#endif
-
 
 struct DeviceOrientationReaderKey: PersistenceReaderKey, Hashable {
     typealias Value = DeviceOrientation
 
     public let id = UUID()
     func load(initialValue: DeviceOrientation?) -> DeviceOrientation? {
+        #if canImport(UIKit)
         DeviceOrientation(UIDevice.current.orientation)
+        #else
+        nil
+        #endif
     }
 
     func subscribe(

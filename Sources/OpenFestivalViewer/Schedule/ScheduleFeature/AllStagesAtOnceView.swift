@@ -8,7 +8,6 @@
 import SwiftUI
 import ComposableArchitecture
 import OpenFestivalModels
-import ScheduleComponents
 import Zoomable
 
 struct AllStagesAtOnceView: View {
