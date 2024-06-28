@@ -14,7 +14,7 @@ let package = Package(
         .library(name: "OpenFestivalParser", targets: ["OpenFestivalParser"]),
         .library(name: "OpenFestivalModels", targets: ["OpenFestivalModels"]),
         .library(name: "OpenFestivalViewer", targets: ["OpenFestivalViewer"]),
-        .library(name: "OpenFestivalDownloader", targets: ["OpenFestivalDownloader"]),
+        .library(name: "GitClient", targets: ["GitClient"]),
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
@@ -76,7 +76,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "OpenFestivalDownloader",
+            name: "GitClient",
             dependencies: [
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
@@ -87,7 +87,7 @@ let package = Package(
             name: "OpenFestivalCLI",
              dependencies: [
                 "OpenFestivalParser",
-                "OpenFestivalDownloader",
+                "GitClient",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Dependencies", package: "swift-dependencies")
             ]

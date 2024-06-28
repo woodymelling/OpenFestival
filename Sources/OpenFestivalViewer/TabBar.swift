@@ -59,26 +59,6 @@ public struct EventViewer {
     }
 }
 
-public struct EventViewerView: View {
-    public init(store: StoreOf<EventViewer>) {
-        self.store = store
-    }
-    @Perception.Bindable var store: StoreOf<EventViewer>
-    public var body: some View {
-        Group {
-            if let store = store.scope(state: \.tabBar, action: \.tabBar) {
-                TabBarView(store: store)
-            }
-        }
-        .onAppear { store.send(.onAppear) }
-    }
-}
-
-#Preview("Event Viewer", body: {
-    EventViewerView(store: Store(initialState: EventViewer.State(Shared(.testival)), reducer: {
-        EventViewer()
-    }))
-})
 
 
 @Reducer
