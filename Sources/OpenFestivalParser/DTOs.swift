@@ -9,6 +9,16 @@ import Foundation
 import OpenFestivalModels
 import MemberwiseInit
 
+struct OrganizationDTO {
+    struct OrganizationInfo: Decodable {
+        var name: String
+        var imageURL: URL?
+    }
+
+    var info: OrganizationInfo
+    var events: [EventDTO]
+}
+
 struct EventDTO {
     var eventInfo: EventInfoDTO
     var contactInfo: [ContactInfoDTO]?
@@ -51,7 +61,7 @@ extension EventDTO {
 }
 
 struct EventInfoDTO: Decodable, Equatable {
-    var name: String
+    var name: String?
     var address: String?
     var timeZone: String?
 

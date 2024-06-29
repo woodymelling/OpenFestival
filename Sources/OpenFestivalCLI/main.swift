@@ -1,7 +1,7 @@
 import ArgumentParser
 import OpenFestivalParser
 import Dependencies
-import OpenFestivalDownloader
+import GitClient
 import Foundation
 
 @main

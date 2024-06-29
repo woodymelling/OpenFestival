@@ -8,23 +8,25 @@ import DependenciesMacros
 
 @DependencyClient
 public struct OpenFestivalParser {
-    public var parse: (_ from: URL) async throws -> Event
+    public var parse: (_ from: URL) async throws -> Organization
 
-    public func parse(from path: String) async throws -> Event {
+    public func parse(from path: String) async throws -> Organization {
         try await self.parse(from: URL(fileURLWithPath: path))
     }
 }
 
 extension OpenFestivalParser {
     enum ValidationFailure: Error, CustomStringConvertible {
-        case noEventInfoFile
+        case noEventInfoFile(URL)
         case noSchedulesDirectory
         case noStagesFile
         case noContactInfoFile
+        case noOrganizationInfoFile
 
         var description: String {
             switch self {
-            case .noEventInfoFile: "No event-info.yaml file found in the provided directory"
+            case .noEventInfoFile(let url): "No event-info.yaml file found in \(url.absoluteString)"
+            case .noOrganizationInfoFile: "No organization-info.yaml file found in the provided directory"
             case .noSchedulesDirectory: "No schedule directory found in the provided directory"
             case .noStagesFile: "No stages.yaml file found in the provided directory"
             case .noContactInfoFile: "No contact-info.yaml file found in the provided directory"
@@ -36,22 +38,74 @@ extension OpenFestivalParser {
 extension OpenFestivalParser: DependencyKey {
     public static var liveValue: OpenFestivalParser {
         OpenFestivalParser(
-            parse: Self.parseEvent(from:)
+            parse: Self.parseOrganization(from:)
         )
     }
 }
 
 extension OpenFestivalParser {
-    private static func parseEvent(from path: URL) async throws -> Event {
-        let eventDTO = try await parseEventDTO(fromPath: path)
+    private static func parseOrganizationDTO(from path: URL) async throws -> OrganizationDTO {
+        @Dependency(\.fileManager) var fileManager
 
-        print("Properly parsed files, attempting to extract schedule info...")
+        let eventURLS = try fileManager
+            .contentsOfDirectory(in: path)
+            .filter { $0.hasDirectoryPath }
+            .filter { $0.lastPathComponent.first != "." }
 
-        switch EventMapper().map(eventDTO) {
-        case let .valid(event): return event
-        case let .invalid(errors): throw errors.first // TODO
+
+        async let events = withThrowingTaskGroup(of: EventDTO.self) {
+            for url in eventURLS {
+                $0.addTask {
+                    try await parseEventDTO(fromPath: url)
+                }
+            }
+
+            return try await $0.reduce(into: [EventDTO]()) { $0.append($1) }
+        }
+
+        async let organizationInfo = parseOrganizationInfo(from: path)
+
+        return try await OrganizationDTO(
+            info: organizationInfo,
+            events: events
+        )
+    }
+
+    private static func parseOrganizationInfo(from path: URL) throws -> OrganizationDTO.OrganizationInfo {
+        @Dependency(\.fileManager) var fileManager
+
+        let urls = try fileManager.contentsOfDirectory(in: path)
+
+        guard let organizationInfo = urls.first(where: { $0.lastPathComponent == "organization-info.yaml" })
+        else { throw ValidationFailure.noOrganizationInfoFile }
+
+        print("Decoding Orgainzation Info from `\(organizationInfo.absoluteString)`...")
+
+        let data = try Data(contentsOf: organizationInfo)
+        let orgInfo = try YAMLDecoder().decode(OrganizationDTO.OrganizationInfo.self, from: data)
+
+        return orgInfo
+    }
+
+
+    private static func parseOrganization(from path: URL) async throws -> Organization {
+        let organizationDTO = try await parseOrganizationDTO(from: path)
+        
+        switch OrganizationMapper().map(organizationDTO) {
+        case let .valid(organization): return organization
+        case let .invalid(errors): throw errors.first
         }
     }
+//    private static func parseEvent(from path: URL) async throws -> Event {
+//        let eventDTO = try await parseEventDTO(fromPath: path)
+//
+//        print("Properly parsed files, attempting to extract schedule info...")
+//
+//        switch EventMapper().map(eventDTO) {
+//        case let .valid(event): return event
+//        case let .invalid(errors): throw errors.first // TODO
+//        }
+//    }
 
     private static func parseEventDTO(fromPath url: URL) async throws -> EventDTO {
 
@@ -106,10 +160,14 @@ extension OpenFestivalParser {
         let urls = try fileManager.contentsOfDirectory(in: url)
        
         guard let eventInfoURL = urls.first(where: { $0.lastPathComponent == "event-info.yaml" })
-        else { throw ValidationFailure.noEventInfoFile }
+        else { throw ValidationFailure.noEventInfoFile(url) }
 
         let data = try Data(contentsOf: eventInfoURL)
-        let eventDTO = try YAMLDecoder().decode(EventInfoDTO.self, from: data)
+        var eventDTO = try YAMLDecoder().decode(EventInfoDTO.self, from: data)
+        
+        if eventDTO.name == nil {
+            eventDTO.name = url.lastPathComponent
+        }
 
         return eventDTO
     }

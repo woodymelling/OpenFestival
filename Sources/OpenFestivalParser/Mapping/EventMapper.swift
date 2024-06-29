@@ -27,6 +27,27 @@ enum Validation: Error {
     }
 }
 
+struct OrganizationMapper: ValidatedMapper {
+    typealias From = OrganizationDTO
+    typealias To = Organization
+    typealias ToError = Validation
+
+    func map(_ dto: OrganizationDTO) -> Output {
+        return dto
+            .events
+            .map { EventMapper().map($0) }
+            .sequence()
+            .map { events in
+                Organization(
+                    id: .init(dto.info.name),
+                    name: dto.info.name,
+                    imageURL: dto.info.imageURL,
+                    events: events
+                )
+            }
+    }
+}
+
 struct EventMapper: ValidatedMapper {
     typealias From = EventDTO
     typealias To = Event
@@ -46,7 +67,7 @@ struct EventMapper: ValidatedMapper {
 
             return Event(
                 id: "TODO",
-                name: dto.eventInfo.name,
+                name: dto.eventInfo.name ?? "",
                 timeZone: timeZone,
                 artists: artists,
                 stages: stages,

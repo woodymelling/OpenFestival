@@ -14,6 +14,15 @@ import Collections
 public typealias OpenFestivalIDType = String
 
 @MemberwiseInit(.public)
+public struct Organization {
+    public var id: Tagged<Self, OpenFestivalIDType>
+    public var name: String
+    public var imageURL: URL?
+
+    public var events: [Event]
+}
+
+@MemberwiseInit(.public)
 public struct Event: Identifiable, Equatable {
     public var id: Tagged<Event, OpenFestivalIDType> //
     public var name: String //
