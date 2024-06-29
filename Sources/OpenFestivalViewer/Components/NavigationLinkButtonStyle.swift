@@ -23,8 +23,8 @@ struct NavigationArrow: View {
     }
 }
 
-struct NavigationLinkButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
+public struct NavigationLinkButtonStyle: ButtonStyle {
+    public func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.label
             NavigationArrow()
@@ -32,7 +32,7 @@ struct NavigationLinkButtonStyle: ButtonStyle {
     }
 }
 
-extension ButtonStyle where Self == NavigationLinkButtonStyle {
+public extension ButtonStyle where Self == NavigationLinkButtonStyle {
     static var navigationLink: Self {
         NavigationLinkButtonStyle()
     }

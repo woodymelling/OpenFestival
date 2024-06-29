@@ -16,9 +16,19 @@ public typealias OpenFestivalIDType = String
 @MemberwiseInit(.public)
 public struct Organization {
     public var id: Tagged<Self, OpenFestivalIDType>
-    public var name: String
-    public var imageURL: URL?
 
+    public struct Info: Decodable {
+
+        public init(name: String, imageURL: URL? = nil) {
+            self.name = name
+            self.imageURL = imageURL
+        }
+
+        public var name: String
+        public var imageURL: URL?
+    }
+
+    public var info: Info
     public var events: [Event]
 }
 

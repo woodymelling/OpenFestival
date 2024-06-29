@@ -35,6 +35,7 @@ let package = Package(
         .package(url: "https://github.com/lorenzofiamingo/swiftui-cached-async-image", from: "2.1.1"),
         .package(url: "https://github.com/ryohey/Zoomable", branch: "main"),
         .package(url: "https://github.com/bdewey/static-libgit2", from: "0.1.0"),
+        .package(url: "https://github.com/bdewey/AsyncSwiftGit/", from: "0.4.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -43,12 +44,13 @@ let package = Package(
             name: "OpenFestivalParser",
             dependencies: [
                 "Yams",
+                "GitClient",
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "Validated", package: "swift-validated"),
                 .product(name: "Prelude", package: "swift-prelude"),
-                .target(name: "OpenFestivalModels")
+                .target(name: "OpenFestivalModels"),
             ]
         ),
         .target(
@@ -78,6 +80,7 @@ let package = Package(
         .target(
             name: "GitClient",
             dependencies: [
+                .product(name: "AsyncSwiftGit", package: "AsyncSwiftGit"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
                 .product(name: "static-libgit2", package: "static-libgit2")

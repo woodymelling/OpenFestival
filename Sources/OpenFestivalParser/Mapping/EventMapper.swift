@@ -40,8 +40,10 @@ struct OrganizationMapper: ValidatedMapper {
             .map { events in
                 Organization(
                     id: .init(dto.info.name),
-                    name: dto.info.name,
-                    imageURL: dto.info.imageURL,
+                    info: .init(
+                        name: dto.info.name,
+                        imageURL: dto.info.imageURL
+                    ),
                     events: events
                 )
             }
