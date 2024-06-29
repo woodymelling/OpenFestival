@@ -41,7 +41,7 @@ public struct StageIconView: View {
                                 .background(LinearGradient(colors: [stageColor, .primary], startPoint: .topLeading, endPoint: .bottomTrailing))
                         }
                 })
-                .frame(square: min(geo.size.width, geo.size.height))
+//                .frame(square: geo.size.width)
 //                .if(stage.iconImageURL == nil, transform: {
 //                    $0.background(LinearGradient(colors: [stageColor, .primary], startPoint: .topLeading, endPoint: .bottomTrailing))
 //                })
@@ -75,17 +75,17 @@ public struct CachedAsyncIcon<Content: View>: View {
     @State var hasTransparency = true
 
     public var body: some View {
-        GeometryReader { _ in
-            CachedAsyncImage(url: url, urlCache: .iconCache) { image in
-                image
-                    .resizable()
-                    .renderingMode(hasTransparency ? .template : .original)
+        CachedAsyncImage(url: url, urlCache: .iconCache) { image in
+            image
+                .resizable()
+                .renderingMode(hasTransparency ? .template : .original)
+                .aspectRatio(contentMode: .fit)
+                .frame(alignment: .center)
 //                    .task {
 //                        self.hasTransparency = await image.frame(square: 100).hasTransparency()
 //                    }
-            } placeholder: {
-                placeholder()
-            }
+        } placeholder: {
+            placeholder()
         }
     }
 }

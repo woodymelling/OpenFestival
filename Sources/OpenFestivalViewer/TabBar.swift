@@ -16,13 +16,10 @@ public struct EventViewer {
 
     @ObservableState
     public struct State {
-        public init(_ eventSource: Shared<Event>) {
-            self._eventSource = eventSource
-            @Shared(.event) var event
-            event = eventSource.wrappedValue
+        public init(event: Event) {
+            self.event = event
         }
 
-        @Shared var eventSource: Event
         @Shared(.event) var event
 
         var tabBar: TabBar.State?
@@ -40,10 +37,8 @@ public struct EventViewer {
             switch action {
             case .onAppear:
                 state.tabBar = .init()
+                return .none
 
-                return .publisher {
-                    state.$eventSource.publisher.map { .sourceEventDidUpdate($0) }
-                }
             case .sourceEventDidUpdate(let event):
                 state.event = event
                 return .none
@@ -59,7 +54,24 @@ public struct EventViewer {
     }
 }
 
+public struct EventViewerView: View {
+    let store: StoreOf<EventViewer>
 
+    public init(store: StoreOf<EventViewer>) {
+        self.store = store
+    }
+
+    public var body: some View {
+        Group {
+
+            if let store = store.scope(state: \.tabBar, action: \.tabBar) {
+                TabBarView(store: store)
+            }
+        }
+        .onAppear { store.send(.onAppear) }
+
+    }
+}
 
 @Reducer
 public struct TabBar {

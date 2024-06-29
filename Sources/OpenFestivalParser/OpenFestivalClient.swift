@@ -22,6 +22,12 @@ extension URL {
 public struct OrganizationReference {
     public var url: URL
     public var info: Organization.Info
+    public var events: [Event]
+
+    public struct Event {
+        public var url: URL
+        public var name: String
+    }
 }
 
 @DependencyClient
@@ -61,10 +67,26 @@ extension OpenFestivalClient: DependencyKey {
                 let yamlContent = try String(contentsOf: infoFile, encoding: .utf8)
                 if let data = yamlContent.data(using: .utf8) {
                     let organization = try YAMLDecoder().decode(Organization.Info.self, from: data)
+
+                    var events: [OrganizationReference.Event] = []
+                    let eventDirectories = try fileManager.contentsOfDirectory(
+                        at: directory,
+                        includingPropertiesForKeys: nil,
+                        options: .skipsHiddenFiles
+                    ).filter { $0.hasDirectoryPath }
+                    for directory in eventDirectories {
+                        events.append(
+                            .init(
+                                url: directory,
+                                name: directory.lastPathComponent
+                            )
+                        )
+                    }
                     organizations.append(
                         OrganizationReference(
                             url: directory,
-                            info: organization
+                            info: organization,
+                            events: events
                         )
                     )
                 }

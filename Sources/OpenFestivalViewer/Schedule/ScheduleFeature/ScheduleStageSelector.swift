@@ -75,6 +75,8 @@ struct ScheduleHeaderButton: View {
                 .padding(20)
         }
         .foregroundStyle(isSelected ? .white : stageColor)
+        .frame(idealWidth: 60, idealHeight: 60)
+        .frame(maxWidth: 60, maxHeight: 60)
         .background {
             if isSelected {
                 Circle()
@@ -82,8 +84,6 @@ struct ScheduleHeaderButton: View {
                     .shadow()
             }
         }
-        .frame(idealWidth: 60, idealHeight: 60)
-        .frame(maxWidth: 60, maxHeight: 60)
         .scaleEffect(press ? 0.8 : 1)
         .pressAndReleaseAction(
             pressing: $press,
@@ -96,7 +96,6 @@ struct ScheduleHeaderButton: View {
 
             }
         )
-
     }
 }
 //

@@ -9,6 +9,7 @@ import DependenciesMacros
 @DependencyClient
 public struct OpenFestivalParser {
     public var parse: (_ from: URL) async throws -> Organization
+    public var parseEvent: (_ from: URL) async throws -> Event
 
     public func parse(from path: String) async throws -> Organization {
         try await self.parse(from: URL(fileURLWithPath: path))
@@ -38,7 +39,8 @@ extension OpenFestivalParser {
 extension OpenFestivalParser: DependencyKey {
     public static var liveValue: OpenFestivalParser {
         OpenFestivalParser(
-            parse: Self.parseOrganization(from:)
+            parse: Self.parseOrganization(from:),
+            parseEvent: Self.parseEvent(from:)
         )
     }
 }
@@ -96,16 +98,17 @@ extension OpenFestivalParser {
         case let .invalid(errors): throw errors.first
         }
     }
-//    private static func parseEvent(from path: URL) async throws -> Event {
-//        let eventDTO = try await parseEventDTO(fromPath: path)
-//
-//        print("Properly parsed files, attempting to extract schedule info...")
-//
-//        switch EventMapper().map(eventDTO) {
-//        case let .valid(event): return event
-//        case let .invalid(errors): throw errors.first // TODO
-//        }
-//    }
+    
+    private static func parseEvent(from path: URL) async throws -> Event {
+        let eventDTO = try await parseEventDTO(fromPath: path)
+
+        print("Properly parsed files, attempting to extract schedule info...")
+
+        switch EventMapper().map(eventDTO) {
+        case let .valid(event): return event
+        case let .invalid(errors): throw errors.first // TODO
+        }
+    }
 
     private static func parseEventDTO(fromPath url: URL) async throws -> EventDTO {
 

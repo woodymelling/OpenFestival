@@ -27,6 +27,7 @@ public struct NavigationLinkButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.label
+            Spacer()
             NavigationArrow()
         }
     }
