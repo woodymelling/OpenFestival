@@ -11,6 +11,7 @@ import OpenFestivalModels
 import Dependencies
 import Collections
 import Prelude
+import SwiftUI
 
 enum Validation: Error {
     case stage(Stage)
@@ -63,10 +64,9 @@ struct EventMapper: ValidatedMapper {
             TimeZoneMapper().map(dto.eventInfo.timeZone).mapErrors { _ in .generic }
         )
         .map { stages, artists, schedule, timeZone in
-
             var artists = artists
             addArtistsFromSchedule(to: &artists, schedule: schedule)
-
+            
             return Event(
                 id: "TODO",
                 name: dto.eventInfo.name ?? "",
@@ -74,7 +74,7 @@ struct EventMapper: ValidatedMapper {
                 artists: artists,
                 stages: stages,
                 schedule: schedule,
-                colorScheme: nil // TODO
+                colorScheme: extractColorScheme(from: dto, stages: stages)
             )
         }
     }
@@ -94,6 +94,32 @@ struct EventMapper: ValidatedMapper {
                 )
             }
         }
+    }
+
+    private func extractColorScheme(
+        from dto: EventDTO,
+        stages: Event.Stages
+    ) -> Event.ColorScheme? {
+        let stageColors = dto.stages.compactMap { stage in
+            stage.color.map {
+                (
+                    Event.Stage.ID(stage.name),
+                    SwiftUI.Color(hex: $0)
+                )
+            }
+        }
+
+        guard stages.count == stageColors.count,
+              let primaryColor = dto.eventInfo.colorScheme?.primaryColor,
+              let workshopsColor = dto.eventInfo.colorScheme?.workshopsColor
+        else { return nil }
+
+        return Event.ColorScheme(
+            mainColor: Color(hex: primaryColor),
+            workshopsColor: Color(hex: workshopsColor),
+            stageColors: .init(stageColors),
+            otherColors: []
+        )
     }
 }
 

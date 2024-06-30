@@ -21,6 +21,7 @@ public struct EventViewer {
         }
 
         @Shared(.event) var event
+        
 
         var tabBar: TabBar.State?
     }
@@ -69,7 +70,7 @@ public struct EventViewerView: View {
             }
         }
         .onAppear { store.send(.onAppear) }
-
+        .environment(\.eventColorScheme, store.event.colorScheme!)
     }
 }
 
