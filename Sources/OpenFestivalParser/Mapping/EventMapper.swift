@@ -66,7 +66,7 @@ struct EventMapper: ValidatedMapper {
         .map { stages, artists, schedule, timeZone in
             var artists = artists
             addArtistsFromSchedule(to: &artists, schedule: schedule)
-            
+
             return Event(
                 id: "TODO",
                 name: dto.eventInfo.name ?? "",
@@ -118,7 +118,7 @@ struct EventMapper: ValidatedMapper {
             mainColor: Color(hex: primaryColor),
             workshopsColor: Color(hex: workshopsColor),
             stageColors: .init(stageColors),
-            otherColors: []
+            otherColors: stageColors.map { $0.1 }
         )
     }
 }

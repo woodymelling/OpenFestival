@@ -21,9 +21,11 @@ public struct EventViewer {
         }
 
         @Shared(.event) var event
-        
-
         var tabBar: TabBar.State?
+
+        var showingArtistImages: Bool {
+            event.artists.contains { $0.imageURL != nil }
+        }
     }
 
     public enum Action {
@@ -64,13 +66,15 @@ public struct EventViewerView: View {
 
     public var body: some View {
         Group {
-
             if let store = store.scope(state: \.tabBar, action: \.tabBar) {
                 TabBarView(store: store)
+            } else {
+                ProgressView()
             }
         }
         .onAppear { store.send(.onAppear) }
         .environment(\.eventColorScheme, store.event.colorScheme!)
+        .environment(\.showingArtistImages, store.showingArtistImages)
     }
 }
 

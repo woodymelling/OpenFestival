@@ -24,7 +24,7 @@ public struct OrganizationReference {
     public var info: Organization.Info
     public var events: [Event]
 
-    public struct Event {
+    public struct Event: Codable {
         public var url: URL
         public var name: String
     }
