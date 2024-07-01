@@ -42,6 +42,8 @@ private func getOrganizationDirectories() throws -> [URL] {
     let fileManager = FileManager.default
     let organizationsDirectory = URL.organizations
 
+    try fileManager.ensureDirectoryExists(at: organizationsDirectory)
+
     let organizationDirectories = try fileManager.contentsOfDirectory(at: organizationsDirectory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
 
     return organizationDirectories
@@ -114,6 +116,7 @@ extension OpenFestivalClient: DependencyKey {
             @Dependency(OpenFestivalParser.self) var parser
             let organization = try await parser.parse(from: temporaryDirectory)
 
+            try fileManager.ensureDirectoryExists(at: .organizations)
 
             let newDirectoryPath = URL.organizations.appendingPathComponent(organization.info.name)
 

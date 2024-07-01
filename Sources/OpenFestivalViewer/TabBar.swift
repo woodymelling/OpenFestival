@@ -65,16 +65,18 @@ public struct EventViewerView: View {
     }
 
     public var body: some View {
-        Group {
-            if let store = store.scope(state: \.tabBar, action: \.tabBar) {
-                TabBarView(store: store)
-            } else {
-                ProgressView()
+        WithPerceptionTracking {
+            Group {
+                if let store = store.scope(state: \.tabBar, action: \.tabBar) {
+                    TabBarView(store: store)
+                } else {
+                    ProgressView()
+                }
             }
+            .onAppear { store.send(.onAppear) }
+            .environment(\.eventColorScheme, store.event.colorScheme!)
+            .environment(\.showingArtistImages, store.showingArtistImages)
         }
-        .onAppear { store.send(.onAppear) }
-        .environment(\.eventColorScheme, store.event.colorScheme!)
-        .environment(\.showingArtistImages, store.showingArtistImages)
     }
 }
 

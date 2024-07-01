@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "OpenFestivalParser", targets: ["OpenFestivalParser"]),
         .library(name: "OpenFestivalModels", targets: ["OpenFestivalModels"]),
         .library(name: "OpenFestivalViewer", targets: ["OpenFestivalViewer"]),
+        .library(name: "OpenFestivalApp", targets: ["OpenFestivalApp"]),
         .library(name: "GitClient", targets: ["GitClient"]),
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
@@ -83,7 +84,17 @@ let package = Package(
                 .product(name: "AsyncSwiftGit", package: "AsyncSwiftGit"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
-                .product(name: "static-libgit2", package: "static-libgit2")
+            ]
+        ),
+        .target(
+            name: "OpenFestivalApp",
+            dependencies: [
+                "OpenFestivalModels",
+                "OpenFestivalParser",
+                "OpenFestivalViewer",
+                .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+                .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image"),
+
             ]
         ),
         .executableTarget(
