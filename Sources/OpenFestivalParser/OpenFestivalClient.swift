@@ -13,9 +13,21 @@ import Yams
 import GitClient
 
 
-extension URL {
+public extension URL {
     static var organizations: URL {
-        documentsDirectory.appendingPathComponent("openfestival-organizations")
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+
+        return documentsDirectory.appendingPathComponent("openfestival-organizations")
+    }
+
+    func relativePath(from base: URL) -> String? {
+        let baseComponents = base.pathComponents
+        let selfComponents = self.pathComponents
+
+        guard baseComponents.count <= selfComponents.count else { return nil }
+
+        let relativeComponents = Array(selfComponents.dropFirst(baseComponents.count + 1))
+        return relativeComponents.joined(separator: "/")
     }
 }
 

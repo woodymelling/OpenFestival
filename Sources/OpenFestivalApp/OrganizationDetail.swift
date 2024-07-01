@@ -41,12 +41,14 @@ public struct OrganizationDetail {
                     @Dependency(OpenFestivalParser.self)
                     var parser
 
+                    print(eventReference)
+                    
                     let event = try await parser.parseEvent(from: eventReference.url)
                     await send(.didLoadEvent(event))
 
-                    @Shared(.selectedEventURL) var url
+                    @Shared(.selectedEventRelativeURL) var url
                     await $url.withLock {
-                        $0 = eventReference.url
+                        $0 = eventReference.url.relativePath(from: URL.organizations)
                     }
                 }
 
@@ -66,41 +68,45 @@ struct OrganizationDetailView: View {
     @Perception.Bindable var store: StoreOf<OrganizationDetail>
 
     var body: some View {
-        VStack(alignment: .center) {
-            if let image = store.organization.info.imageURL {
-                AsyncImage(
-                    url: image,
-                    content: { $0.resizable() },
-                    placeholder: { ProgressView()}
-                )
-                .frame(width: 150, height: 150)
+        WithPerceptionTracking {
 
-                Text(store.organization.info.name)
-                    .font(.largeTitle)
-            }
-            List {
+            VStack(alignment: .center) {
+                if let image = store.organization.info.imageURL {
+                    AsyncImage(
+                        url: image,
+                        content: { $0.resizable() },
+                        placeholder: { ProgressView()}
+                    )
+                    .frame(width: 150, height: 150)
 
-                Section("Events") {
-                    ForEach(store.organization.events, id: \.name) { event in
-                        HStack {
-                            Button(event.name) {
-                                store.send(.didTapEvent(event))
+                    Text(store.organization.info.name)
+                        .font(.largeTitle)
+                }
+                List {
+                    WithPerceptionTracking {
+                        Section("Events") {
+                            ForEach(store.organization.events, id: \.name) { event in
+                                HStack {
+                                    Button(event.name) {
+                                        store.send(.didTapEvent(event))
+                                    }
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .buttonStyle(.navigationLink)
                             }
-                            Spacer()
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .buttonStyle(.navigationLink)
                     }
                 }
             }
+            .listStyle(.plain)
+            .fullScreenCover(
+                item: $store.scope(
+                    state: \.destination?.eventViewer,
+                    action: \.destination.eventViewer
+                ),
+                content: EventViewerView.init(store:)
+            )
         }
-        .listStyle(.plain)
-        .fullScreenCover(
-            item: $store.scope(
-                state: \.destination?.eventViewer,
-                action: \.destination.eventViewer
-            ),
-            content: EventViewerView.init(store:)
-        )
     }
 }

@@ -12,8 +12,8 @@ import OpenFestivalModels
 import OpenFestivalParser
 import SwiftUI
 
-extension PersistenceKey where Self == AppStorageKey<URL?> {
-    static var selectedEventURL: Self {
+extension PersistenceKey where Self == AppStorageKey<String?> {
+    static var selectedEventRelativeURL: Self {
         .appStorage("selected_event_url")
     }
 }
@@ -32,6 +32,7 @@ public struct OpenFestivalAppEntryPoint {
     public enum Action {
         case onAppear
         case loadedSelectedEvent(Event)
+        case failedToLoadEvent
 
         case eventViewer(EventViewer.Action)
         case festivalList(FestivalList.Action)
@@ -41,7 +42,7 @@ public struct OpenFestivalAppEntryPoint {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                @Shared(.selectedEventURL)
+                @Shared(.selectedEventRelativeURL)
                 var selectedEventReference
 
                 if let selectedEventReference {
@@ -49,13 +50,23 @@ public struct OpenFestivalAppEntryPoint {
                         @Dependency(OpenFestivalParser.self)
                         var openFestivalParser
 
-                        let event = try await openFestivalParser.parseEvent(from: selectedEventReference)
+                        let event = try await openFestivalParser.parseEvent(from: .organizations.appendingPathComponent(selectedEventReference))
                         await send(.loadedSelectedEvent(event))
+                    } catch: { error, send in
+                        @Shared(.selectedEventRelativeURL) var selectedEventURL
+                        await $selectedEventURL.withLock {
+                            $0 = nil
+                        }
+
+                        await send(.failedToLoadEvent)
                     }
                 } else {
                     state = .festivalList(FestivalList.State())
                     return .none
                 }
+            case .failedToLoadEvent:
+                state = .festivalList(FestivalList.State())
+                return .none
 
             case .loadedSelectedEvent(let event):
                 state = .eventViewer(EventViewer.State(event: event))
