@@ -29,28 +29,19 @@ public struct StageIconView: View {
 
     public var body: some View {
         if let stage = event.stages[id: stageID] {
-            GeometryReader { geo in
-                CachedAsyncIcon(
-                    url: stage.iconImageURL,
-                    placeholder: {
-                        ZStack {
-                            Text(stage.name)
-                                .font(.system(size: 500, weight: .bold))
-                                .minimumScaleFactor(0.001)
-                                .padding(2)
-                                .background(LinearGradient(colors: [stageColor, .primary], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        }
-                })
-//                .frame(square: geo.size.width)
-//                .if(stage.iconImageURL == nil, transform: {
-//                    $0.background(LinearGradient(colors: [stageColor, .primary], startPoint: .topLeading, endPoint: .bottomTrailing))
-//                })
-                .foregroundStyle(colorScheme == .light ? stageColor : .white)
-                .clipShape(Circle())
-            }
+            CachedAsyncIcon(
+                url: stage.iconImageURL,
+                placeholder: {
+                    ZStack {
+                        Text(stage.name)
+                            .font(.system(size: 500, weight: .bold))
+                            .minimumScaleFactor(0.001)
+                            .padding(2)
+                            .background(LinearGradient(colors: [stageColor, .primary], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    }
+            })
+            .foregroundStyle(colorScheme == .light ? stageColor : .white)
         }
-
-
     }
 }
 

@@ -134,3 +134,20 @@ struct PerformanceTimeStyle: FormatStyle {
     }
 
 }
+
+
+#Preview {
+    List {
+        PerformanceDetailRow(
+            for: .init(
+                id: "",
+                customTitle: nil,
+                artistIDs: [.init("")],
+                startTime: .now,
+                endTime: .now + 1.hours,
+                stageID: Event.testival.stages.first!.id
+            )
+        )
+    }
+    .listStyle(.plain)
+}

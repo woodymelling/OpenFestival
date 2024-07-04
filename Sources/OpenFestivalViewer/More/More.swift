@@ -30,7 +30,8 @@ public struct More {
         case didTapAddress
         case didTapWorkshops
 
-        case didExitEvent
+        case didTapExitEvent
+        case didTapRefreshEvent
 
         case destination(PresentationAction<Destination.Action>)
     }
@@ -44,18 +45,26 @@ public struct More {
         //        case workshops(WorkshopsFeature)
     }
 
+    @Dependency(\.selectedEventClient) var selectedEventClient
+
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
 
-            case .didExitEvent:
-                break
+            case .didTapExitEvent:
+                return .run { _ in
+                    await selectedEventClient.exitEvent()
+                }
 
+            case .didTapRefreshEvent:
+                return .run { _ in
+                    await selectedEventClient.reloadEvent()
+                }
+                
             case .didTapNotifications:
                 break
 
             case .didTapSiteMap:
-
                 guard let siteMapImageURL = state.event.siteMapImageURL else {
                     return .none
                 }
@@ -94,6 +103,17 @@ public struct More {
     }
 }
 
+struct IsEventSpecificApplicationEnvironmentKey: EnvironmentKey {
+    static var defaultValue = false
+}
+
+public extension EnvironmentValues {
+    var isEventSpecificApplication: Bool {
+        get { self[IsEventSpecificApplicationEnvironmentKey.self] }
+        set { self[IsEventSpecificApplicationEnvironmentKey.self] = newValue }
+    }
+}
+
 public struct MoreView: View {
     @Perception.Bindable var store: StoreOf<More>
 
@@ -102,6 +122,7 @@ public struct MoreView: View {
     }
 
     @Environment(\.eventColorScheme) var eventColorScheme
+    @Environment(\.isEventSpecificApplication) var isEventSpecificApplication
 
     public var body: some View {
         WithPerceptionTracking {
@@ -160,15 +181,23 @@ public struct MoreView: View {
                     }
                 }
 
-                //                    Section {
-                //                        if !store.isEventSpecificApplication {
-                //                            Button {
-                //                                store.send(.didExitEvent, animation: .default)
-                //                            } label: {
-                //                                Text("Exit \(store.eventData.event.name)")
-                //                            }
-                //                        }
-                //                    }
+                Section {
+                    if !isEventSpecificApplication {
+                        Button(
+                            "Refresh Event",
+                            systemImage: "arrow.clockwise",
+                            action: {
+                                store.send(.didTapRefreshEvent)
+                            }
+                        )
+
+                        Button {
+                            store.send(.didTapExitEvent, animation: .default)
+                        } label: {
+                            Text("Exit \(store.event.name)")
+                        }
+                    }
+                }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("More")
@@ -264,5 +293,26 @@ struct MoreView_Previews: PreviewProvider {
                 )
             )
         }
+    }
+}
+
+
+@DependencyClient
+public struct SelectedEventClient {
+    public var exitEvent: () async -> Void
+    public var reloadEvent: () async -> Void
+}
+
+extension SelectedEventClient: TestDependencyKey {
+    public static var testValue = SelectedEventClient(
+        exitEvent: { },
+        reloadEvent: { }
+    )
+}
+
+extension DependencyValues {
+    public var selectedEventClient: SelectedEventClient {
+        get { self[SelectedEventClient.self] }
+        set { self[SelectedEventClient.self] = newValue }
     }
 }

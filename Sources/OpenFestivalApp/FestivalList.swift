@@ -9,6 +9,7 @@ import Foundation
 import ComposableArchitecture
 import SwiftUI
 import OpenFestivalParser
+import CachedAsyncImage
 
 
 @Reducer
@@ -96,7 +97,7 @@ struct FestivalListView: View {
                     store.send(.didTapOrganization(org))
                 } label: {
                     HStack {
-                        AsyncImage(
+                        CachedAsyncImage(
                             url: org.info.imageURL,
                             content: { $0.resizable() },
                             placeholder: {

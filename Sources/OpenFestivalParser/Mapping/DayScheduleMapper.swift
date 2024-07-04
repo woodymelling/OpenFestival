@@ -48,7 +48,7 @@ struct DayScheduleMapper: ValidatedMapper {
             .map {
                 Event.Schedule.Day(
                     id: .init(fileContents.fileName),
-                    date: fileContents.body.date,
+                    date: fileContents.body.date ?? CalendarDate(fileContents.fileName),
                     customTitle: fileContents.body.customTitle,
                     stageSchedules: $0
                 )

@@ -39,49 +39,51 @@ public struct OpenFestivalAppEntryPoint {
     }
 
     public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                @Shared(.selectedEventRelativeURL)
-                var selectedEventReference
+        CombineReducers {
+            Reduce { state, action in
+                switch action {
+                case .onAppear:
+                    @Shared(.selectedEventRelativeURL)
+                    var selectedEventReference
 
-                if let selectedEventReference {
-                    return .run { send in
-                        @Dependency(OpenFestivalParser.self)
-                        var openFestivalParser
+                    if let selectedEventReference {
+                        return .run { send in
+                            @Dependency(OpenFestivalParser.self)
+                            var openFestivalParser
 
-                        let event = try await openFestivalParser.parseEvent(from: .organizations.appendingPathComponent(selectedEventReference))
-                        await send(.loadedSelectedEvent(event))
-                    } catch: { error, send in
-                        @Shared(.selectedEventRelativeURL) var selectedEventURL
-                        await $selectedEventURL.withLock {
-                            $0 = nil
+                            let event = try await openFestivalParser.parseEvent(from: .organizations.appendingPathComponent(selectedEventReference))
+                            await send(.loadedSelectedEvent(event))
+                        } catch: { error, send in
+                            @Shared(.selectedEventRelativeURL) var selectedEventURL
+                            await $selectedEventURL.withLock {
+                                $0 = nil
+                            }
+
+                            await send(.failedToLoadEvent)
                         }
-
-                        await send(.failedToLoadEvent)
+                    } else {
+                        state = .festivalList(FestivalList.State())
+                        return .none
                     }
-                } else {
+                case .failedToLoadEvent:
                     state = .festivalList(FestivalList.State())
                     return .none
+
+                case .loadedSelectedEvent(let event):
+                    state = .eventViewer(EventViewer.State(event: event))
+                    return .none
+                case .eventViewer, .festivalList:
+                    return .none
                 }
-            case .failedToLoadEvent:
-                state = .festivalList(FestivalList.State())
-                return .none
-
-            case .loadedSelectedEvent(let event):
-                state = .eventViewer(EventViewer.State(event: event))
-                return .none
-            case .eventViewer, .festivalList:
-                return .none
             }
-        }
 
-        Scope(state: \.eventViewer, action: \.eventViewer) {
-            EventViewer()
-        }
+            Scope(state: \.eventViewer, action: \.eventViewer) {
+                EventViewer()
+            }
 
-        Scope(state: \.festivalList, action: \.festivalList) {
-            FestivalList()
+            Scope(state: \.festivalList, action: \.festivalList) {
+                FestivalList()
+            }
         }
 
     }

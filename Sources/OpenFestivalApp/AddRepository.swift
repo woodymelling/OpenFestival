@@ -39,7 +39,7 @@ public struct AddRepository {
                     return .none
                 }
 
-                state.isAdding = false
+                state.isAdding = true
 
                 return .run { send in
                     @Dependency(OpenFestivalClient.self)
@@ -52,7 +52,7 @@ public struct AddRepository {
                     print(error)
                 }
             case .successfullyAddedRepository:
-
+                state.isAdding = false
                 return .run { _ in
                     @Dependency(\.dismiss) var dismiss
                     await dismiss()
@@ -68,37 +68,40 @@ struct AddRepositoryView: View {
     @Perception.Bindable var store: StoreOf<AddRepository>
 
     var body: some View {
-        NavigationStack{
-            VStack {
-                VStack(alignment: .leading) {
-                    TextField("URL", text: $store.urlInput)
-                        .controlSize(.large)
-                        .textFieldStyle(.roundedBorder)
+        WithPerceptionTracking {
 
-                    if let errorMessage = store.errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                    }
+            NavigationStack{
+                VStack {
+                    VStack(alignment: .leading) {
+                        TextField("URL", text: $store.urlInput)
+                            .controlSize(.large)
+                            .textFieldStyle(.roundedBorder)
 
-                    Text("Add a festival from a github repository")
-                        .font(.caption)
-                }
-                Spacer()
-                Button {
-                    store.send(.didTapAddRepositoryButton)
-                } label: {
-                    if store.isAdding {
-                        ProgressView()
-                    } else {
-                        Text("Add Repository")
+                        if let errorMessage = store.errorMessage {
+                            Text(errorMessage)
+                                .foregroundStyle(.red)
+                        }
+
+                        Text("Add a festival from a github repository")
+                            .font(.caption)
                     }
+                    Spacer()
+                    Button {
+                        store.send(.didTapAddRepositoryButton)
+                    } label: {
+                        if store.isAdding {
+                            ProgressView()
+                        } else {
+                            Text("Add Repository")
+                        }
+                    }
+                    .disabled(store.isAdding)
+                    .buttonStyle(.borderedProminent)
                 }
-                .disabled(store.isAdding)
-                .buttonStyle(.borderedProminent)
+                .padding()
+                .navigationTitle("Add Festival")
             }
-            .padding()
-            .navigationTitle("Add Festival")
+            .presentationDetents([.medium])
         }
-        .presentationDetents([.medium])
     }
 }

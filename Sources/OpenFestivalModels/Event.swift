@@ -114,7 +114,7 @@ public extension Event {
             self.store = performances
             self.artistIndex = artistIndex
             self.pageIndex = pageIndex
-            self.dayMetadatas = IdentifiedArray(uniqueElements: dayMetadatas)
+            self.dayMetadatas = IdentifiedArray(uniqueElements: dayMetadatas.sorted(by: \.date, then: \.id))
         }
 
         public subscript(id performanceID: Performance.ID) -> Performance? {
@@ -572,3 +572,26 @@ extension Optional where Wrapped: RangeReplaceableCollection {
         }
     }
 }
+
+
+
+extension Sequence {
+    func sorted<PrimaryKey: Comparable, SecondaryKey: Comparable>(
+        by primaryKeyPath: KeyPath<Element, PrimaryKey?>,
+        then secondaryKeyPath: KeyPath<Element, SecondaryKey>
+    ) -> [Element] {
+        return sorted { lhs, rhs in
+            if let lhsPrimary = lhs[keyPath: primaryKeyPath], let rhsPrimary = rhs[keyPath: primaryKeyPath] {
+                if lhsPrimary != rhsPrimary {
+                    return lhsPrimary < rhsPrimary
+                }
+            } else if lhs[keyPath: primaryKeyPath] != nil {
+                return true
+            } else if rhs[keyPath: primaryKeyPath] != nil {
+                return false
+            }
+            return lhs[keyPath: secondaryKeyPath] < rhs[keyPath: secondaryKeyPath]
+        }
+    }
+}
+

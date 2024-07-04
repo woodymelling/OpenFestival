@@ -22,12 +22,15 @@ public extension URL {
 
     func relativePath(from base: URL) -> String? {
         let baseComponents = base.pathComponents
-        let selfComponents = self.pathComponents
+        var selfComponents = self.pathComponents
 
-        guard baseComponents.count <= selfComponents.count else { return nil }
+        for component in baseComponents {
+            if component == selfComponents.first {
+                selfComponents.removeFirst()
+            }
+        }
 
-        let relativeComponents = Array(selfComponents.dropFirst(baseComponents.count + 1))
-        return relativeComponents.joined(separator: "/")
+        return selfComponents.joined(separator: "/")
     }
 }
 
@@ -47,7 +50,14 @@ public struct OpenFestivalClient {
     public var fetchMyOrganizationURLs: () async throws -> [URL]
     public var fetchOrganizationsFromDisk: () async throws -> [OrganizationReference]
     public var loadOrganizationFromGithub: (URL) async throws -> Void
-    public var refreshOrganizations: () async throws -> Void
+    public var refreshOrganization: (URL) async throws -> Void
+
+    public func refreshOrganizations() async throws -> Void {
+        for orgDirectory in try getOrganizationDirectories() {
+            try await self._refreshOrganization(orgDirectory)
+        }
+    }
+
 }
 
 private func getOrganizationDirectories() throws -> [URL] {
@@ -136,11 +146,9 @@ extension OpenFestivalClient: DependencyKey {
             // Move the directory to the new path
             try fileManager.moveItem(at: temporaryDirectory, to: newDirectoryPath)
         },
-        refreshOrganizations: {
+        refreshOrganization: {
             @Dependency(GitClient.self) var gitClient
-            for orgDirectory in try getOrganizationDirectories() {
-                try await gitClient.pull(at: orgDirectory)
-            }
+            try await gitClient.pull(at: $0)
         }
     )
 }
