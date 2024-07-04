@@ -497,7 +497,7 @@ public extension Event {
                                         Event.Performance(
                                             id: .init("Float On-0:30-Village"),
                                             customTitle: nil,
-                                            artistIDs: ["Float On"],
+                                            artistIDs: ["Float On", "Floods"],
                                             startTime: Date(year: 2024, month: 6, day: 13, hour: 0, minute: 30)!,
                                             endTime: Date(year: 2024, month: 6, day: 13, hour: 2)!,
                                             stageID: Event.Stage.ID(rawValue: "Village")

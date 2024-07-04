@@ -44,7 +44,7 @@ public struct PerformanceDetailRow: View {
                 VStack(alignment: .leading) {
                     Text(performance.title)
 
-                    Text(timeIntervalLabel + performance.startTime.formatted(.daySegment))
+                    Text(timeIntervalLabel + " " + performance.startTime.formatted(.daySegment))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

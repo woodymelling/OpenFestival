@@ -16,7 +16,7 @@ public struct Schedule {
     public init() {}
 
     @ObservableState
-    public struct State: Equatable {
+    public struct State {
 
         public init() {
             @Shared(.event) var event
@@ -86,9 +86,10 @@ public struct Schedule {
         }
     }
     
-    @Reducer(state: .equatable)
+    @Reducer
     public enum Destination {
         case artistDetail(ArtistDetail)
+        case performanceDetail(PerformanceDetails)
     }
 
     public var body: some ReducerOf<Self> {
@@ -165,6 +166,7 @@ public struct Schedule {
                 case 1:
                     state.destination = .artistDetail(ArtistDetail.State(id: performance.artistIDs.first!))
                 default:
+                    state.destination = .performanceDetail(PerformanceDetails.State(performanceID: performance.id))
                     return .none
 
                 }
@@ -244,6 +246,11 @@ public struct ScheduleView: View {
             .sheet(item: $store.scope(state: \.destination?.artistDetail, action: \.destination.artistDetail)) { store in
                 NavigationStack {
                     ArtistDetailView(store: store)
+                }
+            }
+            .sheet(item: $store.scope(state: \.destination?.performanceDetail, action: \.destination.performanceDetail)) { store in
+                NavigationStack {
+                    PerformanceDetailView(store: store)
                 }
             }
 //            .sheet(item: $store.scope(state: \.destination?.groupSet, action: \.destination.groupSet)) { store in
