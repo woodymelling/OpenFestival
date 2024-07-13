@@ -29,7 +29,9 @@ struct DayScheduleMapper: ValidatedMapper {
     typealias ToError = Validation.ScheduleError.DayScheduleError
 
     func map(_ fileContents: From) -> Output {
-        fileContents.body
+        let date = fileContents.body.date ?? CalendarDate(fileContents.fileName)
+
+        return fileContents.body
             .performances
             .mapValues(\.toStageDaySchedule)
             .sequence()
@@ -41,14 +43,14 @@ struct DayScheduleMapper: ValidatedMapper {
                     let stageID: Event.Stage.ID = .init(tuple.key)
 
                     partialResult[stageID] = tuple.value.map {
-                        $0.toPerformance(at: stageID, on: fileContents.body.date)
+                        $0.toPerformance(at: stageID, on: date)
                     }
                 }
             }
             .map {
                 Event.Schedule.Day(
                     id: .init(fileContents.fileName),
-                    date: fileContents.body.date ?? CalendarDate(fileContents.fileName),
+                    date: date,
                     customTitle: fileContents.body.customTitle,
                     stageSchedules: $0
                 )

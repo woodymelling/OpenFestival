@@ -32,6 +32,7 @@ public struct EventViewer {
         case tabBar(TabBar.Action)
 
         case onAppear
+        
         case sourceEventDidUpdate(Event)
     }
 
@@ -54,6 +55,7 @@ public struct EventViewer {
         .ifLet(\.tabBar, action: \.tabBar) {
             TabBar()
         }
+        ._printChanges()
     }
 }
 
@@ -65,18 +67,16 @@ public struct EventViewerView: View {
     }
 
     public var body: some View {
-        WithPerceptionTracking {
-            Group {
-                if let store = store.scope(state: \.tabBar, action: \.tabBar) {
-                    TabBarView(store: store)
-                } else {
-                    ProgressView()
-                }
+        Group {
+            if let store = store.scope(state: \.tabBar, action: \.tabBar) {
+                TabBarView(store: store)
+            } else {
+                ProgressView()
             }
-            .onAppear { store.send(.onAppear) }
-            .environment(\.eventColorScheme, store.event.colorScheme!)
-            .environment(\.showingArtistImages, store.showingArtistImages)
         }
+        .onAppear { store.send(.onAppear) }
+        .environment(\.eventColorScheme, store.event.colorScheme!)
+        .environment(\.showingArtistImages, store.showingArtistImages)
     }
 }
 
@@ -90,6 +90,8 @@ public struct TabBar {
     public struct State {
         var selectedTab: Tab = .schedule
 
+        @Shared(.highlightedPerformance) var highlightedPerformance
+
         var schedule: Schedule.State = .init()
         var artistList: ArtistList.State = .init()
         var more: More.State = .init()
@@ -97,6 +99,9 @@ public struct TabBar {
 
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
+        case onAppear
+
+        case didHighlightCard(Event.Performance.ID)
 
         case schedule(Schedule.Action)
         case artistList(ArtistList.Action)
@@ -105,6 +110,32 @@ public struct TabBar {
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
+
+        Reduce { state, action in
+            switch action {
+            case .onAppear:
+                return .publisher {
+                    state.$highlightedPerformance.publisher.compactMap {
+                        $0.map { .didHighlightCard($0) }
+                    }
+                }
+
+            case .didHighlightCard(let performanceID):
+                @SharedReader(.event) var event
+                guard let performance = event.schedule[id: performanceID],
+                      let performanceDay = event.schedule.dayFor(performanceID)
+                else { return .none }
+
+                state.selectedTab = .schedule
+                state.schedule.selectedStage = performance.stageID
+                state.schedule.selectedDay = performanceDay
+                state.schedule.destination = nil
+                return .none
+
+            case .binding, .schedule, .artistList, .more:
+                return .none
+            }
+        }
 
         Scope(state: \.artistList, action: \.artistList) {
             ArtistList()
@@ -121,34 +152,33 @@ public struct TabBar {
 }
 
 struct TabBarView: View {
-    @Perception.Bindable var store: StoreOf<TabBar>
+    @Bindable var store: StoreOf<TabBar>
 
     var body: some View {
-        WithPerceptionTracking {
-            TabView(selection: $store.selectedTab) {
-                NavigationStack {
-                    ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
-                }
-                .tabItem {
-                    Label("Schedule", systemImage: "calendar")
-                }
-                .tag(TabBar.Tab.schedule)
-
-                NavigationStack {
-                    ArtistListView(store: store.scope(state: \.artistList, action: \.artistList))
-                }
-                .navigationViewStyle(.stack)
-                .tabItem { Label("Artists", systemImage: "person.3") }
-                .tag(TabBar.Tab.artists)
-
-                NavigationStack {
-                    MoreView(store: store.scope(state: \.more, action: \.more))
-                }
-                .navigationViewStyle(.stack)
-                .tabItem { Label("More", systemImage: "ellipsis") }
-                .tag(TabBar.Tab.more)
+        TabView(selection: $store.selectedTab) {
+            NavigationStack {
+                ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
             }
+            .tabItem {
+                Label("Schedule", systemImage: "calendar")
+            }
+            .tag(TabBar.Tab.schedule)
+
+            NavigationStack {
+                ArtistListView(store: store.scope(state: \.artistList, action: \.artistList))
+            }
+            .navigationViewStyle(.stack)
+            .tabItem { Label("Artists", systemImage: "person.3") }
+            .tag(TabBar.Tab.artists)
+
+            NavigationStack {
+                MoreView(store: store.scope(state: \.more, action: \.more))
+            }
+            .navigationViewStyle(.stack)
+            .tabItem { Label("More", systemImage: "ellipsis") }
+            .tag(TabBar.Tab.more)
         }
+        .onAppear { store.send(.onAppear) }
     }
 }
 

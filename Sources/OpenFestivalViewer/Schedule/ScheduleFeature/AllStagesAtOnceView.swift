@@ -36,15 +36,13 @@ struct AllStagesAtOnceView: View {
     var body: some View {
         ScrollView {
             SchedulePageView(schedule) { performance in
-                WithPerceptionTracking {
-                    ScheduleCardView(
-                        performance.item,
-                        isSelected: false,
-                        isFavorite: false
-                    )
-                    .onTapGesture { store.send(.didTapCard(performance.id)) }
-                    .tag(performance.id)
-                }
+                ScheduleCardView(
+                    performance.item,
+                    isSelected: false,
+                    isFavorite: false
+                )
+                .onTapGesture { store.send(.didTapCard(performance.id)) }
+                .tag(performance.id)
             }
             .frame(height: 1500)
         }

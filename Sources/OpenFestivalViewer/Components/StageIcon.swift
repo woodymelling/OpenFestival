@@ -33,11 +33,14 @@ public struct StageIconView: View {
                 url: stage.iconImageURL,
                 placeholder: {
                     ZStack {
-                        Text(stage.name)
-                            .font(.system(size: 500, weight: .bold))
+                        Text("\(stage.name.first.map(String.init) ?? "")")
+                            .font(.system(size: 300, weight: .heavy))
                             .minimumScaleFactor(0.001)
-                            .padding(2)
-                            .background(LinearGradient(colors: [stageColor, .primary], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .padding()
+                            .background {
+                                Circle()
+                                    .fill(stageColor)
+                            }
                     }
             })
             .foregroundStyle(colorScheme == .light ? stageColor : .white)

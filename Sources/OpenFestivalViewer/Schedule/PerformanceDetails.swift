@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Woodrow Melling on 7/3/24.
 //
@@ -60,23 +60,21 @@ public struct PerformanceDetails {
 
 
 struct PerformanceDetailView: View {
-    @Perception.Bindable var store: StoreOf<PerformanceDetails>
+    @Bindable var store: StoreOf<PerformanceDetails>
 
     var body: some View {
         List {
-            WithPerceptionTracking {
-                if let performance = store.performance {
-                    Section {
-                        PerformanceDetailRow(for: performance)
-                    }
+            if let performance = store.performance {
+                Section {
+                    PerformanceDetailRow(for: performance)
+                }
 
-                    Section("Artists") {
-                        ForEach(store.artists) { artist in
-                            Button(artist.name) {
-                                store.send(.didTapArtist(artist.id))
-                            }
-                            .buttonStyle(.navigationLink)
+                Section("Artists") {
+                    ForEach(store.artists) { artist in
+                        Button(artist.name) {
+                            store.send(.didTapArtist(artist.id))
                         }
+                        .buttonStyle(.navigationLink)
                     }
                 }
             }

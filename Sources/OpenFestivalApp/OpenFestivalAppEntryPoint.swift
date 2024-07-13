@@ -97,20 +97,18 @@ public struct OpenFestivalAppView: View {
     let store: StoreOf<OpenFestivalAppEntryPoint>
 
     public var body: some View {
-        WithPerceptionTracking {
-            switch store.state {
-            case .loading:
-                ProgressView()
-                    .onAppear { store.send(.onAppear) }
-            case .eventViewer:
-                if let store = store.scope(state: \.eventViewer, action: \.eventViewer) {
-                    EventViewerView(store: store)
-                }
-            case .festivalList:
-                if let store = store.scope(state: \.festivalList, action: \.festivalList) {
-                    NavigationStack {
-                        FestivalListView(store: store)
-                    }
+        switch store.state {
+        case .loading:
+            ProgressView()
+                .onAppear { store.send(.onAppear) }
+        case .eventViewer:
+            if let store = store.scope(state: \.eventViewer, action: \.eventViewer) {
+                EventViewerView(store: store)
+            }
+        case .festivalList:
+            if let store = store.scope(state: \.festivalList, action: \.festivalList) {
+                NavigationStack {
+                    FestivalListView(store: store)
                 }
             }
         }

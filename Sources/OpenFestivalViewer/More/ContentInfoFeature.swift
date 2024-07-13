@@ -39,44 +39,40 @@ struct ContactInfoView: View {
     let store: StoreOf<ContactInfoFeature>
 
     var body: some View {
-        
+        List {
+            ForEach(store.contactNumbers) { contactNumber in
+                Button {
+                    store.send(.didTapContactNumber(contactNumber))
+                } label: {
 
-        WithPerceptionTracking {
-            List {
-                ForEach(store.contactNumbers) { contactNumber in
-                    Button {
-                        store.send(.didTapContactNumber(contactNumber))
-                    } label: {
-                        
-                        HStack {
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(contactNumber.title)
-                                    .font(.headline)
-                                Text(contactNumber.phoneNumber.asPhoneNumber)
-                                    .textSelection(.enabled)
-                                
-                                Text(contactNumber.description)
-                                    .font(.caption)
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "phone.fill")
-                                .resizable()
-                                .frame(square: 20)
-                                .foregroundColor(.accentColor)
-                            
+                    HStack {
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(contactNumber.title)
+                                .font(.headline)
+                            Text(contactNumber.phoneNumber.asPhoneNumber)
+                                .textSelection(.enabled)
+
+                            Text(contactNumber.description)
+                                .font(.caption)
                         }
-                        .padding()
-                        
+
+                        Spacer()
+
+                        Image(systemName: "phone.fill")
+                            .resizable()
+                            .frame(square: 20)
+                            .foregroundColor(.accentColor)
+
                     }
-                    .buttonStyle(.plain)
-                    
+                    .padding()
+
                 }
+                .buttonStyle(.plain)
+
             }
-            .navigationTitle("Contact Info")
         }
+        .navigationTitle("Contact Info")
     }
 }
 

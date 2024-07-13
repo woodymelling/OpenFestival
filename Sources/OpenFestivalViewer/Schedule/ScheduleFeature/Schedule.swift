@@ -216,7 +216,7 @@ enum ScheduleStyle: Equatable {
 }
 
 public struct ScheduleView: View {
-    @Perception.Bindable var store: StoreOf<Schedule>
+    @Bindable var store: StoreOf<Schedule>
 
     public init(store: StoreOf<Schedule>) {
         self.store = store
@@ -225,34 +225,33 @@ public struct ScheduleView: View {
     @SharedReader(.deviceOrientation) var deviceOrientation
 
     public var body: some View {
-        WithPerceptionTracking {
-            Group {
-                switch deviceOrientation {
-                case .portrait:
-                    SingleStageAtOnceView(store: store)
+        Group {
+            switch deviceOrientation {
+            case .portrait:
+                SingleStageAtOnceView(store: store)
 
-                case .landscape:
-                    AllStagesAtOnceView(store: store)
-                }
+            case .landscape:
+                AllStagesAtOnceView(store: store)
             }
-            .modifier(EventDaySelectorViewModifier(selectedDay: $store.selectedDay))
-            .toolbar {
-                ToolbarItem {
-                    FilterMenu(store: store)
-                }
+        }
+        .modifier(EventDaySelectorViewModifier(selectedDay: $store.selectedDay))
+        .toolbar {
+            ToolbarItem {
+                FilterMenu(store: store)
             }
-            .task { await store.send(.task).finish() }
-            .environment(\.dayStartsAtNoon, true)
-            .sheet(item: $store.scope(state: \.destination?.artistDetail, action: \.destination.artistDetail)) { store in
-                NavigationStack {
-                    ArtistDetailView(store: store)
-                }
+        }
+        .task { await store.send(.task).finish() }
+        .environment(\.dayStartsAtNoon, true)
+        .sheet(item: $store.scope(state: \.destination?.artistDetail, action: \.destination.artistDetail)) { store in
+            NavigationStack {
+                ArtistDetailView(store: store)
             }
-            .sheet(item: $store.scope(state: \.destination?.performanceDetail, action: \.destination.performanceDetail)) { store in
-                NavigationStack {
-                    PerformanceDetailView(store: store)
-                }
+        }
+        .sheet(item: $store.scope(state: \.destination?.performanceDetail, action: \.destination.performanceDetail)) { store in
+            NavigationStack {
+                PerformanceDetailView(store: store)
             }
+        }
 //            .sheet(item: $store.scope(state: \.destination?.groupSet, action: \.destination.groupSet)) { store in
 //                NavigationStack {
 //                    GroupSetDetailView(store: store)
@@ -273,40 +272,27 @@ public struct ScheduleView: View {
 //                    store.send(.scheduleTutorial(.hideLandscapeTutorial))
 //                }
 //            )
-
-        }
     }
 
 
     struct FilterMenu: View {
-        @Perception.Bindable var store: StoreOf<Schedule>
+        @Bindable var store: StoreOf<Schedule>
 
         var body: some View {
-
-            WithPerceptionTracking {
-                Menu {
-                    Toggle(isOn: $store.filteringFavorites.animation()) {
-                        Label(
-                            "Favorites",
-                            systemImage:  store.isFiltering ? "heart.fill" : "heart"
-                        )
-                    }
-                } label: {
+            Menu {
+                Toggle(isOn: $store.filteringFavorites.animation()) {
                     Label(
-                        "Filter",
-                        systemImage: store.isFiltering ?
-                        "line.3.horizontal.decrease.circle.fill" :
-                            "line.3.horizontal.decrease.circle"
+                        "Favorites",
+                        systemImage:  store.isFiltering ? "heart.fill" : "heart"
                     )
                 }
-    //            .popover(present: $store.showingFilterTutorial, attributes: { $0.dismissal.mode = .tapOutside }) {
-    //                ArrowPopover(arrowSide: .top(.mostClockwise)) {
-    //                    Text("Filter the schedule to only see your favorite artists")
-    //                }
-    //                .onTapGesture {
-    //                    store.send(.scheduleTutorial(.hideFilterTutorial))
-    //                }
-    //            }
+            } label: {
+                Label(
+                    "Filter",
+                    systemImage: store.isFiltering ?
+                    "line.3.horizontal.decrease.circle.fill" :
+                        "line.3.horizontal.decrease.circle"
+                )
             }
         }
     }

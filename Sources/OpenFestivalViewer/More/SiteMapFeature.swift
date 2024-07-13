@@ -32,15 +32,13 @@ struct SiteMapView: View {
     let store: StoreOf<SiteMapFeature>
 
     var body: some View {
-        WithPerceptionTracking {
-            CachedAsyncImage(url: store.url) {
-                $0
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .zoomable()
-            } placeholder: {
-                ProgressView()
-            }
+        CachedAsyncImage(url: store.url) {
+            $0
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .zoomable()
+        } placeholder: {
+            ProgressView()
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Site Map")

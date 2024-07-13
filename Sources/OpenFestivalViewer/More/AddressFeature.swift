@@ -48,36 +48,34 @@ struct AddressView: View {
     let store: StoreOf<AddressFeature>
     
     var body: some View {
-        WithPerceptionTracking {
-            List {
-                Text(store.address)
-                    .font(.headline)
-                    .textSelection(.enabled)
-                
-                Button { store.send(.didTapOpenInAppleMaps) } label: {
-                    Label {
-                        Text("Open in Apple Maps")
-                    } icon: {
-                        Image("apple-maps", bundle: .module)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    }
-                }
-                
-                
-                Button { store.send(.didTapOpenInGoogleMaps) } label: {
-                    Label {
-                        Text("Open in Google Maps")
-                        
-                    } icon: {
-                        Image("google-maps", bundle: .module)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    }
+        List {
+            Text(store.address)
+                .font(.headline)
+                .textSelection(.enabled)
+
+            Button { store.send(.didTapOpenInAppleMaps) } label: {
+                Label {
+                    Text("Open in Apple Maps")
+                } icon: {
+                    Image("apple-maps", bundle: .module)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
                 }
             }
-            .navigationTitle("Address")
+
+
+            Button { store.send(.didTapOpenInGoogleMaps) } label: {
+                Label {
+                    Text("Open in Google Maps")
+
+                } icon: {
+                    Image("google-maps", bundle: .module)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                }
+            }
         }
+        .navigationTitle("Address")
     }
 }
 

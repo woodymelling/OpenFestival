@@ -66,48 +66,43 @@ public struct OrganizationDetail {
 }
 
 struct OrganizationDetailView: View {
-    @Perception.Bindable var store: StoreOf<OrganizationDetail>
+    @Bindable var store: StoreOf<OrganizationDetail>
 
     var body: some View {
-        WithPerceptionTracking {
+        VStack(alignment: .center) {
+            if let image = store.organization.info.imageURL {
+                CachedAsyncImage(
+                    url: image,
+                    content: { $0.resizable() },
+                    placeholder: { ProgressView()}
+                )
+                .frame(width: 150, height: 150)
 
-            VStack(alignment: .center) {
-                if let image = store.organization.info.imageURL {
-                    CachedAsyncImage(
-                        url: image,
-                        content: { $0.resizable() },
-                        placeholder: { ProgressView()}
-                    )
-                    .frame(width: 150, height: 150)
-
-                    Text(store.organization.info.name)
-                        .font(.largeTitle)
-                }
-                List {
-                    WithPerceptionTracking {
-                        Section("Events") {
-                            ForEach(store.organization.events, id: \.name) { event in
-                                HStack {
-                                    Button(event.name) {
-                                        store.send(.didTapEvent(event))
-                                    }
-                                    Spacer()
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .buttonStyle(.navigationLink)
+                Text(store.organization.info.name)
+                    .font(.largeTitle)
+            }
+            List {
+                Section("Events") {
+                    ForEach(store.organization.events, id: \.name) { event in
+                        HStack {
+                            Button(event.name) {
+                                store.send(.didTapEvent(event))
                             }
+                            Spacer()
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(.navigationLink)
                     }
                 }
             }
-            .listStyle(.plain)
-            .fullScreenCover(
-                item: $store.scope(
-                    state: \.destination?.eventViewer,
-                    action: \.destination.eventViewer
-                ),
-                content: EventViewerView.init(store:)
-            )
         }
+        .listStyle(.plain)
+        .fullScreenCover(
+            item: $store.scope(
+                state: \.destination?.eventViewer,
+                action: \.destination.eventViewer
+            ),
+            content: EventViewerView.init(store:)
+        )
     }
 }

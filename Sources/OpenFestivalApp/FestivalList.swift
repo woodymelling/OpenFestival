@@ -87,57 +87,54 @@ public struct FestivalList {
 
 
 struct FestivalListView: View {
-    @Perception.Bindable var store: StoreOf<FestivalList>
+    @Bindable var store: StoreOf<FestivalList>
 
     var body: some View {
-        WithPerceptionTracking {
+        List(store.organizations, id: \.url) { org in
+            Button {
+                store.send(.didTapOrganization(org))
+            } label: {
+                HStack {
+                    CachedAsyncImage(
+                        url: org.info.imageURL,
+                        content: { $0.resizable() },
+                        placeholder: {
+                            Image(systemName: "photo.artframe")
+                                .resizable()
+                        }
+                    )
+                    .frame(width: 60, height: 60)
+                    .aspectRatio(contentMode: .fit)
 
-            List(store.organizations, id: \.url) { org in
-                Button {
-                    store.send(.didTapOrganization(org))
-                } label: {
-                    HStack {
-                        CachedAsyncImage(
-                            url: org.info.imageURL,
-                            content: { $0.resizable() },
-                            placeholder: {
-                                Image(systemName: "photo.artframe")
-                                    .resizable()
-                            }
-                        )
-                        .frame(width: 60, height: 60)
-                        .aspectRatio(contentMode: .fit)
-
-                        Text(org.info.name)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(org.info.name)
                 }
-                .buttonStyle(.navigationLink)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .listStyle(.plain)
-            .onAppear { store.send(.onAppear) }
-            .refreshable { await store.send(.didPullToRefresh).finish() }
-            .navigationTitle("My Festivals")
-            .toolbar {
-                Button("Add Festival", systemImage: "plus") {
-                    store.send(.didTapAddFestivalButton)
-                }
-            }
-            .sheet(
-                item: $store.scope(
-                    state: \.destination?.addRepository,
-                    action: \.destination.addRepository
-                ),
-                content: AddRepositoryView.init(store:)
-            )
-            .navigationDestination(
-                item: $store.scope(
-                    state: \.destination?.organizationDetail,
-                    action: \.destination.organizationDetail
-                ),
-                destination: OrganizationDetailView.init(store:)
-            )
+            .buttonStyle(.navigationLink)
         }
+        .listStyle(.plain)
+        .onAppear { store.send(.onAppear) }
+        .refreshable { await store.send(.didPullToRefresh).finish() }
+        .navigationTitle("My Festivals")
+        .toolbar {
+            Button("Add Festival", systemImage: "plus") {
+                store.send(.didTapAddFestivalButton)
+            }
+        }
+        .sheet(
+            item: $store.scope(
+                state: \.destination?.addRepository,
+                action: \.destination.addRepository
+            ),
+            content: AddRepositoryView.init(store:)
+        )
+        .navigationDestination(
+            item: $store.scope(
+                state: \.destination?.organizationDetail,
+                action: \.destination.organizationDetail
+            ),
+            destination: OrganizationDetailView.init(store:)
+        )
     }
 }
 

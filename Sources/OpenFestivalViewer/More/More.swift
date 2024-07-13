@@ -115,7 +115,7 @@ public extension EnvironmentValues {
 }
 
 public struct MoreView: View {
-    @Perception.Bindable var store: StoreOf<More>
+    @Bindable var store: StoreOf<More>
 
     public init(store: StoreOf<More>) {
         self.store = store
@@ -125,105 +125,102 @@ public struct MoreView: View {
     @Environment(\.isEventSpecificApplication) var isEventSpecificApplication
 
     public var body: some View {
-        WithPerceptionTracking {
-            List {
-                Section {
+        List {
+            Section {
+                MoreButton(
+                    "Workshops",
+                    image: Image(systemName: "figure.yoga"),
+                    color: eventColorScheme.workshopsColor
+                ) {
+                    store.send(.didTapWorkshops)
+                }
+            }
+
+            Section {
+                if store.event.siteMapImageURL != nil {
                     MoreButton(
-                        "Workshops",
-                        image: Image(systemName: "figure.yoga"),
-                        color: eventColorScheme.workshopsColor
+                        "Site Map",
+                        systemName: "map.fill",
+                        color: eventColorScheme.otherColors[1]
                     ) {
-                        store.send(.didTapWorkshops)
+                        store.send(.didTapSiteMap)
                     }
                 }
 
-                Section {
-                    if store.event.siteMapImageURL != nil {
-                        MoreButton(
-                            "Site Map",
-                            systemName: "map.fill",
-                            color: eventColorScheme.otherColors[1]
-                        ) {
-                            store.send(.didTapSiteMap)
-                        }
-                    }
-
-                    if store.event.address != nil {
-                        MoreButton(
-                            "Address",
-                            systemName: "mappin",
-                            color: eventColorScheme.otherColors[2]
-                        ) {
-                            store.send(.didTapAddress)
-                        }
-                    }
-                }
-
-                Section {
+                if store.event.address != nil {
                     MoreButton(
-                        "Notifications",
-                        systemName: "bell.badge.fill",
-                        color: eventColorScheme.otherColors[3]
+                        "Address",
+                        systemName: "mappin",
+                        color: eventColorScheme.otherColors[2]
                     ) {
-                        store.send(.didTapNotifications)
-                    }
-                }
-
-                Section {
-                    if store.event.contactNumbers.hasElements {
-                        MoreButton(
-                            "Emergency Contact",
-                            systemName: "phone.fill",
-                            color: eventColorScheme.otherColors[4]
-                        ) {
-                            store.send(.didTapContactInfo)
-                        }
-                    }
-                }
-
-                Section {
-                    if !isEventSpecificApplication {
-                        Button(
-                            "Refresh Event",
-                            systemImage: "arrow.clockwise",
-                            action: {
-                                store.send(.didTapRefreshEvent)
-                            }
-                        )
-
-                        Button {
-                            store.send(.didTapExitEvent, animation: .default)
-                        } label: {
-                            Text("Exit \(store.event.name)")
-                        }
+                        store.send(.didTapAddress)
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("More")
-            //            .navigationDestinationWrapper(
-            //                item: $store.scope(state: \.destination?.workshops, action: \.destination.workshops),
-            //                destination: WorkshopsView.init
-            //            )
-            .navigationDestination(
-                item: $store.scope(state: \.destination?.siteMap, action: \.destination.siteMap),
-                destination: SiteMapView.init
-            )
-            .navigationDestination(
-                item: $store.scope(state: \.destination?.address, action: \.destination.address),
-                destination: AddressView.init
-            )
-            //            .navigationDestinationWrapper(
-            //                item: $store.scope(state: \.destination?.notifications, action: \.destination.notifications),
-            //                destination: NotificationsView.init
-            //            )
-            .navigationDestination(
-                item: $store.scope(state: \.destination?.contactInfo, action: \.destination.contactInfo),
-                destination: ContactInfoView.init
-            )
 
+            Section {
+                MoreButton(
+                    "Notifications",
+                    systemName: "bell.badge.fill",
+                    color: eventColorScheme.otherColors[3]
+                ) {
+                    store.send(.didTapNotifications)
+                }
+            }
 
+            Section {
+                if store.event.contactNumbers.hasElements {
+                    MoreButton(
+                        "Emergency Contact",
+                        systemName: "phone.fill",
+                        color: eventColorScheme.otherColors[4]
+                    ) {
+                        store.send(.didTapContactInfo)
+                    }
+                }
+            }
+
+            Section {
+                if !isEventSpecificApplication {
+                    Button(
+                        "Refresh Event",
+                        systemImage: "arrow.clockwise",
+                        action: {
+                            store.send(.didTapRefreshEvent)
+                        }
+                    )
+
+                    Button {
+                        store.send(.didTapExitEvent, animation: .default)
+                    } label: {
+                        Text("Exit \(store.event.name)")
+                    }
+                }
+            }
         }
+        .listStyle(.insetGrouped)
+        .navigationTitle("More")
+        //            .navigationDestinationWrapper(
+        //                item: $store.scope(state: \.destination?.workshops, action: \.destination.workshops),
+        //                destination: WorkshopsView.init
+        //            )
+        .navigationDestination(
+            item: $store.scope(state: \.destination?.siteMap, action: \.destination.siteMap),
+            destination: SiteMapView.init
+        )
+        .navigationDestination(
+            item: $store.scope(state: \.destination?.address, action: \.destination.address),
+            destination: AddressView.init
+        )
+        //            .navigationDestinationWrapper(
+        //                item: $store.scope(state: \.destination?.notifications, action: \.destination.notifications),
+        //                destination: NotificationsView.init
+        //            )
+        .navigationDestination(
+            item: $store.scope(state: \.destination?.contactInfo, action: \.destination.contactInfo),
+            destination: ContactInfoView.init
+        )
+
     }
 
     struct MoreButton: View {

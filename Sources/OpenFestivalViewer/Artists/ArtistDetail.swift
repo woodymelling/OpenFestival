@@ -24,7 +24,7 @@ public struct ArtistDetail {
         public var id: Event.Artist.ID
 
         @Shared(.favoriteArtists) var favoriteArtists
-        @Shared(.event) var event
+        @SharedReader(.event) var event
 
         public var artist: Event.Artist? {
             event.artists[id: self.id]
@@ -35,6 +35,8 @@ public struct ArtistDetail {
         }
 
         @Presents var destination: Destination.State?
+
+        @Shared(.highlightedPerformance) var highlightingPerformance
     }
 
     @Reducer(state: .equatable)
@@ -57,8 +59,7 @@ public struct ArtistDetail {
         Reduce { state, action in
             switch action {
             case .didTapPerformance(let performance):
-
-                //                self.showScheduleItem(scheduleItem.id)
+                state.highlightingPerformance = performance
                 return .none
 
             case .favoriteArtistButtonTapped:
@@ -78,78 +79,75 @@ public struct ArtistDetail {
 }
 
 public struct ArtistDetailView: View {
-    @Perception.Bindable var store: StoreOf<ArtistDetail>
+    @Bindable var store: StoreOf<ArtistDetail>
 
     public init(store: StoreOf<ArtistDetail>) {
         self.store = store
     }
 
     public var body: some View {
-        WithPerceptionTracking {
-            if let artist = store.artist {
-
-                VStack(spacing: 1) {
-                    Header(artist: artist) {
-                        Text(artist.name)
-                            .font(.largeTitle)
-                            .fontWeight(.semibold)
-                            .padding(.leading)
-                    }
-
-                    List {
-                        ForEach(
-                            store.event.schedule[for: store.id].sorted(by: \.startTime)
-                        ) { performance in
-                            Button {
-                                store.send(.didTapPerformance(performance.id))
-                            } label: {
-                                PerformanceDetailRow(for: performance)
-                            }
-                            .buttonStyle(.navigationLink)
-                        }
-
-                        if let bio = artist.bio, !bio.isEmpty {
-                            Text(bio)
-                        }
-
-                        // MARK: Socials
-                        ForEach(artist.links, id: \.self) { link in
-                            Button {
-                                store.send(.didTapURL(link.url))
-                            } label: {
-                                LinkView(link)
-                            }
-                            .buttonStyle(.navigationLink)
-                        }
-                    }
-                    .listStyle(.plain)
-                    // Replicating drop shadow at the top of the scroll,
-                    // Doing it in normal ways is pretty buggy from what I can tell
-                    .overlay(alignment: .top) {
-                        LinearGradient(
-                            colors: [
-                                Color(.systemBackground),
-                                .clear
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .frame(height: 3)
-                    }
-                    .scrollContentMargins(length: 3)
+        if let artist = store.artist {
+            VStack(spacing: 1) {
+                Header(artist: artist) {
+                    Text(artist.name)
+                        .font(.largeTitle)
+                        .fontWeight(.semibold)
+                        .padding(.leading)
                 }
-                .sheet(
-                    item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
-                    content: { SafariView(store: $0).ignoresSafeArea(edges: .bottom) }
-                )
-                .toolbar {
-                    Toggle("Favorite", isOn: $store.favoriteArtists[artist.id])
-                        .frame(square: 20)
-                        .toggleStyle(FavoriteToggleStyle())
+
+                List {
+                    ForEach(
+                        store.event.schedule[for: store.id].sorted(by: \.startTime)
+                    ) { performance in
+                        Button {
+                            store.send(.didTapPerformance(performance.id))
+                        } label: {
+                            PerformanceDetailRow(for: performance)
+                        }
+                        .buttonStyle(.navigationLink)
+                    }
+
+                    if let bio = artist.bio, !bio.isEmpty {
+                        Text(bio)
+                    }
+
+                    // MARK: Socials
+                    ForEach(artist.links, id: \.self) { link in
+                        Button {
+                            store.send(.didTapURL(link.url))
+                        } label: {
+                            LinkView(link)
+                        }
+                        .buttonStyle(.navigationLink)
+                    }
                 }
-            } else {
-                ProgressView()
+                .listStyle(.plain)
+                // Replicating drop shadow at the top of the scroll,
+                // Doing it in normal ways is pretty buggy from what I can tell
+                .overlay(alignment: .top) {
+                    LinearGradient(
+                        colors: [
+                            Color(.systemBackground),
+                            .clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 3)
+                }
+                .contentMargins(3)
             }
+            .sheet(
+                item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
+                content: { SafariView(store: $0).ignoresSafeArea(edges: .bottom) }
+            )
+            .toolbar {
+                Toggle("Favorite", isOn: $store.favoriteArtists[artist.id])
+                    .frame(square: 20)
+                    .toggleStyle(FavoriteToggleStyle())
+            }
+        } else {
+            ProgressView()
         }
     }
 
@@ -270,18 +268,6 @@ public struct ArtistDetailView: View {
         ArtistDetailView(store: Store(initialState: ArtistDetail.State(id: "Float On"), reducer: {
             ArtistDetail()
         }))
-    }
-}
-
-@available(iOS, deprecated: 17, message: "Use contentMargins directly.")
-extension View {
-    @ViewBuilder
-    func scrollContentMargins(edges: Edge.Set = .all, length: CGFloat) -> some View {
-        if #available(iOS 17, *) {
-            self.contentMargins(.top, length, for: .scrollContent)
-        } else {
-            self
-        }
     }
 }
 

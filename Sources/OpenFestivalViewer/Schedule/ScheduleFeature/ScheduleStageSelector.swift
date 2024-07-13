@@ -70,9 +70,8 @@ struct ScheduleHeaderButton: View {
 
     var body: some View {
         CachedAsyncIcon(url: stage.iconImageURL) {
-            Text(stage.name)
-                .font(.largeTitle)
-                .padding(20)
+            Text(stage.name.first.map(String.init) ?? "")
+                .font(.system(.largeTitle, design: .rounded, weight: .heavy))
         }
         .foregroundStyle(isSelected ? .white : stageColor)
         .frame(idealWidth: 60, idealHeight: 60)

@@ -25,7 +25,7 @@ public struct ArtistList {
             event.artists
                 .filter {
                     if searchText.hasElements {
-                        $0.name.contains(searchText)
+                        $0.name.caseInsensitiveContains(searchText)
                     } else {
                         true
                     }
@@ -65,30 +65,28 @@ public struct ArtistList {
 }
 
 public struct ArtistListView: View {
-    @Perception.Bindable var store: StoreOf<ArtistList>
+    @Bindable var store: StoreOf<ArtistList>
 
     public init(store: StoreOf<ArtistList>) {
         self.store = store
     }
 
     public var body: some View {
-        WithPerceptionTracking {
-            List(store.artists) { artist in
-                Button {
-                    store.send(.didTapArtist(artist.id))
-                } label: {
-                    ArtistRow(artist: artist)
-                }
+        List(store.artists) { artist in
+            Button {
+                store.send(.didTapArtist(artist.id))
+            } label: {
+                ArtistRow(artist: artist)
             }
-            .searchable(text: $store.searchText)
-            .autocorrectionDisabled()
-            .navigationTitle("Artists")
-            .listStyle(.plain)
-            .navigationDestination(
-                item: $store.scope(state: \.artistDetail, action: \.artistDetail),
-                destination: ArtistDetailView.init
-            )
         }
+        .searchable(text: $store.searchText)
+        .autocorrectionDisabled()
+        .navigationTitle("Artists")
+        .listStyle(.plain)
+        .navigationDestination(
+            item: $store.scope(state: \.artistDetail, action: \.artistDetail),
+            destination: ArtistDetailView.init
+        )
     }
 
     public struct ArtistRow: View {
@@ -162,5 +160,12 @@ struct ArtistListView_Previews: PreviewProvider {
                 )
             )
         }
+    }
+}
+
+
+extension StringProtocol {
+    func caseInsensitiveContains(_ other: String) -> Bool {
+        self.lowercased().contains(other)
     }
 }

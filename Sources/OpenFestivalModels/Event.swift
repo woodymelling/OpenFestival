@@ -147,6 +147,12 @@ public extension Event {
             Set(self.store.values)
         }
 
+        public func dayFor(_ performance: Event.Performance.ID) -> Day.ID? {
+            pageIndex.first { 
+                $0.value.values.flatMap { $0 }.contains(performance)
+            }?.key
+        }
+
         public struct Day: Identifiable, Equatable {
             public init(
                 id: Tagged<Day, OpenFestivalIDType>,

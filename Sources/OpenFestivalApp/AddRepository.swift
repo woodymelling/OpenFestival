@@ -65,43 +65,40 @@ public struct AddRepository {
 }
 
 struct AddRepositoryView: View {
-    @Perception.Bindable var store: StoreOf<AddRepository>
+    @Bindable var store: StoreOf<AddRepository>
 
     var body: some View {
-        WithPerceptionTracking {
+        NavigationStack{
+            VStack {
+                VStack(alignment: .leading) {
+                    TextField("URL", text: $store.urlInput)
+                        .controlSize(.large)
+                        .textFieldStyle(.roundedBorder)
 
-            NavigationStack{
-                VStack {
-                    VStack(alignment: .leading) {
-                        TextField("URL", text: $store.urlInput)
-                            .controlSize(.large)
-                            .textFieldStyle(.roundedBorder)
-
-                        if let errorMessage = store.errorMessage {
-                            Text(errorMessage)
-                                .foregroundStyle(.red)
-                        }
-
-                        Text("Add a festival from a github repository")
-                            .font(.caption)
+                    if let errorMessage = store.errorMessage {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
                     }
-                    Spacer()
-                    Button {
-                        store.send(.didTapAddRepositoryButton)
-                    } label: {
-                        if store.isAdding {
-                            ProgressView()
-                        } else {
-                            Text("Add Repository")
-                        }
-                    }
-                    .disabled(store.isAdding)
-                    .buttonStyle(.borderedProminent)
+
+                    Text("Add a festival from a github repository")
+                        .font(.caption)
                 }
-                .padding()
-                .navigationTitle("Add Festival")
+                Spacer()
+                Button {
+                    store.send(.didTapAddRepositoryButton)
+                } label: {
+                    if store.isAdding {
+                        ProgressView()
+                    } else {
+                        Text("Add Repository")
+                    }
+                }
+                .disabled(store.isAdding)
+                .buttonStyle(.borderedProminent)
             }
-            .presentationDetents([.medium])
+            .padding()
+            .navigationTitle("Add Festival")
         }
+        .presentationDetents([.medium])
     }
 }
