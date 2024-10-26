@@ -26,7 +26,7 @@ public struct CalendarDate: Equatable, Hashable {
         self.day = day
     }
 
-    public init(date: Date) {
+    public init(_ date: Date) {
         @Dependency(\.calendar) var calendar
         self.year = calendar.component(.year, from: date)
         self.month = calendar.component(.month, from: date)
@@ -39,7 +39,7 @@ public struct CalendarDate: Equatable, Hashable {
             return DateComponents(calendar: calendar, year: self.year, month: self.month, day: self.day).date!
         }
         set {
-            self = CalendarDate(date: newValue)
+            self = CalendarDate(newValue)
         }
     }
 }
@@ -47,7 +47,7 @@ public struct CalendarDate: Equatable, Hashable {
 extension CalendarDate: LosslessStringConvertible {
     public init?(_ description: String) {
         if let date = Self.formatter.date(from: description) {
-            self.init(date: date)
+            self.init(date)
         } else {
             return nil
         }
@@ -89,13 +89,13 @@ extension CalendarDate: Codable {
 public extension CalendarDate {
     static var today: CalendarDate {
         @Dependency(\.date) var date
-        return CalendarDate(date: date())
+        return CalendarDate(date())
     }
 
     func adding(years: Int? = nil, months: Int? = nil, weeks: Int? = nil, days: Int? = nil) -> CalendarDate {
         @Dependency(\.calendar) var calendar
         let components = DateComponents(year: years, month: months, day: days, weekOfYear: weeks)
-        return CalendarDate(date: calendar.date(byAdding: components, to: self.date)!)
+        return CalendarDate(calendar.date(byAdding: components, to: self.date)!)
     }
 
     func atTimeOfDay(hour: Int? = nil, minute: Int? = nil, seconds: Int? = nil) -> Date {
@@ -166,7 +166,7 @@ extension CalendarDate: CustomStringConvertible {}
 
 public extension Date {
     var calendarDate: CalendarDate {
-        get { CalendarDate(date: self) }
+        get { CalendarDate(self) }
         set {
             @Dependency(\.calendar) var calendar
             let components = calendar.dateComponents([.hour, .minute, .hour, .second], from: self)

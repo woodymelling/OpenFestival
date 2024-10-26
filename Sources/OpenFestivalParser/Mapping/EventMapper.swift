@@ -40,7 +40,6 @@ struct OrganizationMapper: ValidatedMapper {
             .sequence()
             .map { events in
                 Organization(
-                    id: .init(dto.info.name),
                     info: .init(
                         name: dto.info.name,
                         imageURL: dto.info.imageURL
@@ -61,16 +60,22 @@ struct EventMapper: ValidatedMapper {
             StagesMapper().map(dto.stages).mapErrors { Validation.stage($0) },
             ArtistsMapper().map(dto.artists).mapErrors { _ in .artist },
             ScheduleMapper().map(dto.schedule).mapErrors { Validation.schedule($0) },
-            TimeZoneMapper().map(dto.eventInfo.timeZone).mapErrors { _ in .generic }
+            TimeZoneMapper().map(dto.eventInfo.timeZone).mapErrors { _ in .generic },
+            ContactInfoMapper().map(dto.contactInfo ?? []).mapErrors { _ in .generic }
         )
-        .map { stages, artists, schedule, timeZone in
+        .map { stages, artists, schedule, timeZone, contactInfo in
             var artists = artists
             addArtistsFromSchedule(to: &artists, schedule: schedule)
-
+            
             return Event(
-                id: "TODO",
                 name: dto.eventInfo.name ?? "",
                 timeZone: timeZone,
+                imageURL: dto.eventInfo.imageURL,
+                siteMapImageURL: dto.eventInfo.siteMapImageURL,
+                address: dto.eventInfo.address,
+                latitude: nil,
+                longitude: nil,
+                contactNumbers: contactInfo,
                 artists: artists,
                 stages: stages,
                 schedule: schedule,
@@ -86,7 +91,6 @@ struct EventMapper: ValidatedMapper {
         for artistID in schedule.performances.flatMap(\.artistIDs) {
             if artists[id: artistID] == nil {
                 artists[id: artistID] = Event.Artist(
-                    id: artistID,
                     name: artistID.rawValue,
                     bio: nil,
                     imageURL: nil,
@@ -133,12 +137,25 @@ struct StagesMapper: ValidatedMapper {
             IdentifiedArray(
                 uniqueElements: dtos.map {
                     Event.Stage(
-                        id: Tagged($0.name),
                         name: $0.name,
                         iconImageURL: $0.imageURL
                     )
                 }
             )
+        )
+    }
+}
+
+struct ContactInfoMapper: ValidatedMapper {
+    typealias From = [ContactInfoDTO]
+    typealias To = [Event.ContactNumber]
+    typealias ToError = Never
+
+    func map(_ dtos: [ContactInfoDTO]) -> Output {
+        .valid(
+            dtos.map {
+                Event.ContactNumber(title: $0.title, phoneNumber: $0.phoneNumber, description: $0.description)
+            }
         )
     }
 }
@@ -184,7 +201,6 @@ struct ArtistsMapper: ValidatedMapper {
         .valid(
             IdentifiedArray(uniqueElements: dtos.map {
                 Event.Artist(
-                    id: .init($0.name),
                     name: $0.name,
                     bio: $0.description,
                     imageURL: $0.imageURL,

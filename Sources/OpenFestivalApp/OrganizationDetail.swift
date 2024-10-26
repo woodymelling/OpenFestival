@@ -11,7 +11,6 @@ import OpenFestivalParser
 import OpenFestivalViewer
 import OpenFestivalModels
 import SwiftUI
-import CachedAsyncImage
 
 @Reducer
 public struct OrganizationDetail {
@@ -74,7 +73,7 @@ struct OrganizationDetailView: View {
                 CachedAsyncImage(
                     url: image,
                     content: { $0.resizable() },
-                    placeholder: { ProgressView()}
+                    placeholder: { ProgressView() }
                 )
                 .frame(width: 150, height: 150)
 

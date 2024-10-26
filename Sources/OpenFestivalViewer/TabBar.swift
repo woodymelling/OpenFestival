@@ -34,6 +34,13 @@ public struct EventViewer {
         case onAppear
         
         case sourceEventDidUpdate(Event)
+        case delegate(Delegate)
+
+        @CasePathable
+        public enum Delegate {
+            case didTapRefreshEvent
+            case didTapExitEvent
+        }
     }
 
     public var body: some ReducerOf<Self> {
@@ -47,7 +54,13 @@ public struct EventViewer {
                 state.event = event
                 return .none
 
-            case .tabBar:
+            case .tabBar(.more(.didTapRefreshEvent)):
+                return .send(.delegate(.didTapRefreshEvent))
+
+            case .tabBar(.more(.didTapExitEvent)):
+                return .send(.delegate(.didTapExitEvent))
+
+            case .tabBar, .delegate:
                 return .none
             }
 
@@ -55,7 +68,6 @@ public struct EventViewer {
         .ifLet(\.tabBar, action: \.tabBar) {
             TabBar()
         }
-        ._printChanges()
     }
 }
 
@@ -130,6 +142,7 @@ public struct TabBar {
                 state.schedule.selectedStage = performance.stageID
                 state.schedule.selectedDay = performanceDay
                 state.schedule.destination = nil
+                state.schedule.showingPerformanceID = performanceID
                 return .none
 
             case .binding, .schedule, .artistList, .more:

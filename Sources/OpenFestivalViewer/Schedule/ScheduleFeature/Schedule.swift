@@ -46,7 +46,7 @@ public struct Schedule {
         public var selectedDay: Event.Schedule.Day.ID
         public var filteringFavorites: Bool = false
 
-        public var cardToDisplay: Event.Performance.ID?
+        public var showingPerformanceID: Event.Performance.ID?
 
         public var showTutorialElements: Bool = false
         public var showingLandscapeTutorial: Bool = false
@@ -58,32 +58,27 @@ public struct Schedule {
             // For future filters
             return filteringFavorites
         }
+
+        var showTimeIndicator: Bool {
+            @Dependency(\.date) var date
+
+            if let selectedDay = event.schedule.dayMetadatas[id: selectedDay],
+               selectedDay.date == CalendarDate(date()) {
+                return true
+            } else {
+                return false
+            }
+        }
     }
 
     
     public enum Action: BindableAction {
         case binding(_ action: BindingAction<State>)
-
-        case task
-        case scheduleTutorial(ScheduleTutorialAction)
-
-        case showAndHighlightCard(Event.Performance.ID)
-        case highlightCard(Event.Performance.ID)
-        case unHighlightCard
-
         case didTapCard(Event.Performance.ID)
 
         case destination(PresentationAction<Destination.Action>)
         
         case didSelectStage(Event.Stage.ID)
-
-        
-        public enum ScheduleTutorialAction {
-            case showLandscapeTutorial
-            case hideLandscapeTutorial
-            case showFilterTutorial
-            case hideFilterTutorial
-        }
     }
     
     @Reducer
@@ -94,68 +89,9 @@ public struct Schedule {
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
-        
         Reduce { state, action in
             switch action {
             case .binding:
-                return .none
-                
-            case .task:
-                return showFilterTutorialIfRequired(state: &state)
-
-            case let .scheduleTutorial(tutorialAction):
-                
-                switch tutorialAction {
-                case .showLandscapeTutorial:
-                    state.showingLandscapeTutorial = true
-                case .hideLandscapeTutorial:
-                    state.showingLandscapeTutorial = false
-                case .showFilterTutorial:
-                    state.showingFilterTutorial = true
-                case .hideFilterTutorial:
-                    state.showingFilterTutorial = false
-                }
-                
-                return .none
-                
-            case .showAndHighlightCard(let cardID):
-                
-//                state.destination = nil
-//                
-//                guard let card = state.event.schedule[id: cardID] else {
-//                    XCTFail("Could not find scheduleItem with id: \(cardID)")
-//                    return .none
-//                }
-//                
-//                let schedulePage = card.schedulePageIdentifier(
-//                    dayStartsAtNoon: state.eventData.event.dayStartsAtNoon,
-//                    timeZone: state.eventData.event.timeZone
-//                )
-//
-//                if let stage = state.eventData.stages[id: schedulePage.stageID] {
-//                    state.selectedStage = stage.id
-//                }
-//
-//                state.selectedDate = schedulePage.date
-//                
-//                state.cardToDisplay = state.eventData.schedule[id: cardID]
-
-                return .run { send in
-                    
-                    try! await Task.sleep(for: .seconds(2))
-                    
-//                    await send(.unHighlightCard)
-                         
-                    await send(.unHighlightCard, animation: .default)
-                }
-
-            case .highlightCard(let card):
-                state.cardToDisplay = card
-                return .none
-
-            case .unHighlightCard:
-                state.cardToDisplay = nil
-
                 return .none
 
             case .didTapCard(let performanceID):
@@ -182,30 +118,6 @@ public struct Schedule {
             }
         }
         .ifLet(\.$destination, action: \.destination)
-    }
-    
-    func showFilterTutorialIfRequired(state: inout State) -> Effect<Action> {
-        @Shared(.appStorage("hasShownScheduleTutorial"))
-        var hasShownScheduleTutorial: Bool = true
-
-        if state.showingComingSoonScreen || hasShownScheduleTutorial {
-            return .none
-        }
-        
-        hasShownScheduleTutorial = true
-
-        return .run { send in
-            try await Task.sleep(for: .seconds(1))
-            
-            await send(.scheduleTutorial(.showLandscapeTutorial))
-            
-            try await Task.sleep(for: .seconds(2))
-            await send(.scheduleTutorial(.hideLandscapeTutorial))
-            
-            await send(.scheduleTutorial(.showFilterTutorial))
-            try await Task.sleep(for: .seconds(5))
-            await send(.scheduleTutorial(.hideFilterTutorial))
-        }
     }
 }
 
@@ -240,7 +152,6 @@ public struct ScheduleView: View {
                 FilterMenu(store: store)
             }
         }
-        .task { await store.send(.task).finish() }
         .environment(\.dayStartsAtNoon, true)
         .sheet(item: $store.scope(state: \.destination?.artistDetail, action: \.destination.artistDetail)) { store in
             NavigationStack {
@@ -252,26 +163,6 @@ public struct ScheduleView: View {
                 PerformanceDetailView(store: store)
             }
         }
-//            .sheet(item: $store.scope(state: \.destination?.groupSet, action: \.destination.groupSet)) { store in
-//                NavigationStack {
-//                    GroupSetDetailView(store: store)
-//                }
-//            }
-//            .toast(
-//                isPresenting: $store.showingLandscapeTutorial,
-//                duration: 5,
-//                tapToDismiss: true,
-//                alert: {
-//                    AlertToast(
-//                        displayMode: .alert,
-//                        type: .systemImage("arrow.counterclockwise", .primary),
-//                        subTitle: "Rotate your phone to see all of the stages at once"
-//                    )
-//                },
-//                completion: {
-//                    store.send(.scheduleTutorial(.hideLandscapeTutorial))
-//                }
-//            )
     }
 
 

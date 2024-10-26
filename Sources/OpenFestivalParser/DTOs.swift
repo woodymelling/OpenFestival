@@ -33,7 +33,7 @@ extension EventDTO {
     }
 
     @MemberwiseInit
-    struct DaySchedule: Decodable, Equatable {
+    struct DaySchedule: Codable, Equatable {
         var customTitle: String?
         var date: CalendarDate? // This could be defined in the yaml, or from the title of the file
         var performances: [String: [PerformanceDTO]]
@@ -60,7 +60,7 @@ extension EventDTO {
     }
 }
 
-struct EventInfoDTO: Decodable, Equatable {
+struct EventInfoDTO: Codable, Equatable {
     var name: String?
     var address: String?
     var timeZone: String?
@@ -70,47 +70,46 @@ struct EventInfoDTO: Decodable, Equatable {
 
     var colorScheme: ColorScheme?
 
-    struct ColorScheme: Equatable, Decodable {
+    struct ColorScheme: Equatable, Codable {
         var primaryColor: String?
         var workshopsColor: String?
     }
 }
 
-struct StageDTO: Decodable, Equatable {
+struct StageDTO: Codable, Equatable {
     var name: String
     var color: String?
     var imageURL: URL?
 }
 
-struct ContactInfoDTO: Decodable, Equatable {
+struct ContactInfoDTO: Codable, Equatable {
     var phoneNumber: String
     var title: String
     var description: String?
 }
 
-struct PerformanceDTO: Decodable, Equatable {
+struct PerformanceDTO: Codable, Equatable {
     var title: String?
     var artist: String?
     var artists: [String]?
     var time: String
     var endTime: String?
-    var endtime: String?
 }
 
-struct ArtistDTO {
+struct ArtistDTO: Sendable {
     var name: String
     var description: String
     var imageURL: URL?
     var links: [Link]
 
 
-    struct Link: Decodable, Equatable {
+    struct Link: Codable, Equatable, Sendable {
         var url: URL
         var label: String?
     }
 }
 
-public struct ArtistInfoFrontMatter: Decodable, Equatable {
+public struct ArtistInfoFrontMatter: Codable, Equatable {
     var imageURL: URL?
     var links: [ArtistDTO.Link]
 }

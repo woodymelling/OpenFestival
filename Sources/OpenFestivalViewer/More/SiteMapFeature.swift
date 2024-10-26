@@ -9,8 +9,9 @@ import SwiftUI
 import PDFKit
 //import Kingfisher
 import ComposableArchitecture
-import CachedAsyncImage
 import Zoomable
+import Nuke
+import NukeUI
 
 @Reducer
 public struct SiteMapFeature {
@@ -32,15 +33,34 @@ struct SiteMapView: View {
     let store: StoreOf<SiteMapFeature>
 
     var body: some View {
-        CachedAsyncImage(url: store.url) {
-            $0
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .zoomable()
-        } placeholder: {
-            ProgressView()
+
+        LazyImage(url: store.url) { state in
+            if let image = state.image {
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .zoomable()
+            } else if state.error != nil {
+                Color.red // Indicates an error
+            } else {
+                ProgressView()
+            }
         }
+//        LazyImage(url: store.url) {
+//            $0
+//                .resizable()
+//                .aspectRatio(contentMode: .fit)
+//                .zoomable()
+//        } placeholder: {
+//            ProgressView()
+//        }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Site Map")
     }
+}
+
+
+extension URLCache {
+
+    static let siteMapImageCache = URLCache(memoryCapacity: 512_000_000, diskCapacity: 10_000_000_000)
 }

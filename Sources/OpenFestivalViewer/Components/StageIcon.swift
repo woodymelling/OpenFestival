@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftUI
-import CachedAsyncImage
 import OpenFestivalModels
 import ComposableArchitecture
 
@@ -32,23 +31,35 @@ public struct StageIconView: View {
             CachedAsyncIcon(
                 url: stage.iconImageURL,
                 placeholder: {
-                    ZStack {
-                        Text("\(stage.name.first.map(String.init) ?? "")")
-                            .font(.system(size: 300, weight: .heavy))
-                            .minimumScaleFactor(0.001)
-                            .padding()
-                            .background {
-                                Circle()
-                                    .fill(stageColor)
-                            }
-                    }
+                    DefaultStageIcon(stage: stage)
             })
             .foregroundStyle(colorScheme == .light ? stageColor : .white)
         }
     }
 }
 
+struct DefaultStageIcon: View {
+    var stage: Event.Stage
+    @Environment(\.eventColorScheme) var eventColorScheme
 
+    var stageColor: Color {
+        eventColorScheme.stageColors[stage.id]
+    }
+    var body: some View {
+        ZStack {
+            Text("\(stage.name.first.map(String.init) ?? "")")
+                .font(.system(size: 300, weight: .heavy))
+                .minimumScaleFactor(0.001)
+                .padding()
+                .background {
+                    Circle()
+                        .fill(stageColor)
+                }
+        }
+    }
+}
+
+import NukeUI
 
 public struct CachedAsyncIcon<Content: View>: View {
     public init(
@@ -69,17 +80,18 @@ public struct CachedAsyncIcon<Content: View>: View {
     @State var hasTransparency = true
 
     public var body: some View {
-        CachedAsyncImage(url: url, urlCache: .iconCache) { image in
-            image
-                .resizable()
-                .renderingMode(hasTransparency ? .template : .original)
-                .aspectRatio(contentMode: .fit)
-                .frame(alignment: .center)
-//                    .task {
-//                        self.hasTransparency = await image.frame(square: 100).hasTransparency()
-//                    }
-        } placeholder: {
-            placeholder()
+        LazyImage(url: url) { state in
+            if let image = state.image {
+                image
+                    .resizable()
+                    .renderingMode(hasTransparency ? .template : .original)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(alignment: .center)
+            } else if state.error != nil {
+                placeholder()
+            } else {
+                placeholder()
+            }
         }
     }
 }

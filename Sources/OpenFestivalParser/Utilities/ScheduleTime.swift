@@ -43,9 +43,9 @@ public struct ScheduleTime: Codable {
         return DateComponents(hour: hour, minute: minute)
     }
 
-    func formattedString() -> String {
+    func formattedString(dateFormat: String = "HH:mm:ss") -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
+        formatter.dateFormat = dateFormat
         formatter.timeZone = .init(secondsFromGMT: 0)
         guard let date = Calendar.current.date(from: toDateComponents()) else {
             return ""

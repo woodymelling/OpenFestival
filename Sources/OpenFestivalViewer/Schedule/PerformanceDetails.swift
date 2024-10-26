@@ -23,7 +23,6 @@ public struct PerformanceDetails {
         }
 
         var artists: [Event.Artist] {
-
             (performance?.artistIDs ?? []).compactMap {
                 event.artists[id: $0]
             }

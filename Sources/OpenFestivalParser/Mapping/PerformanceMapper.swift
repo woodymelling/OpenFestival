@@ -38,6 +38,58 @@ struct TimelessStagelessPerformance: Equatable {
     var artistIDs: OrderedSet<Event.Artist.ID>
 }
 
+import Parsing
+
+extension EventFileTree.ScheduleDayConversion {
+    struct TimelessStagelessPerformanceConversion: Conversion {
+        typealias Input = PerformanceDTO
+        typealias Output = TimelessStagelessPerformance
+
+        func apply(_ input: PerformanceDTO) throws -> TimelessStagelessPerformance {
+            TimelessStagelessPerformance(
+                startTime: try ScheduleTimeConversion().apply(input.time),
+                endTime: try input.endTime.map(ScheduleTimeConversion().apply(_:)),
+                customTitle: input.title,
+                artistIDs: try getArtists(artist: input.artist, artists: input.artists)
+            )
+        }
+
+        func unapply(_ output: TimelessStagelessPerformance) throws -> PerformanceDTO {
+            let artistIDs = output.artistIDs.map(\.rawValue)
+            return PerformanceDTO(
+                title: output.customTitle,
+                artist: artistIDs.count == 1 ? artistIDs.first : nil,
+                artists: artistIDs.count > 1 ? artistIDs : nil,
+                time: try ScheduleTimeConversion().unapply(output.startTime),
+                endTime: try output.endTime.map(ScheduleTimeConversion().unapply(_:))
+            )
+        }
+
+
+        typealias PerformanceError = Validation.ScheduleError.PerformanceError
+
+        func getArtists(artist: String?, artists: [String]?) throws -> OrderedSet<Event.Artist.ID> {
+            switch (artist, artists) {
+            case (.none, .none): return []
+            case (.some, .some): throw PerformanceError.artistAndArtists
+            case (.some(let artistName), .none):
+                guard artistName.hasElements
+                else { throw PerformanceError.emptyArtist }
+
+                return OrderedSet([Event.Artist.ID(artistName)])
+
+            case (.none, .some(let artists)):
+                guard artists.hasElements
+                else { throw PerformanceError.emptyArtists  }
+
+                return OrderedSet(artists.map(Event.Artist.ID.init(rawValue:)))
+            }
+        }
+    }
+
+}
+
+
 extension PerformanceDTO {
     var toPartialPerformance: Validated<TimelessStagelessPerformance, Validation.ScheduleError.PerformanceError> {
         typealias PerformanceError = Validation.ScheduleError.PerformanceError
@@ -45,14 +97,14 @@ extension PerformanceDTO {
         typealias ArtistCollection = OrderedSet<ArtistID>
 
         let startTime = Validated {
-            try parseTimeString(self.time)
+            try ScheduleTimeConversion().apply(self.time)
         } mappingError: { _ in
             PerformanceError.invalidStartTime(self.time)
         }
 
         let endTime = Validated {
-            try (self.endTime ?? self.endtime).map {
-                try parseTimeString($0)
+            try self.endTime.map {
+                try ScheduleTimeConversion().apply($0)
             }
         } mappingError: { _ in
             PerformanceError.invalidEndTime(self.endTime ?? "")
@@ -93,23 +145,36 @@ extension PerformanceDTO {
     }
 }
 
-func parseTimeString(_ time: String) throws -> ScheduleTime {
-    struct TimeParsingError: Error {}
 
-    let formatter = DateFormatter()
-    let formats = ["h:mm a", "HH:mm", "h a", "h:mm", "h"]
+struct ScheduleTimeConversion: Conversion {
+    typealias Input = String
+    typealias Output = ScheduleTime
 
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    private let formats = ["h:mm a", "HH:mm", "h a", "h:mm", "h"]
 
-    for format in formats {
-        formatter.dateFormat = format
-        if let time = ScheduleTime(from: time, using: formatter) {
-            return time
+    func apply(_ input: Input) throws -> Output {
+        struct TimeParsingError: Error {}
+
+        let formatter = DateFormatter()
+
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+        for format in formats {
+            formatter.dateFormat = format
+            if let time = ScheduleTime(from: input, using: formatter) {
+                return time
+            }
         }
+
+        throw TimeParsingError()
     }
 
-    throw TimeParsingError()
+    func unapply(_ output: ScheduleTime) throws -> String {
+        output.formattedString(dateFormat: formats.first!)
+    }
 }
+
+import Parsing
 
 extension Validated {
     func flatMapish<U>(_ transform: (Value) -> Validated<U, Error>) -> Validated<U, Error> {

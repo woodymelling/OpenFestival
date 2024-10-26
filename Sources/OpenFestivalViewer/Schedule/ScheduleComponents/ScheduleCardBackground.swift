@@ -50,7 +50,7 @@ public struct ScheduleCardBackground<Content: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         // This is to give a little bit of space between cards that bump against each other,
         // It makes it easier to differentiate between the 
-        .padding(.bottom, 0.5)
+        .padding(.bottom, 0.2)
     }
 }
 

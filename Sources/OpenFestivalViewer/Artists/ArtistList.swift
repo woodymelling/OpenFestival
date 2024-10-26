@@ -8,7 +8,6 @@
 import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
-import CachedAsyncImage
 
 @Reducer
 public struct ArtistList {
@@ -81,6 +80,7 @@ public struct ArtistListView: View {
         }
         .searchable(text: $store.searchText)
         .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
         .navigationTitle("Artists")
         .listStyle(.plain)
         .navigationDestination(
@@ -166,6 +166,6 @@ struct ArtistListView_Previews: PreviewProvider {
 
 extension StringProtocol {
     func caseInsensitiveContains(_ other: String) -> Bool {
-        self.lowercased().contains(other)
+        self.lowercased().contains(other.lowercased())
     }
 }

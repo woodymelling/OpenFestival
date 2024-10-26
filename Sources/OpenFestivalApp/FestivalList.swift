@@ -9,8 +9,7 @@ import Foundation
 import ComposableArchitecture
 import SwiftUI
 import OpenFestivalParser
-import CachedAsyncImage
-
+import OpenFestivalViewer
 
 @Reducer
 public struct FestivalList {

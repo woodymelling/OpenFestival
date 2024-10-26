@@ -1,0 +1,26 @@
+//
+//  YamlConversion.swift
+//  OpenFestival
+//
+//  Created by Woodrow Melling on 10/22/24.
+//
+
+
+import Parsing
+import Foundation
+import Yams
+
+struct YamlConversion<T: Codable>: Conversion {
+    typealias Input = Data
+    typealias Output = T
+
+    init(_ type: T.Type) { }
+
+    func apply(_ input: Data) throws -> T {
+        try YAMLDecoder().decode(T.self, from: input)
+    }
+
+    func unapply(_ output: T) throws -> Data {
+        try Data(YAMLEncoder().encode(output).utf8)
+    }
+}

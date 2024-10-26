@@ -20,7 +20,6 @@ class DayScheduleMappingTests: XCTestCase {
         } operation: {
             super.perform(run)
         }
-
     }
     
     func testMappingDaySchedule() {
@@ -64,7 +63,7 @@ class DayScheduleMappingTests: XCTestCase {
                 id: .init("FileName"),
                 date: CalendarDate(year: 2024, month: 6, day: 12),
                 customTitle: nil,
-                performances: [
+                stageSchedules: [
                     "Bass Haven": [
                         Event.Performance(
                             id: .init("Sunspear-16:30-Bass Haven"),
@@ -148,7 +147,7 @@ class DayScheduleMappingTests: XCTestCase {
                     id: "FileName",
                     date: CalendarDate(year: 2024, month: 6, day: 12),
                     customTitle: nil,
-                    performances: [
+                    stageSchedules: [
                         "Bass Haven": [
                             Event.Performance(
                                 id: .init("Sunspear-18:30-Bass Haven"),

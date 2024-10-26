@@ -1,8 +1,9 @@
 import XCTest
 @testable import OpenFestivalParser
-import Yams
 import CustomDump
 import OpenFestivalModels
+import Testing
+import Parsing
 
 final class YamlDecodingTests: XCTestCase {
     func testDecodingSimpleEventInfo() throws {
@@ -24,12 +25,12 @@ final class YamlDecodingTests: XCTestCase {
             workshopsColor: "#C70039"
         """
 
-        let encoder = YAMLDecoder()
+        let parser = Parsers.Yaml<EventInfoDTO>()
 
-        let dto = try encoder.decode(EventInfoDTO.self, from: yaml)
+        let dto = try parser.parse(yaml)
 
-        XCTAssertNoDifference(
-            dto,
+        #expect(
+            dto ==
             EventInfoDTO(
                 name: "Testival",
                 address: "123 Festival Road, Music City",
@@ -55,12 +56,13 @@ final class YamlDecodingTests: XCTestCase {
           color: "#4287f5"
         """
 
-        let encoder = YAMLDecoder()
+        let parser = Parsers.Yaml<[StageDTO]>()
 
-        let dto = try encoder.decode([StageDTO].self, from: yaml)
+        let dto = try parser.parse(yaml)
 
-        XCTAssertNoDifference(
-            dto,
+
+        #expect(
+            dto ==
             [
                 StageDTO(name: "Mystic Grove", color: "#1DB954", imageURL: URL(string: "http://example.com/mystic-grove.jpg")!),
                 StageDTO(name: "Bass Haven", color: "#FF5733", imageURL: URL(string: "http://example.com/bass-haven.jpg")!),
@@ -79,11 +81,11 @@ final class YamlDecodingTests: XCTestCase {
           description: "For emergencies only"
         """
 
-        let encoder = YAMLDecoder()
-        let dto = try encoder.decode([ContactInfoDTO].self, from: yaml)
+        let parser = Parsers.Yaml<[ContactInfoDTO]>()
+        let dto = try parser.parse(yaml)
 
-        XCTAssertNoDifference(
-            dto,
+        #expect(
+            dto ==
             [
                 ContactInfoDTO(phoneNumber: "+1234567890", title: "General Info", description: nil),
                 ContactInfoDTO(phoneNumber: "+0987654321", title: "Emergency", description: "For emergencies only")
@@ -139,10 +141,10 @@ final class YamlDecodingTests: XCTestCase {
             title: "The Wind Down"
         """
 
-        let encoder = YAMLDecoder()
-        let dto = try encoder.decode(EventDTO.DaySchedule.self, from: yaml)
+        let parser = Parsers.Yaml<EventDTO.DaySchedule>()
+        let dto = try parser.parse(yaml)
 
-        XCTAssertNoDifference(dto, .init(performances: [
+        #expect(dto == .init(performances: [
             "Bass Haven": [
                 PerformanceDTO(title: nil, artist: "Prism Sound", artists: nil, time: "10:00 PM"),
                 PerformanceDTO(title: "Subsonic B2B Sylvan", artist: nil, artists: ["Subsonic", "Sylvan Beats"], time: "11:30 PM"),
@@ -166,17 +168,19 @@ final class YamlDecodingTests: XCTestCase {
 
     func testDecodingSimpleArtist() throws {
         let yaml = """
-            imageURL: "http://example.com/subsonic.jpg"
+            imageURL: http://example.com/subsonic.jpg
             links:
-              - url: "http://soundcloud.com/subsonic"
-              - url: "http://instagram.com/subsonic"
+            - url: http://soundcloud.com/subsonic
+            - url: http://instagram.com/subsonic
         """
 
-        let encoder = YAMLDecoder()
-        let dto = try encoder.decode(ArtistInfoFrontMatter.self, from: yaml)
+        let parser = Parsers.Yaml<ArtistInfoFrontMatter>()
 
-        XCTAssertNoDifference(
-            dto,
+        let dto = try parser.parse(yaml)
+
+
+        #expect(
+            dto ==
             ArtistInfoFrontMatter(
                 imageURL: .init(string: "http://example.com/subsonic.jpg"),
                 links: [
@@ -186,25 +190,27 @@ final class YamlDecodingTests: XCTestCase {
             )
         )
     }
+}
 
-    func testDecodingStandardArtistFile() throws {
+struct ArtistDecodingTests {
+    @Test(.tags(.frontmatter))
+    func decodingStandardArtistFile() throws {
         let markdown = """
         ---
-        imageURL: "http://example.com/subsonic.jpg"
+        imageURL: http://example.com/subsonic.jpg
         links:
-          - url: "http://soundcloud.com/subsonic"
-          - url: "http://instagram.com/subsonic"
+        - url: http://soundcloud.com/subsonic
+        - url: http://instagram.com/subsonic
         ---
-
         Subsonic delivers powerful bass-driven music that shakes the ground and moves the crowd, known for their high-energy performances and deep, resonant beats.
         """
 
-        let decoder = MarkdownWithFrontmatterDecoder()
-        let dto = try decoder.decode(ArtistInfoFrontMatter.self, from: markdown)
+        var text = Substring(markdown)
+        let parser = MarkdownWithFrontMatter<ArtistInfoFrontMatter>.Parser()
+        let dto = try parser.parse(&text)
 
-        XCTAssertNoDifference(
-            dto,
-            MarkdownWithFrontMatter(
+        #expect(
+            dto == MarkdownWithFrontMatter(
                 frontMatter: ArtistInfoFrontMatter(
                     imageURL: .init(string: "http://example.com/subsonic.jpg"),
                     links: [
@@ -215,22 +221,30 @@ final class YamlDecodingTests: XCTestCase {
                 body: "Subsonic delivers powerful bass-driven music that shakes the ground and moves the crowd, known for their high-energy performances and deep, resonant beats."
             )
         )
+
+        try parser.print(dto, into: &text)
+        #expect(Substring(markdown) == text)
     }
 
-    func testDecodingArtistFileWithNoFrontmatter() throws {
+    @Test(.tags(.frontmatter))
+    func decodingArtistFileWithNoFrontmatterRoundtripping() throws {
         let markdown = """
         Subsonic delivers powerful bass-driven music that shakes the ground and moves the crowd, known for their high-energy performances and deep, resonant beats.
         """
 
-        let decoder = MarkdownWithFrontmatterDecoder()
-        let dto = try decoder.decode(ArtistInfoFrontMatter.self, from: markdown)
+        var text = Substring(markdown)
+        let parser = MarkdownWithFrontMatter<ArtistInfoFrontMatter>.Parser()
+        let dto = try parser.parse(&text)
 
-        XCTAssertNoDifference(
-            dto,
-            MarkdownWithFrontMatter(
+        #expect(
+            dto == MarkdownWithFrontMatter(
                 frontMatter: nil,
                 body: "Subsonic delivers powerful bass-driven music that shakes the ground and moves the crowd, known for their high-energy performances and deep, resonant beats."
             )
         )
+
+        try parser.print(dto, into: &text)
+        #expect(markdown == text)
     }
 }
+

@@ -16,7 +16,7 @@ public struct ContactInfoFeature: Reducer {
     
     @ObservableState
     public struct State: Equatable {
-        var contactNumbers: IdentifiedArrayOf<Event.ContactNumber>
+        var contactNumbers: [Event.ContactNumber]
     }
     
     public enum Action {
@@ -53,8 +53,10 @@ struct ContactInfoView: View {
                             Text(contactNumber.phoneNumber.asPhoneNumber)
                                 .textSelection(.enabled)
 
-                            Text(contactNumber.description)
-                                .font(.caption)
+                            if let description = contactNumber.description {
+                                Text(description)
+                                    .font(.caption)
+                            }
                         }
 
                         Spacer()
@@ -101,19 +103,18 @@ struct ContactInfoView_Previews: PreviewProvider {
             ContactInfoView(
                 store: .init(
                     initialState: ContactInfoFeature.State(
-                        contactNumbers: .init(
-                            uniqueElements: [
-                                .init(
-                                    title: "Emergency Services",
-                                    phoneNumber: "5555551234",
-                                    description: "This will connect you directly with our switchboard, and alert the appropriate services."
-                                ),
-                                .init(
-                                    title: "General Information Line",
-                                    phoneNumber: "5555554321",
-                                    description: "For general information, questions or concerns, or to report any sanitation issues within the WW grounds, please contact this number."
-                                )
-                        ])
+                        contactNumbers: [
+                            .init(
+                                title: "Emergency Services",
+                                phoneNumber: "5555551234",
+                                description: "This will connect you directly with our switchboard, and alert the appropriate services."
+                            ),
+                            .init(
+                                title: "General Information Line",
+                                phoneNumber: "5555554321",
+                                description: "For general information, questions or concerns, or to report any sanitation issues within the WW grounds, please contact this number."
+                            )
+                        ]
                     ),
                     reducer: ContactInfoFeature.init
                 )

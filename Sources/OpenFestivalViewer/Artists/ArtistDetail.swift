@@ -9,8 +9,8 @@ import Foundation
 import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
-import CachedAsyncImage
-
+import NukeUI
+ 
 @Reducer
 public struct ArtistDetail {
     //
@@ -284,7 +284,7 @@ struct FavoriteToggleStyle: ToggleStyle {
         )
         .onTapGesture { configuration.isOn.toggle() }
         .labelStyle(.iconOnly)
-        .animateHeart(value: configuration.isOn)
+        .contentTransition(.symbolEffect(.automatic))
     }
 }
 
@@ -292,8 +292,6 @@ extension View {
     @ViewBuilder
     func animateHeart(value: some Equatable) -> some View {
         if #available(iOS 17, *) {
-            self
-                .contentTransition(.symbolEffect(.replace, options: .repeating))
 
         } else {
             self.animation(.default, value: value)

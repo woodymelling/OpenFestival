@@ -45,22 +45,17 @@ public struct More {
         //        case workshops(WorkshopsFeature)
     }
 
-    @Dependency(\.selectedEventClient) var selectedEventClient
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
 
             case .didTapExitEvent:
-                return .run { _ in
-                    await selectedEventClient.exitEvent()
-                }
+                return .none
 
             case .didTapRefreshEvent:
-                return .run { _ in
-                    await selectedEventClient.reloadEvent()
-                }
-                
+                return .none
+
             case .didTapNotifications:
                 break
 
@@ -126,15 +121,15 @@ public struct MoreView: View {
 
     public var body: some View {
         List {
-            Section {
-                MoreButton(
-                    "Workshops",
-                    image: Image(systemName: "figure.yoga"),
-                    color: eventColorScheme.workshopsColor
-                ) {
-                    store.send(.didTapWorkshops)
-                }
-            }
+//            Section {
+//                MoreButton(
+//                    "Workshops",
+//                    image: Image(systemName: "figure.yoga"),
+//                    color: eventColorScheme.workshopsColor
+//                ) {
+//                    store.send(.didTapWorkshops)
+//                }
+//            }
 
             Section {
                 if store.event.siteMapImageURL != nil {
@@ -157,16 +152,16 @@ public struct MoreView: View {
                     }
                 }
             }
-
-            Section {
-                MoreButton(
-                    "Notifications",
-                    systemName: "bell.badge.fill",
-                    color: eventColorScheme.otherColors[3]
-                ) {
-                    store.send(.didTapNotifications)
-                }
-            }
+//
+//            Section {
+//                MoreButton(
+//                    "Notifications",
+//                    systemName: "bell.badge.fill",
+//                    color: eventColorScheme.otherColors[3]
+//                ) {
+//                    store.send(.didTapNotifications)
+//                }
+//            }
 
             Section {
                 if store.event.contactNumbers.hasElements {
@@ -274,12 +269,6 @@ public struct MoreView: View {
     }
 }
 
-
-
-
-
-
-
 struct MoreView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
@@ -290,26 +279,5 @@ struct MoreView_Previews: PreviewProvider {
                 )
             )
         }
-    }
-}
-
-
-@DependencyClient
-public struct SelectedEventClient {
-    public var exitEvent: () async -> Void
-    public var reloadEvent: () async -> Void
-}
-
-extension SelectedEventClient: TestDependencyKey {
-    public static var testValue = SelectedEventClient(
-        exitEvent: { },
-        reloadEvent: { }
-    )
-}
-
-extension DependencyValues {
-    public var selectedEventClient: SelectedEventClient {
-        get { self[SelectedEventClient.self] }
-        set { self[SelectedEventClient.self] = newValue }
     }
 }

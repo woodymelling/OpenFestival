@@ -15,7 +15,7 @@ public typealias OpenFestivalIDType = String
 
 @MemberwiseInit(.public)
 public struct Organization {
-    public var id: Tagged<Self, OpenFestivalIDType>
+    public var id: Tagged<Self, OpenFestivalIDType> { .init(self.info.name) }
 
     public struct Info: Decodable {
 
@@ -34,7 +34,7 @@ public struct Organization {
 
 @MemberwiseInit(.public)
 public struct Event: Identifiable, Equatable {
-    public var id: Tagged<Event, OpenFestivalIDType> //
+    public var id: Tagged<Event, OpenFestivalIDType> { .init(name) }
     public var name: String //
     public var timeZone: TimeZone
 
@@ -45,7 +45,7 @@ public struct Event: Identifiable, Equatable {
     public var latitude: String? = nil
     public var longitude: String? = nil
 
-    public var contactNumbers: IdentifiedArrayOf<ContactNumber> = []
+    public var contactNumbers: [ContactNumber] = []
     public var artists: IdentifiedArrayOf<Artist>
     public var stages: Stages
     public var schedule: Schedule
@@ -58,9 +58,9 @@ public extension Event {
         public var id: String = UUID().uuidString
         public var phoneNumber: String
         public var title: String
-        public var description: String
+        public var description: String?
 
-        public init(title: String, phoneNumber: String, description: String) {
+        public init(title: String, phoneNumber: String, description: String?) {
             self.title = title
             self.phoneNumber = phoneNumber
             self.description = description
@@ -73,7 +73,7 @@ public extension Event {
 
     @MemberwiseInit(.public)
     struct Stage: Identifiable, Equatable, Hashable {
-        public var id: Tagged<Event, OpenFestivalIDType>
+        public var id: Tagged<Event, OpenFestivalIDType> { .init(name) }
         public var name: String
         public var iconImageURL: URL?
     }
@@ -204,7 +204,7 @@ import SwiftUI
 public extension Event {
     @MemberwiseInit(.public)
     struct Artist: Identifiable, Equatable, Hashable {
-        public var id: Tagged<Event, String>
+        public var id: Tagged<Self, String> { .init(name) }
         public var name: String
         public var bio: String?
         public var imageURL: URL?
@@ -257,7 +257,6 @@ public extension Event {
 public extension Event {
     static var empty: Self {
         .init(
-            id: "",
             name: "",
             timeZone: .current,
             artists: [],
@@ -269,56 +268,48 @@ public extension Event {
 
     static var testival: Self {
         .init(
-            id: .init("testival"),
             name: "Testival",
             timeZone: .current,
             siteMapImageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSite%20Map.webp?alt=media&token=48272d3c-ace0-4d5b-96a9-a5142f1c744a"),
             address: "1234 Pine Ave, Somewhere in the forest",
             artists: [
                 Artist(
-                    id: Tagged(rawValue: "Subsonic"),
                     name: "Subsonic",
                     bio: "Subsonic delivers powerful bass-driven music that shakes the ground and moves the crowd, known for their high-energy performances and deep, resonant beats.",
                     imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSubsonic.webp?alt=media&token=8b732938-f9c7-4216-8fb5-3ff4acad9384"),
                     links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Phantom Groove"),
                 name: "Phantom Groove",
                 bio: nil,
                 imageURL: nil,
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Sunspear"),
                 name: "Sunspear",
                 bio: nil,
                 imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSunspear-image.webp?alt=media&token=be30f499-8356-41a9-9425-7e19e36e2ea9")!,
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Rhythmbox"),
                 name: "Rhythmbox",
                 bio: nil,
                 imageURL: nil,
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Prism Sound"),
                 name: "Prism Sound",
                 bio: nil,
                 imageURL: nil,
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Oaktrail"),
                 name: "Oaktrail",
                 bio: nil,
                 imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FOaktrail.webp?alt=media&token=db962b24-e144-476c-ac4c-71ffa7f7f32d"),
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Space Chunk"),
                 name: "Space Chunk",
                 bio: nil,
                 imageURL: URL(string: "https://i1.sndcdn.com/avatars-oI73KB5SpEOGCmFq-5ezWjw-t500x500.jpg")!,
@@ -327,21 +318,18 @@ public extension Event {
                 ]
               ),
               Artist(
-                id: Tagged(rawValue: "The Sleepies"),
                 name: "The Sleepies",
                 bio: nil,
                 imageURL: nil,
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Sylvan Beats"),
                 name: "Sylvan Beats",
                 bio: nil,
                 imageURL: nil,
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Overgrowth"),
                 name: "Overgrowth",
                 bio: nil,
                 imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FOvergrowth%20DJ%20Profile.webp?alt=media&token=f0856acd-ab9c-47bf-b1d8-d7e385048beb"),
@@ -350,21 +338,18 @@ public extension Event {
                 ]
               ),
               Artist(
-                id: Tagged(rawValue: "Floods"),
                 name: "Floods",
                 bio: nil,
                 imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FFloods.webp?alt=media&token=2fca7492-7de5-4390-bf9a-d9fe7eb55cd8"),
                 links: []
               ),
               Artist(
-                id: Tagged(rawValue: "Float On"),
                 name: "Float On",
                 bio: nil,
                 imageURL: nil,
                 links: []
               ),
                 Artist(
-                    id: Tagged(rawValue: "Caribou State"),
                     name: "Caribou State",
                     bio: nil,
                     imageURL: nil,
@@ -373,18 +358,15 @@ public extension Event {
             ],
             stages: [
                 Stage(
-                    id: "Fractal Forest",
                     name: "Fractal Forest",
                     iconImageURL: URL(string: "https://firebasestorage.googleapis.com:443/v0/b/festivl.appspot.com/o/userContent%2F0545133C-90A6-4A64-99F9-EA563A8E976E.png?alt=media&token=35509f1f-a977-47d2-bd76-2d3898d0e465")
                 ),
 
                 Stage(
-                    id: "Village",
                     name: "Village",
                     iconImageURL: URL(string: "https://firebasestorage.googleapis.com:443/v0/b/festivl.appspot.com/o/userContent%2F96A24076-86EB-4327-BC13-26B3A8B1B769.png?alt=media&token=cb596866-35e6-4e39-a018-004b7338d7e8")
                 ),
                 Stage(
-                    id: "Pagoda",
                     name: "Pagoda",
                     iconImageURL: URL(string: "https://firebasestorage.googleapis.com:443/v0/b/festivl.appspot.com/o/userContent%2F980B90FE-4868-4E65-B0B8-045A54BEFBD2.png?alt=media&token=91037e7e-5702-424d-a4f5-f0c78c5c9fde")
                 )

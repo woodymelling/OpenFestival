@@ -5,6 +5,10 @@ import OpenFestivalModels
 
 import Dependencies
 import DependenciesMacros
+import Parsing
+
+import FileTree
+
 
 @DependencyClient
 public struct OpenFestivalParser {
@@ -191,8 +195,7 @@ extension OpenFestivalParser {
                 throw NSError(domain: "InvalidData", code: 0, userInfo: [NSLocalizedDescriptionKey: "Unable to convert data to string"])
             }
 
-            let decoder = MarkdownWithFrontmatterDecoder()
-            let decoded = try decoder.decode(ArtistInfoFrontMatter.self, from: markdown)
+            let decoded = try MarkdownWithFrontMatter<ArtistInfoFrontMatter>.Parser().parse(markdown)
             return ArtistDTO(
                 name: fileURL.deletingPathExtension().lastPathComponent,
                 description: decoded.body,
@@ -203,6 +206,15 @@ extension OpenFestivalParser {
     }
 
     private static func parseContactInfo(fromDirectory url: URL) async throws -> [ContactInfoDTO] {
+//        FileSystem()
+//            .map(Conversions.DataToString())
+//            .map(.string)
+//            .pipe { Parsers.Yaml<[ContactInfoDTO]>() }
+//            .parse(url)
+        []
+    }
+
+    private static func _parseContactInfo(fromDirectory url: URL) async throws -> [ContactInfoDTO] {
         @Dependency(\.fileManager) var fileManager
         let urls = try fileManager.contentsOfDirectory(in: url)
 
@@ -215,3 +227,20 @@ extension OpenFestivalParser {
         return contactInfo
     }
 }
+
+extension Conversions {
+    struct DataToString: Conversion {
+        func apply(_ input: Data) throws -> String {
+            String(decoding: input, as: UTF8.self)
+        }
+
+        func unapply(_ output: String) throws -> Data {
+            output.data(using: .utf8)!
+        }
+        
+        typealias Input = Data
+        typealias Output = String
+    }
+}
+
+

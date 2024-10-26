@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "OpenFestival",
     platforms: [
-        .macOS(.v13),
+        .macOS(.v14),
         .iOS(.v17)
     ],
     products: [
@@ -19,23 +19,24 @@ let package = Package(
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
-        
+        .package(url: "https://github.com/woodymelling/swift-file-tree", branch: "develop"),
+
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.11.0"),
-        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
-        .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
+        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
+        .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.3.6"),
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "1.0.0"),
         .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.10.0"),
         .package(url: "https://github.com/pointfreeco/swift-validated", from: "0.2.0"),
         .package(url: "https://github.com/pointfreeco/swift-prelude", branch: "main"),
+        .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.13.0"),
 
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
 
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
         .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0"),
-        .package(url: "https://github.com/lorenzofiamingo/swiftui-cached-async-image", from: "2.1.1"),
+        .package(url: "https://github.com/kean/Nuke", from: "12.8.0"),
         .package(url: "https://github.com/ryohey/Zoomable", branch: "main"),
-        .package(url: "https://github.com/bdewey/static-libgit2", from: "0.1.0"),
         .package(url: "https://github.com/bdewey/AsyncSwiftGit/", from: "0.4.0")
     ],
     targets: [
@@ -46,11 +47,13 @@ let package = Package(
             dependencies: [
                 "Yams",
                 "GitClient",
+                .product(name: "FileTree", package: "swift-file-tree"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "Validated", package: "swift-validated"),
                 .product(name: "Prelude", package: "swift-prelude"),
+                .product(name: "Parsing", package: "swift-parsing"),
                 .target(name: "OpenFestivalModels"),
             ]
         ),
@@ -71,8 +74,9 @@ let package = Package(
                 "OpenFestivalModels",
                 "OpenFestivalParser",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-                .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image"),
                 .product(name: "Zoomable", package: "Zoomable"),
+                .product(name: "Nuke", package: "Nuke"),
+                .product(name: "NukeUI", package: "Nuke")
             ],
             resources: [
                 .process("Media")
@@ -93,8 +97,6 @@ let package = Package(
                 "OpenFestivalParser",
                 "OpenFestivalViewer",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-                .product(name: "CachedAsyncImage", package: "swiftui-cached-async-image"),
-
             ]
         ),
         .executableTarget(
@@ -111,7 +113,7 @@ let package = Package(
             dependencies: [
                  "OpenFestivalParser",
                  "Yams",
-                 .product(name: "CustomDump", package: "swift-custom-dump"),
+                 .product(name: "CustomDump", package: "swift-custom-dump")
             ],
             resources: [
                 .copy("ExampleFestivals")

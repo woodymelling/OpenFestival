@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 import CoreMotion
 import ComposableArchitecture
-import CachedAsyncImage
 
 struct ScheduleComingSoonView: View {
     var imageURL: URL?
