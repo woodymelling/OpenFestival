@@ -4,9 +4,11 @@ import Collections
 import OpenFestivalModels
 import MemberwiseInit
 
+protocol EquatableError: Equatable, Error {}
+
 extension Validation.ScheduleError {
     enum PerformanceError: Error, CustomStringConvertible, Equatable {
-        case invalidStartTime(String)
+        case invalidStartTime(ScheduleTimeDecodingError)
         case invalidEndTime(String)
         case artistAndArtists
         case noArtistsOrTitle
@@ -38,7 +40,27 @@ struct TimelessStagelessPerformance: Equatable {
     var artistIDs: OrderedSet<Event.Artist.ID>
 }
 
+
 import Parsing
+import FileTree
+
+func mapErrors<T, E1: Error, NewError: Error>(
+    work: () throws(E1) -> T,
+    to transformError: (E1) -> NewError
+) throws(NewError) -> T {
+    do {
+        return try work()
+    } catch {
+        throw transformError(error)
+    }
+}
+
+struct Er1: Error {}
+struct Er2: Error {
+    let er: Er1
+}
+
+
 
 extension EventFileTree.ScheduleDayConversion {
     struct TimelessStagelessPerformanceConversion: Conversion {
@@ -46,11 +68,20 @@ extension EventFileTree.ScheduleDayConversion {
         typealias Output = TimelessStagelessPerformance
 
         func apply(_ input: PerformanceDTO) throws -> TimelessStagelessPerformance {
-            TimelessStagelessPerformance(
-                startTime: try ScheduleTimeConversion().apply(input.time),
-                endTime: try input.endTime.map(ScheduleTimeConversion().apply(_:)),
+            let (startTime, endTime, artistIDs) = try allSucceed(
+                { try ScheduleTimeConversion().apply(input.time) },
+                { try input.endTime.map(ScheduleTimeConversion().apply(_:)) },
+                { try getArtists(artist: input.artist, artists: input.artists) }
+            )
+
+            guard !(input.title == nil && artistIDs.isEmpty)
+            else { throw PerformanceError.noArtistsOrTitle }
+
+            return TimelessStagelessPerformance(
+                startTime: startTime,
+                endTime: endTime,
                 customTitle: input.title,
-                artistIDs: try getArtists(artist: input.artist, artists: input.artists)
+                artistIDs: artistIDs
             )
         }
 
@@ -92,85 +123,57 @@ extension EventFileTree.ScheduleDayConversion {
 
 extension PerformanceDTO {
     var toPartialPerformance: Validated<TimelessStagelessPerformance, Validation.ScheduleError.PerformanceError> {
-        typealias PerformanceError = Validation.ScheduleError.PerformanceError
-        typealias ArtistID = Event.Artist.ID
-        typealias ArtistCollection = OrderedSet<ArtistID>
-
-        let startTime = Validated {
-            try ScheduleTimeConversion().apply(self.time)
-        } mappingError: { _ in
-            PerformanceError.invalidStartTime(self.time)
-        }
-
-        let endTime = Validated {
-            try self.endTime.map {
-                try ScheduleTimeConversion().apply($0)
-            }
-        } mappingError: { _ in
-            PerformanceError.invalidEndTime(self.endTime ?? "")
-        }
-
-        let artistIDs: Validated<ArtistCollection, PerformanceError> = Validated {
-            switch (self.artist, self.artists) {
-            case (.none, .none): return []
-            case (.some, .some): throw PerformanceError.artistAndArtists
-            case (.some(let artistName), .none):
-                guard artistName.hasElements
-                else { throw PerformanceError.emptyArtist }
-
-                return OrderedSet([Event.Artist.ID(artistName)])
-
-            case (.none, .some(let artists)):
-                guard artists.hasElements
-                else { throw PerformanceError.emptyArtists  }
-
-                return OrderedSet(artists.map(ArtistID.init(rawValue:)))
-            }
-        } mappingError: { error in
-            (error as? PerformanceError) ?? .unknownError
-        }
-
-
-        return zip(startTime, endTime, artistIDs).flatMapish { startTime, endTime, artists in
-            guard !(artists.isEmpty && self.title == nil)
-            else { return .error(.noArtistsOrTitle) }
-
-            return .valid(TimelessStagelessPerformance(
-                startTime: startTime,
-                endTime: endTime,
-                customTitle: self.title,
-                artistIDs: artists
-            ))
-        }
-    }
-}
-
-
-struct ScheduleTimeConversion: Conversion {
-    typealias Input = String
-    typealias Output = ScheduleTime
-
-    private let formats = ["h:mm a", "HH:mm", "h a", "h:mm", "h"]
-
-    func apply(_ input: Input) throws -> Output {
-        struct TimeParsingError: Error {}
-
-        let formatter = DateFormatter()
-
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-        for format in formats {
-            formatter.dateFormat = format
-            if let time = ScheduleTime(from: input, using: formatter) {
-                return time
-            }
-        }
-
-        throw TimeParsingError()
-    }
-
-    func unapply(_ output: ScheduleTime) throws -> String {
-        output.formattedString(dateFormat: formats.first!)
+        fatalError()
+//        typealias PerformanceError = Validation.ScheduleError.PerformanceError
+//        typealias ArtistID = Event.Artist.ID
+//        typealias ArtistCollection = OrderedSet<ArtistID>
+//
+//        let startTime = Validated {
+//            try ScheduleTimeConversion().apply(self.time)
+//        } mappingError: { _ in
+//            PerformanceError.invalidStartTime(self.time)
+//        }
+//
+//        let endTime = Validated {
+//            try self.endTime.map {
+//                try ScheduleTimeConversion().apply($0)
+//            }
+//        } mappingError: { _ in
+//            PerformanceError.invalidEndTime(self.endTime ?? "")
+//        }
+//
+//        let artistIDs: Validated<ArtistCollection, PerformanceError> = Validated {
+//            switch (self.artist, self.artists) {
+//            case (.none, .none): return []
+//            case (.some, .some): throw PerformanceError.artistAndArtists
+//            case (.some(let artistName), .none):
+//                guard artistName.hasElements
+//                else { throw PerformanceError.emptyArtist }
+//
+//                return OrderedSet([Event.Artist.ID(artistName)])
+//
+//            case (.none, .some(let artists)):
+//                guard artists.hasElements
+//                else { throw PerformanceError.emptyArtists  }
+//
+//                return OrderedSet(artists.map(ArtistID.init(rawValue:)))
+//            }
+//        } mappingError: { error in
+//            (error as? PerformanceError) ?? .unknownError
+//        }
+//
+//
+//        return zip(startTime, endTime, artistIDs).flatMapish { startTime, endTime, artists in
+//            guard !(artists.isEmpty && self.title == nil)
+//            else { return .error(.noArtistsOrTitle) }
+//
+//            return .valid(TimelessStagelessPerformance(
+//                startTime: startTime,
+//                endTime: endTime,
+//                customTitle: self.title,
+//                artistIDs: artists
+//            ))
+//        }
     }
 }
 

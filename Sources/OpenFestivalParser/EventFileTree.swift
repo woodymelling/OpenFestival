@@ -21,6 +21,28 @@ extension Organization {
     }
 }
 
+import CustomDump
+extension Conversion {
+    func _printChanges() -> some Conversion<Input, Output> {
+        Convert(
+            apply: {
+                
+                customDump($0, name: "Before \(Self.self).apply")
+                let result = try self.apply($0)
+                customDump(result, name: "After \(Self.self).apply")
+
+                return result
+            },
+            unapply: {
+                customDump($0, name: "Before \(Self.self).unapply")
+                let result = try self.unapply($0)
+                customDump(result, name: "After \(Self.self) unapply")
+                return result
+            }
+        )
+    }
+}
+
 
 
 struct EventFileTree: FileTreeComponent {
@@ -40,7 +62,13 @@ struct EventFileTree: FileTreeComponent {
             StaticDirectory("schedules") {
                 Many {
                     File($0, .yaml)
-                        .map(ScheduleDayConversion())
+                        .map {
+                            FileContentConversion {
+                                YamlConversion(EventDTO.DaySchedule.self)
+                            }
+                            
+                            ScheduleDayConversion()
+                        }
                 }
             }
 
@@ -55,15 +83,46 @@ struct EventFileTree: FileTreeComponent {
     }
 
     struct EventConversion: Conversion {
+
         typealias Input = (EventInfoDTO, [Event.ContactNumber], [Event.Stage], [Event.Schedule.Day], [Event.Artist])
         typealias Output = Event
 
         func apply(_ input: Input) throws -> Event {
-            fatalError()
+            Event(
+                name: input.0.name ?? "",
+                // TODO?
+                timeZone: try TimeZoneConversion().apply(input.0.timeZone) ?? TimeZone.current,
+                imageURL: input.0.imageURL,
+                siteMapImageURL: input.0.siteMapImageURL,
+                address: input.0.address,
+                latitude: nil,
+                // TODO:
+                longitude: nil,
+                contactNumbers: input.1,
+                artists: IdentifiedArray(uniqueElements: input.4),
+                stages: IdentifiedArray(uniqueElements: input.2),
+                schedule: Event.Schedule(days: input.3),
+                colorScheme: nil // TODO:
+            )
         }
 
         func unapply(_ output: Event) throws -> Input {
             fatalError()
+        }
+
+
+
+        struct TimeZoneConversion: Conversion {
+            typealias Input = String?
+            typealias Output = TimeZone?
+
+            func apply(_ input: String?) throws -> TimeZone? {
+                input.flatMap(TimeZone.init(identifier:)) ?? input.flatMap(TimeZone.init(abbreviation:))
+            }
+
+            func unapply(_ output: TimeZone?) throws -> String? {
+                output.map { $0.identifier }
+            }
         }
     }
 
@@ -108,15 +167,13 @@ struct EventFileTree: FileTreeComponent {
     }
 
     struct ScheduleDayConversion: Conversion {
-        typealias Input = FileContent<Data>
+        typealias Input = FileContent<EventDTO.DaySchedule>
         typealias Output = Event.Schedule.Day
 
         var body: some Conversion<Input, Output> {
 
             FileContentConversion {
-                YamlConversion(EventDTO.DaySchedule.self)
-
-                EventDTO.DaySchedule.Tuple()
+                EventDTO.DaySchedule.TupleConversion()
 
                 Conversions.Tuple(
                     Identity<String?>(),
@@ -125,41 +182,118 @@ struct EventFileTree: FileTreeComponent {
                 )
             }
 
-            FileContentTupleScheduleDayConversion()
+            FileContentToTupleScheduleDayConversion()
+
         }
 
 
         struct ScheduleDictionaryConversion: Conversion {
             typealias Input = [String: [PerformanceDTO]]
-            typealias Output = [Event.Stage.ID: [Event.Performance]]
+            typealias Output = [Event.Stage.ID: [StagelessPerformance]]
 
             var body: some Conversion<Input, Output> {
                 Conversions.MapKVPairs(
                     keyConversion: Event.Stage.ID.Conversion(),
-                    valueConversion: Convert {
-                        Conversions.MapValues {
-                            TimelessStagelessPerformanceConversion()
-                        }
-
-                        StagelessPerformanceConversion()
-                    }
+                    valueConversion: StagelessPerformanceConversion()
                 )
+            }
 
-                StagedPerformanceConversion()
+            struct StagelessPerformanceConversion: Conversion {
+                typealias Input = [PerformanceDTO]
+                typealias Output = [StagelessPerformance]
+                var body: some Conversion<Input, Output> {
+                    Conversions.MapValues {
+                        TimelessStagelessPerformanceConversion()
+                    }
+
+                    DetermineFullSetTimesConversion()
+
+                }
             }
         }
 
 
-        struct StagelessPerformanceConversion: Conversion {
+        struct DetermineFullSetTimesConversion: Conversion {
             typealias Input = [TimelessStagelessPerformance]
             typealias Output = [StagelessPerformance]
 
-            func apply(_ input: [TimelessStagelessPerformance]) throws -> [StagelessPerformance] {
-                fatalError()
+            func apply(_ partialPerformances: Input) throws(Validation.ScheduleError.StageDayScheduleError) -> Output {
+                var schedule: [StagelessPerformance] = []
+                var scheduleStartTime: ScheduleTime?
+
+                for (index, performance) in partialPerformances.enumerated() {
+                    var startTime = performance.startTime
+                    var endTime: ScheduleTime
+
+                    // End times can be manually set
+                    if let staticEndTime = performance.endTime {
+                        endTime = staticEndTime
+
+                        // If they aren't, find the next performance, and make the endtime butt up against it
+                    } else if let nextPerformance = partialPerformances[safe: index + 1] {
+                        endTime = nextPerformance.startTime
+
+                        // If there aren't any performances after this, we can't determine the endtime
+                    } else {
+                        throw .cannotDetermineEndTimeForPerformance(performance)
+                    }
+
+                    if let scheduleStartTime {
+                        if startTime < scheduleStartTime {
+                            startTime.hour += 24
+                        }
+
+                        if endTime < scheduleStartTime {
+                            endTime.hour += 24
+                        }
+                    } else {
+                        scheduleStartTime = startTime
+                        if endTime < startTime {
+                            endTime.hour += 24
+                        }
+                    }
+
+                    schedule.append(StagelessPerformance(
+                        customTitle: performance.customTitle,
+                        artistIDs: performance.artistIDs,
+                        startTime: startTime,
+                        endTime: endTime
+                    ))
+                }
+
+                for (index, performance) in schedule.enumerated() {
+                    guard let nextPerformance = schedule[safe: index + 1]
+                    else { continue }
+
+                    guard performance.endTime <= nextPerformance.startTime
+                    else { throw .overlappingPerformances(performance, nextPerformance) }
+
+                    guard performance.startTime < performance.endTime
+                    else { throw .endTimeBeforeStartTime(performance) }
+                }
+
+                return schedule
             }
 
-            func unapply(_ output: [StagelessPerformance]) throws -> [TimelessStagelessPerformance] {
-                fatalError()
+            func unapply(_ performances: [StagelessPerformance]) throws -> [TimelessStagelessPerformance] {
+                var schedule = performances.map {
+                    TimelessStagelessPerformance(
+                        startTime: $0.startTime,
+                        endTime: $0.endTime,
+                        customTitle: $0.customTitle,
+                        artistIDs: $0.artistIDs
+                    )
+                }
+
+                // remove end times for schedules that butt up against each other.
+                for (index, performance) in schedule.enumerated() {
+                    if let nextPerformance = performances[safe: index + 1],
+                       performance.endTime == nextPerformance.startTime {
+                        schedule[index].endTime = nil
+                    }
+                }
+
+                return schedule
             }
         }
 
@@ -168,26 +302,97 @@ struct EventFileTree: FileTreeComponent {
             typealias Output = [Event.Stage.ID: [Event.Performance]]
 
             func apply(_ input: Input) throws -> Output {
-                fatalError()
+                input.mapValuesWithKeys { key, value in
+                    value.map {
+                        Event.Performance(
+                            id: "\($0.customTitle ?? "")-\($0.artistIDs.map(\.rawValue).joined(separator: "-"))-\($0.startTime)-\($0.endTime)",
+                            customTitle: $0.customTitle,
+                            artistIDs: $0.artistIDs,
+                            startTime: Date(), // TODO:
+                            endTime: Date(), // TODO:
+                            stageID: key
+                        )
+                    }
+                }
             }
 
             func unapply(_ output: Output) throws -> Input {
-                fatalError()
+                output.mapValues {
+                    $0.map {
+                        StagelessPerformance(
+                            customTitle: $0.customTitle,
+                            artistIDs: $0.artistIDs,
+                            startTime: ScheduleTime(from: $0.startTime),
+                            endTime: ScheduleTime(from: $0.endTime)
+                        )
+                    }
+                }
             }
         }
 
-        struct FileContentTupleScheduleDayConversion: Conversion {
-            typealias Input = FileContent<(String?, CalendarDate?, [Event.Stage.ID: [Event.Performance]])>
+        struct FileContentToTupleScheduleDayConversion: Conversion {
+            typealias Input = FileContent<(String?, CalendarDate?, [Event.Stage.ID: [StagelessPerformance]])>
             typealias Output = Event.Schedule.Day
 
             func apply(_ input: Input) throws -> Output {
-                fatalError()
+                let customTitle = input.data.0
+                let scheduleDate = input.data.1 ?? CalendarDate(input.fileName) ?? .today // Default to today if nothing is provided
+
+                let schedule = input.data.2.mapValuesWithKeys { key, value in
+                    value.map {
+                        Event.Performance(
+                            id: .init(
+                                makeIDs(
+                                    from: $0.customTitle,
+                                    $0.artistIDs.map(\.rawValue).joined(separator: "-"),
+                                    String(describing: $0.startTime),
+//                                    String(describing: $0.endTime),
+                                    key.rawValue
+                                )
+                            ),
+                            customTitle: $0.customTitle,
+                            artistIDs: $0.artistIDs,
+                            startTime: scheduleDate.atTime($0.startTime),
+                            endTime: scheduleDate.atTime($0.endTime),
+                            stageID: key
+                        )
+                    }
+                }
+
+                return Event.Schedule.Day(
+                    id: .init(makeIDs(from: customTitle, String(describing: scheduleDate))),
+                    date: scheduleDate,
+                    customTitle: input.data.0,
+                    stageSchedules: schedule
+                )
             }
 
             func unapply(_ output: Output) throws -> Input {
-                fatalError()
+                FileContent(
+                    fileName: output.metadata.date?.description ?? output.metadata.customTitle ?? "schedule",
+                    data: (output.metadata.customTitle, output.metadata.date, output.stageSchedules.mapValues {
+                        $0.map {
+                            StagelessPerformance(
+                                customTitle: $0.customTitle,
+                                artistIDs: $0.artistIDs,
+                                startTime: ScheduleTime(from: $0.startTime),
+                                endTime: ScheduleTime(from: $0.endTime)
+                            )
+                        }
+                    })
+                )
             }
         }
+    }
+}
+
+func makeIDs(from items: String?...) -> String {
+    items.compactMap(\.self).joined(separator: "-")
+}
+
+extension Dictionary {
+    func mapValuesWithKeys<NewValue>(_ transform: (Key, Value) -> NewValue) -> [Key: NewValue] {
+        Dictionary<Key, NewValue>(uniqueKeysWithValues: self.map { ($0, transform($0, $1))})
     }
 }
 
@@ -210,7 +415,7 @@ extension Tagged {
 typealias Identity = Conversions.Identity
 
 extension EventDTO.DaySchedule {
-    struct Tuple: Conversion {
+    struct TupleConversion: Conversion {
         typealias Input = EventDTO.DaySchedule
         typealias Output = (String?, CalendarDate?, [String: [PerformanceDTO]])
 
@@ -266,7 +471,6 @@ extension Conversion {
 
 }
 
-
 extension Conversions {
     public struct MapValues<C: Conversion>: Conversion {
         var transform: C
@@ -304,7 +508,7 @@ extension Conversions {
         }
 
         public func unapply(_ output: Output) throws -> Input {
-            Dictionary(uniqueKeysWithValues: try Output().map {
+            Dictionary(uniqueKeysWithValues: try output.map {
                 try (keyConversion.unapply($0.0), valueConversion.unapply($0.1))
             })
         }
@@ -320,7 +524,7 @@ public struct Convert<Input, Output>: Conversion {
         self._unapply = unapply
     }
 
-    init(@ConversionBuilder build: () -> some Conversion<Input, Output>) {
+    init<C: Conversion<Input, Output>>(@ConversionBuilder build: () -> C) {
         let conversion = build()
         self._apply = conversion.apply
         self._unapply = conversion.unapply

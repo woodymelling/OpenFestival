@@ -119,32 +119,32 @@ extension OpenFestivalClient: DependencyKey {
             return organizations
         },
         loadOrganizationFromGithub: { url in
-            let fileManager = FileManager.default
-            let temporaryDirectory = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-
-            print("Ensuring directory exists at path: \(temporaryDirectory.path)")
-
-            try fileManager.ensureDirectoryExists(at: temporaryDirectory)
-
-            print("Directory exists, starting clone operation to: \(temporaryDirectory.path)")
-
-
-            @Dependency(GitClient.self) var gitClient
-            try await gitClient.cloneRepository(
-                from: url,
-                destination: temporaryDirectory
-            )
-
-            @Dependency(OpenFestivalParser.self) var parser
-            let organization = try await parser.parse(from: temporaryDirectory)
-
-            try fileManager.ensureDirectoryExists(at: .organizations)
-
-            let newDirectoryPath = URL.organizations.appendingPathComponent(organization.info.name)
-
-            print("Moving directory from \(temporaryDirectory) to \(newDirectoryPath.absoluteString)")
-            // Move the directory to the new path
-            try fileManager.moveItem(at: temporaryDirectory, to: newDirectoryPath)
+//            let fileManager = FileManager.default
+//            let temporaryDirectory = URL.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+//
+//            print("Ensuring directory exists at path: \(temporaryDirectory.path)")
+//
+//            try fileManager.ensureDirectoryExists(at: temporaryDirectory)
+//
+//            print("Directory exists, starting clone operation to: \(temporaryDirectory.path)")
+//
+//
+//            @Dependency(GitClient.self) var gitClient
+//            try await gitClient.cloneRepository(
+//                from: url,
+//                destination: temporaryDirectory
+//            )
+//
+//            @Dependency(OpenFestivalParser.self) var parser
+//            let organization = try await parser.parse(from: temporaryDirectory)
+//
+//            try fileManager.ensureDirectoryExists(at: .organizations)
+//
+//            let newDirectoryPath = URL.organizations.appendingPathComponent(organization.info.name)
+//
+//            print("Moving directory from \(temporaryDirectory) to \(newDirectoryPath.absoluteString)")
+//            // Move the directory to the new path
+//            try fileManager.moveItem(at: temporaryDirectory, to: newDirectoryPath)
         },
         refreshOrganization: {
             @Dependency(GitClient.self) var gitClient

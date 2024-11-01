@@ -20,44 +20,6 @@ extension Validation.ScheduleError {
     }
 }
 
-/*
- This is decoding a whole file, so the DTO should have access to the Date, whether encoded in the file or in the file title
- */
-struct DayScheduleMapper: ValidatedMapper {
-    typealias From = (fileName: String, body: EventDTO.DaySchedule)
-    typealias To = Event.Schedule.Day
-    typealias ToError = Validation.ScheduleError.DayScheduleError
-
-    func map(_ fileContents: From) -> Output {
-        let date = fileContents.body.date ?? CalendarDate(fileContents.fileName)
-
-        return fileContents.body
-            .performances
-            .mapValues(\.toStageDaySchedule)
-            .sequence()
-            .map { // [String: [StagelessPerformance] -> [Stage.ID: IdentifiedArrayOf<Performance>]]
-                $0.reduce(into: [:]) { (
-                    partialResult: inout [Event.Stage.ID : [Event.Performance]],
-                    tuple: (key: String, value: [StagelessPerformance])
-                ) in
-                    let stageID: Event.Stage.ID = .init(tuple.key)
-
-                    partialResult[stageID] = tuple.value.map {
-                        $0.toPerformance(at: stageID, on: date)
-                    }
-                }
-            }
-            .map {
-                Event.Schedule.Day(
-                    id: .init(fileContents.fileName),
-                    date: date,
-                    customTitle: fileContents.body.customTitle,
-                    stageSchedules: $0
-                )
-            }
-            .mapErrors { ToError.scheduleDayError($0) }
-    }
-}
 
 extension StagelessPerformance {
     func toPerformance(at stage: Event.Stage.ID, on day: CalendarDate?) -> Event.Performance {

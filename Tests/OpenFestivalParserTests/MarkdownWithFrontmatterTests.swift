@@ -115,27 +115,3 @@ struct MarkdownWithFrontmatterTests {
         #expect(originalText == text)
     }
 }
-
-struct YamlParsingTests {
-    @Test
-    func simpleYamlRountripping() throws {
-        struct Person: Codable, Equatable {
-            var name: String
-        }
-
-        let originalText = """
-        name: blob
-        
-        """
-
-        var text = Substring(originalText)
-
-        let result: Person = try Parsers.Yaml().parse(&text)
-        #expect(result == Person(name: "blob"))
-
-        try Parsers.Yaml().print(result, into: &text)
-
-        #expect(originalText == text)
-    }
-
-}

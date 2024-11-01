@@ -14,7 +14,8 @@ struct YamlConversion<T: Codable>: Conversion {
     typealias Input = Data
     typealias Output = T
 
-    init(_ type: T.Type) { }
+    init(_ type: T.Type = T.self) { }
+    
 
     func apply(_ input: Data) throws -> T {
         try YAMLDecoder().decode(T.self, from: input)

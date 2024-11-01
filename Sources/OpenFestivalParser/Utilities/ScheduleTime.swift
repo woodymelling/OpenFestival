@@ -7,6 +7,8 @@
 
 import Foundation
 
+private let formatter = DateFormatter()
+
 public struct ScheduleTime: Codable {
     var hour: Int
     var minute: Int
@@ -39,15 +41,15 @@ public struct ScheduleTime: Codable {
         self.minute = components.minute ?? 0
     }
 
-    func toDateComponents() -> DateComponents {
-        return DateComponents(hour: hour, minute: minute)
+    var dateComponents: DateComponents {
+        return DateComponents(timeZone: .gmt, year: 1970, hour: hour, minute: minute)
     }
 
     func formattedString(dateFormat: String = "HH:mm:ss") -> String {
-        let formatter = DateFormatter()
         formatter.dateFormat = dateFormat
-        formatter.timeZone = .init(secondsFromGMT: 0)
-        guard let date = Calendar.current.date(from: toDateComponents()) else {
+        formatter.timeZone = .gmt
+
+        guard let date = Calendar.current.date(from: dateComponents) else {
             return ""
         }
         return formatter.string(from: date)

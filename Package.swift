@@ -113,7 +113,8 @@ let package = Package(
             dependencies: [
                  "OpenFestivalParser",
                  "Yams",
-                 .product(name: "CustomDump", package: "swift-custom-dump")
+                 .product(name: "CustomDump", package: "swift-custom-dump"),
+                 .product(name: "DependenciesTestSupport", package: "swift-dependencies")
             ],
             resources: [
                 .copy("ExampleFestivals")
