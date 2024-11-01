@@ -10,18 +10,20 @@ import Parsing
 import Foundation
 import Yams
 
-struct YamlConversion<T: Codable>: Conversion {
-    typealias Input = Data
-    typealias Output = T
+extension Conversions {
 
-    init(_ type: T.Type = T.self) { }
-    
-
-    func apply(_ input: Data) throws -> T {
-        try YAMLDecoder().decode(T.self, from: input)
-    }
-
-    func unapply(_ output: T) throws -> Data {
-        try Data(YAMLEncoder().encode(output).utf8)
+    struct YamlConversion<T: Codable>: Conversion {
+        typealias Input = Data
+        typealias Output = T
+        
+        init(_ type: T.Type = T.self) { }
+        
+        func apply(_ input: Data) throws -> T {
+            try YAMLDecoder().decode(T.self, from: input)
+        }
+        
+        func unapply(_ output: T) throws -> Data {
+            try Data(YAMLEncoder().encode(output).utf8)
+        }
     }
 }

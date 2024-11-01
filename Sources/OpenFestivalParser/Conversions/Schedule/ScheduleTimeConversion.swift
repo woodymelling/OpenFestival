@@ -8,33 +8,6 @@
 import Parsing
 import Foundation
 
-struct _ScheduleTimeConversion {
-    typealias Input = String
-    typealias Output = ScheduleTime
-
-    private let formats = ["h:mm a", "HH:mm", "h a", "h:mm", "h"]
-
-    func apply(_ input: Input) throws(ScheduleTimeDecodingError) -> Output {
-
-        let formatter = DateFormatter()
-
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-        for format in formats {
-            formatter.dateFormat = format
-            if let time = ScheduleTime(from: input, using: formatter) {
-                return time
-            }
-        }
-
-        throw ScheduleTimeDecodingError.invalidDateString
-    }
-
-    func unapply(_ output: ScheduleTime) throws  -> String {
-        output.formattedString(dateFormat: formats.first!)
-    }
-}
-
 struct ScheduleTimeConversion: Conversion {
     typealias Input = String
     typealias Output = ScheduleTime

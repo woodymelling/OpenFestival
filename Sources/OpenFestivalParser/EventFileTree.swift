@@ -21,37 +21,13 @@ extension Organization {
     }
 }
 
-import CustomDump
-extension Conversion {
-    func _printChanges() -> some Conversion<Input, Output> {
-        Convert(
-            apply: {
-                
-                customDump($0, name: "Before \(Self.self).apply")
-                let result = try self.apply($0)
-                customDump(result, name: "After \(Self.self).apply")
-
-                return result
-            },
-            unapply: {
-                customDump($0, name: "Before \(Self.self).unapply")
-                let result = try self.unapply($0)
-                customDump(result, name: "After \(Self.self) unapply")
-                return result
-            }
-        )
-    }
-}
-
-
-
 struct EventFileTree: FileTreeComponent {
     typealias FileType = Event
 
     var body: some FileTreeComponent<Event> {
         FileTree {
             StaticFile("event-info", .yaml)
-                .map(YamlConversion(EventInfoDTO.self))
+                .map(Conversions.YamlConversion(EventInfoDTO.self))
 
             StaticFile("contact-info", .yaml)
                 .map(ContactInfoConversion())
@@ -64,7 +40,7 @@ struct EventFileTree: FileTreeComponent {
                     File($0, .yaml)
                         .map {
                             FileContentConversion {
-                                YamlConversion(EventDTO.DaySchedule.self)
+                                Conversions.YamlConversion(EventDTO.DaySchedule.self)
                             }
                             
                             ScheduleDayConversion()
@@ -129,8 +105,7 @@ struct EventFileTree: FileTreeComponent {
 
     struct StagesConversion: Conversion {
         var body: some Conversion<Data, [Event.Stage]> {
-
-            YamlConversion([StageDTO].self)
+            Conversions.YamlConversion([StageDTO].self)
                 .mapValues {
                     Event.Stage(name: $0.name, iconImageURL: $0.imageURL)
                 } unapply: {
@@ -149,7 +124,7 @@ struct EventFileTree: FileTreeComponent {
 
         var body: some Conversion<Data, [Event.ContactNumber]> {
 
-            YamlConversion([ContactInfoDTO].self)
+            Conversions.YamlConversion([ContactInfoDTO].self)
                 .mapValues {
                     Event.ContactNumber(
                         phoneNumber: $0.phoneNumber,
@@ -163,225 +138,6 @@ struct EventFileTree: FileTreeComponent {
                         description: $0.description
                     )
                 }
-        }
-    }
-
-    struct ScheduleDayConversion: Conversion {
-        typealias Input = FileContent<EventDTO.DaySchedule>
-        typealias Output = Event.Schedule.Day
-
-        var body: some Conversion<Input, Output> {
-
-            FileContentConversion {
-                EventDTO.DaySchedule.TupleConversion()
-
-                Conversions.Tuple(
-                    Identity<String?>(),
-                    Identity<CalendarDate?>(),
-                    ScheduleDictionaryConversion()
-                )
-            }
-
-            FileContentToTupleScheduleDayConversion()
-
-        }
-
-
-        struct ScheduleDictionaryConversion: Conversion {
-            typealias Input = [String: [PerformanceDTO]]
-            typealias Output = [Event.Stage.ID: [StagelessPerformance]]
-
-            var body: some Conversion<Input, Output> {
-                Conversions.MapKVPairs(
-                    keyConversion: Event.Stage.ID.Conversion(),
-                    valueConversion: StagelessPerformanceConversion()
-                )
-            }
-
-            struct StagelessPerformanceConversion: Conversion {
-                typealias Input = [PerformanceDTO]
-                typealias Output = [StagelessPerformance]
-                var body: some Conversion<Input, Output> {
-                    Conversions.MapValues {
-                        TimelessStagelessPerformanceConversion()
-                    }
-
-                    DetermineFullSetTimesConversion()
-
-                }
-            }
-        }
-
-
-        struct DetermineFullSetTimesConversion: Conversion {
-            typealias Input = [TimelessStagelessPerformance]
-            typealias Output = [StagelessPerformance]
-
-            func apply(_ partialPerformances: Input) throws(Validation.ScheduleError.StageDayScheduleError) -> Output {
-                var schedule: [StagelessPerformance] = []
-                var scheduleStartTime: ScheduleTime?
-
-                for (index, performance) in partialPerformances.enumerated() {
-                    var startTime = performance.startTime
-                    var endTime: ScheduleTime
-
-                    // End times can be manually set
-                    if let staticEndTime = performance.endTime {
-                        endTime = staticEndTime
-
-                        // If they aren't, find the next performance, and make the endtime butt up against it
-                    } else if let nextPerformance = partialPerformances[safe: index + 1] {
-                        endTime = nextPerformance.startTime
-
-                        // If there aren't any performances after this, we can't determine the endtime
-                    } else {
-                        throw .cannotDetermineEndTimeForPerformance(performance)
-                    }
-
-                    if let scheduleStartTime {
-                        if startTime < scheduleStartTime {
-                            startTime.hour += 24
-                        }
-
-                        if endTime < scheduleStartTime {
-                            endTime.hour += 24
-                        }
-                    } else {
-                        scheduleStartTime = startTime
-                        if endTime < startTime {
-                            endTime.hour += 24
-                        }
-                    }
-
-                    schedule.append(StagelessPerformance(
-                        customTitle: performance.customTitle,
-                        artistIDs: performance.artistIDs,
-                        startTime: startTime,
-                        endTime: endTime
-                    ))
-                }
-
-                for (index, performance) in schedule.enumerated() {
-                    guard let nextPerformance = schedule[safe: index + 1]
-                    else { continue }
-
-                    guard performance.endTime <= nextPerformance.startTime
-                    else { throw .overlappingPerformances(performance, nextPerformance) }
-
-                    guard performance.startTime < performance.endTime
-                    else { throw .endTimeBeforeStartTime(performance) }
-                }
-
-                return schedule
-            }
-
-            func unapply(_ performances: [StagelessPerformance]) throws -> [TimelessStagelessPerformance] {
-                var schedule = performances.map {
-                    TimelessStagelessPerformance(
-                        startTime: $0.startTime,
-                        endTime: $0.endTime,
-                        customTitle: $0.customTitle,
-                        artistIDs: $0.artistIDs
-                    )
-                }
-
-                // remove end times for schedules that butt up against each other.
-                for (index, performance) in schedule.enumerated() {
-                    if let nextPerformance = performances[safe: index + 1],
-                       performance.endTime == nextPerformance.startTime {
-                        schedule[index].endTime = nil
-                    }
-                }
-
-                return schedule
-            }
-        }
-
-        struct StagedPerformanceConversion: Conversion {
-            typealias Input = [Event.Stage.ID: [StagelessPerformance]]
-            typealias Output = [Event.Stage.ID: [Event.Performance]]
-
-            func apply(_ input: Input) throws -> Output {
-                input.mapValuesWithKeys { key, value in
-                    value.map {
-                        Event.Performance(
-                            id: "\($0.customTitle ?? "")-\($0.artistIDs.map(\.rawValue).joined(separator: "-"))-\($0.startTime)-\($0.endTime)",
-                            customTitle: $0.customTitle,
-                            artistIDs: $0.artistIDs,
-                            startTime: Date(), // TODO:
-                            endTime: Date(), // TODO:
-                            stageID: key
-                        )
-                    }
-                }
-            }
-
-            func unapply(_ output: Output) throws -> Input {
-                output.mapValues {
-                    $0.map {
-                        StagelessPerformance(
-                            customTitle: $0.customTitle,
-                            artistIDs: $0.artistIDs,
-                            startTime: ScheduleTime(from: $0.startTime),
-                            endTime: ScheduleTime(from: $0.endTime)
-                        )
-                    }
-                }
-            }
-        }
-
-        struct FileContentToTupleScheduleDayConversion: Conversion {
-            typealias Input = FileContent<(String?, CalendarDate?, [Event.Stage.ID: [StagelessPerformance]])>
-            typealias Output = Event.Schedule.Day
-
-            func apply(_ input: Input) throws -> Output {
-                let customTitle = input.data.0
-                let scheduleDate = input.data.1 ?? CalendarDate(input.fileName) ?? .today // Default to today if nothing is provided
-
-                let schedule = input.data.2.mapValuesWithKeys { key, value in
-                    value.map {
-                        Event.Performance(
-                            id: .init(
-                                makeIDs(
-                                    from: $0.customTitle,
-                                    $0.artistIDs.map(\.rawValue).joined(separator: "-"),
-                                    String(describing: $0.startTime),
-//                                    String(describing: $0.endTime),
-                                    key.rawValue
-                                )
-                            ),
-                            customTitle: $0.customTitle,
-                            artistIDs: $0.artistIDs,
-                            startTime: scheduleDate.atTime($0.startTime),
-                            endTime: scheduleDate.atTime($0.endTime),
-                            stageID: key
-                        )
-                    }
-                }
-
-                return Event.Schedule.Day(
-                    id: .init(makeIDs(from: customTitle, String(describing: scheduleDate))),
-                    date: scheduleDate,
-                    customTitle: input.data.0,
-                    stageSchedules: schedule
-                )
-            }
-
-            func unapply(_ output: Output) throws -> Input {
-                FileContent(
-                    fileName: output.metadata.date?.description ?? output.metadata.customTitle ?? "schedule",
-                    data: (output.metadata.customTitle, output.metadata.date, output.stageSchedules.mapValues {
-                        $0.map {
-                            StagelessPerformance(
-                                customTitle: $0.customTitle,
-                                artistIDs: $0.artistIDs,
-                                startTime: ScheduleTime(from: $0.startTime),
-                                endTime: ScheduleTime(from: $0.endTime)
-                            )
-                        }
-                    })
-                )
-            }
         }
     }
 }
@@ -471,84 +227,15 @@ extension Conversion {
 
 }
 
-extension Conversions {
-    public struct MapValues<C: Conversion>: Conversion {
-        var transform: C
-
-        public init(_ transform: C) {
-            self.transform = transform
-        }
-
-        public init(@ConversionBuilder _ build: () -> C) {
-            self.transform = build()
-        }
-
-        public func apply(_ input: [C.Input]) throws -> [C.Output] {
-            try input.map(transform.apply)
-        }
-
-        public func unapply(_ output: [C.Output]) throws -> [C.Input] {
-            try output.map(transform.unapply)
-        }
-    }
-
-
-    public struct MapKVPairs<KeyConversion: Conversion, ValueConversion: Conversion>: Conversion where KeyConversion.Input: Hashable, KeyConversion.Output: Hashable {
-        public typealias Input = [KeyConversion.Input: ValueConversion.Input]
-        public typealias Output = [KeyConversion.Output: ValueConversion.Output]
-
-        var keyConversion: KeyConversion
-        var valueConversion: ValueConversion
-
-        public func apply(_ input: Input) throws -> Output {
-            Dictionary(uniqueKeysWithValues: try input.map {
-                try (keyConversion.apply($0.0), valueConversion.apply($0.1))
-            })
-
-        }
-
-        public func unapply(_ output: Output) throws -> Input {
-            Dictionary(uniqueKeysWithValues: try output.map {
-                try (keyConversion.unapply($0.0), valueConversion.unapply($0.1))
-            })
-        }
-    }
-}
-
-public struct Convert<Input, Output>: Conversion {
-    var _apply: (Input) throws -> Output
-    var _unapply: (Output) throws -> Input
-
-    init(apply: @escaping (Input) throws -> Output, unapply: @escaping (Output) throws -> Input) {
-        self._apply = apply
-        self._unapply = unapply
-    }
-
-    init<C: Conversion<Input, Output>>(@ConversionBuilder build: () -> C) {
-        let conversion = build()
-        self._apply = conversion.apply
-        self._unapply = conversion.unapply
-    }
-
-    
-    public func apply(_ input: Input) throws -> Output {
-        try self._apply(input)
-    }
-
-    public func unapply(_ output: Output) throws -> Input {
-        try self._unapply(output)
-    }
-}
 
 extension FileExtension {
     static var markdown: FileExtension = "md"
 }
 
-
 struct ArtistConversion: Conversion {
     var body: some Conversion<FileContent<Data>, Event.Artist> {
         FileContentConversion {
-            DataStringConversion()
+            Conversions.DataToString()
             MarkdownWithFrontMatterConversion<ArtistInfoFrontMatter>()
         }
 

@@ -103,12 +103,12 @@ struct DayScheduleConversionTests {
                 ]
             ]
         )
-        let result = try EventFileTree.ScheduleDayConversion().apply(dto)
+        let result = try ScheduleDayConversion().apply(dto)
 
 
         expectNoDifference(result, schedule)
 
-        let roundTrip = try EventFileTree.ScheduleDayConversion().unapply(result)
+        let roundTrip = try ScheduleDayConversion().unapply(result)
         expectNoDifference(roundTrip, dto)
     }
 
@@ -181,12 +181,12 @@ struct DayScheduleConversionTests {
             ]
         )
 
-        let result = try EventFileTree.ScheduleDayConversion().apply(dto)
+        let result = try ScheduleDayConversion().apply(dto)
 
 
         expectNoDifference(result, schedule)
 
-        let roundTrip = try EventFileTree.ScheduleDayConversion().unapply(result)
+        let roundTrip = try ScheduleDayConversion().unapply(result)
         expectNoDifference(roundTrip, dto)
     }
 }

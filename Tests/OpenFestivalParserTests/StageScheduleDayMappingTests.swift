@@ -231,7 +231,7 @@ typealias ScheduleError = Validation.ScheduleError.StageDayScheduleError
 
 
 struct StageScheduleDayMappingTests {
-    let conversion = EventFileTree.ScheduleDayConversion.ScheduleDictionaryConversion.StagelessPerformanceConversion()
+    let conversion = ScheduleDayConversion.ScheduleDictionaryConversion.StagelessPerformanceConversion()
 
     // MARK: - Success Cases
 

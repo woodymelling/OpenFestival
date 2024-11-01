@@ -8,7 +8,7 @@ import FileTree
 
 struct PerformanceConversionTests {
 
-    let conversion = EventFileTree.ScheduleDayConversion.TimelessStagelessPerformanceConversion()
+    let conversion = ScheduleDayConversion.TimelessStagelessPerformanceConversion()
     typealias PerformanceError = Validation.ScheduleError.PerformanceError
 
     @Test
@@ -77,7 +77,7 @@ struct PerformanceConversionTests {
 
     struct ConversionErrors {
         typealias PerformanceError = Validation.ScheduleError.PerformanceError
-        let conversion = EventFileTree.ScheduleDayConversion.TimelessStagelessPerformanceConversion()
+        let conversion = ScheduleDayConversion.TimelessStagelessPerformanceConversion()
 
         @Test("Invalid start time throws error")
         func invalidStartTime() throws {

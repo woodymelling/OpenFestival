@@ -44,25 +44,7 @@ struct TimelessStagelessPerformance: Equatable {
 import Parsing
 import FileTree
 
-func mapErrors<T, E1: Error, NewError: Error>(
-    work: () throws(E1) -> T,
-    to transformError: (E1) -> NewError
-) throws(NewError) -> T {
-    do {
-        return try work()
-    } catch {
-        throw transformError(error)
-    }
-}
-
-struct Er1: Error {}
-struct Er2: Error {
-    let er: Er1
-}
-
-
-
-extension EventFileTree.ScheduleDayConversion {
+extension ScheduleDayConversion {
     struct TimelessStagelessPerformanceConversion: Conversion {
         typealias Input = PerformanceDTO
         typealias Output = TimelessStagelessPerformance
@@ -121,69 +103,5 @@ extension EventFileTree.ScheduleDayConversion {
 }
 
 
-extension PerformanceDTO {
-    var toPartialPerformance: Validated<TimelessStagelessPerformance, Validation.ScheduleError.PerformanceError> {
-        fatalError()
-//        typealias PerformanceError = Validation.ScheduleError.PerformanceError
-//        typealias ArtistID = Event.Artist.ID
-//        typealias ArtistCollection = OrderedSet<ArtistID>
-//
-//        let startTime = Validated {
-//            try ScheduleTimeConversion().apply(self.time)
-//        } mappingError: { _ in
-//            PerformanceError.invalidStartTime(self.time)
-//        }
-//
-//        let endTime = Validated {
-//            try self.endTime.map {
-//                try ScheduleTimeConversion().apply($0)
-//            }
-//        } mappingError: { _ in
-//            PerformanceError.invalidEndTime(self.endTime ?? "")
-//        }
-//
-//        let artistIDs: Validated<ArtistCollection, PerformanceError> = Validated {
-//            switch (self.artist, self.artists) {
-//            case (.none, .none): return []
-//            case (.some, .some): throw PerformanceError.artistAndArtists
-//            case (.some(let artistName), .none):
-//                guard artistName.hasElements
-//                else { throw PerformanceError.emptyArtist }
-//
-//                return OrderedSet([Event.Artist.ID(artistName)])
-//
-//            case (.none, .some(let artists)):
-//                guard artists.hasElements
-//                else { throw PerformanceError.emptyArtists  }
-//
-//                return OrderedSet(artists.map(ArtistID.init(rawValue:)))
-//            }
-//        } mappingError: { error in
-//            (error as? PerformanceError) ?? .unknownError
-//        }
-//
-//
-//        return zip(startTime, endTime, artistIDs).flatMapish { startTime, endTime, artists in
-//            guard !(artists.isEmpty && self.title == nil)
-//            else { return .error(.noArtistsOrTitle) }
-//
-//            return .valid(TimelessStagelessPerformance(
-//                startTime: startTime,
-//                endTime: endTime,
-//                customTitle: self.title,
-//                artistIDs: artists
-//            ))
-//        }
-    }
-}
-
 import Parsing
 
-extension Validated {
-    func flatMapish<U>(_ transform: (Value) -> Validated<U, Error>) -> Validated<U, Error> {
-        switch self {
-        case .valid(let value): return transform(value)
-        case .invalid(let error): return .invalid(error)
-        }
-    }
-}

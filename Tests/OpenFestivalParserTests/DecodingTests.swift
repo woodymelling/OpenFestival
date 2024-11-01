@@ -49,11 +49,11 @@ struct YamlCodingTests {
             colorScheme: .init(primaryColor: "#FF5733", workshopsColor: "#C70039")
         )
 
-        let result = try YamlConversion(EventInfoDTO.self).apply(yaml)
+        let result = try Conversions.YamlConversion(EventInfoDTO.self).apply(yaml)
         expectNoDifference(result, expectedResult)
 
         // Test roundtripping from struct to yaml back to struct
-        try expect(expectedResult, toRoundtripUsing: YamlConversion(EventInfoDTO.self).inverted())
+        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion(EventInfoDTO.self).inverted())
     }
 
     @Test
@@ -77,11 +77,11 @@ struct YamlCodingTests {
             StageDTO(name: "Tranquil Meadow", color: "#4287f5", imageURL: nil)
         ]
 
-        let result = try YamlConversion([StageDTO].self).apply(yaml)
+        let result = try Conversions.YamlConversion([StageDTO].self).apply(yaml)
 
         expectNoDifference(result, expectedResult)
 
-        try expect(expectedResult, toRoundtripUsing: YamlConversion([StageDTO].self).inverted())
+        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion([StageDTO].self).inverted())
     }
 
 
@@ -101,11 +101,11 @@ struct YamlCodingTests {
             ContactInfoDTO(phoneNumber: "+0987654321", title: "Emergency", description: "For emergencies only")
         ]
 
-        let result = try YamlConversion([ContactInfoDTO].self).apply(yaml)
+        let result = try Conversions.YamlConversion([ContactInfoDTO].self).apply(yaml)
 
         expectNoDifference(result, expectedResult)
 
-        try expect(expectedResult, toRoundtripUsing: YamlConversion([ContactInfoDTO].self).inverted())
+        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion([ContactInfoDTO].self).inverted())
     }
 
 
@@ -177,11 +177,11 @@ struct YamlCodingTests {
             ]
         ])
 
-        let result = try YamlConversion<EventDTO.DaySchedule>().apply(yaml)
+        let result = try Conversions.YamlConversion<EventDTO.DaySchedule>().apply(yaml)
 
         expectNoDifference(result, expectedResult)
 
-        try expect(expectedResult, toRoundtripUsing: YamlConversion<EventDTO.DaySchedule>().inverted())
+        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion<EventDTO.DaySchedule>().inverted())
     }
 
     @Test
@@ -201,11 +201,11 @@ struct YamlCodingTests {
             ]
         )
 
-        let result = try YamlConversion<ArtistInfoFrontMatter>().apply(yaml)
+        let result = try Conversions.YamlConversion<ArtistInfoFrontMatter>().apply(yaml)
 
         expectNoDifference(result, expectedResult)
 
-        try expect(expectedResult, toRoundtripUsing: YamlConversion<ArtistInfoFrontMatter>().inverted())
+        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion<ArtistInfoFrontMatter>().inverted())
     }
 }
 
