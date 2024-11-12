@@ -20,7 +20,7 @@ fileprivate let day = CalendarDate(year: 2024, month: 6, day: 12)
 struct DayScheduleConversionTests {
 
     @Test
-    func multiStage() throws {
+    func multiStage() async throws {
         let dto = FileContent(fileName: "2024-06-12", data: EventDTO.DaySchedule(
             date: CalendarDate(year: 2024, month: 6, day: 12),
             performances: [
@@ -103,18 +103,18 @@ struct DayScheduleConversionTests {
                 ]
             ]
         )
-        let result = try ScheduleDayConversion().apply(dto)
+        let result = try await ScheduleDayConversion().apply(dto)
 
 
         expectNoDifference(result, schedule)
 
-        let roundTrip = try ScheduleDayConversion().unapply(result)
+        let roundTrip = try await ScheduleDayConversion().unapply(result)
         expectNoDifference(roundTrip, dto)
     }
 
 
     @Test
-    func testSingleStage() throws {
+    func testSingleStage() async throws {
         let dto = FileContent(fileName: "2024-06-12", data: EventDTO.DaySchedule(
             date: day,
             performances: [
@@ -181,13 +181,12 @@ struct DayScheduleConversionTests {
             ]
         )
 
-        let result = try ScheduleDayConversion().apply(dto)
+        let result = try await ScheduleDayConversion().apply(dto)
 
 
         expectNoDifference(result, schedule)
 
-        let roundTrip = try ScheduleDayConversion().unapply(result)
+        let roundTrip = try await ScheduleDayConversion().unapply(result)
         expectNoDifference(roundTrip, dto)
     }
 }
-

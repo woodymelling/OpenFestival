@@ -50,11 +50,9 @@ extension ScheduleDayConversion {
         typealias Output = TimelessStagelessPerformance
 
         func apply(_ input: PerformanceDTO) throws -> TimelessStagelessPerformance {
-            let (startTime, endTime, artistIDs) = try allSucceed(
-                { try ScheduleTimeConversion().apply(input.time) },
-                { try input.endTime.map(ScheduleTimeConversion().apply(_:)) },
-                { try getArtists(artist: input.artist, artists: input.artists) }
-            )
+            let startTime = try ScheduleTimeConversion().apply(input.time)
+            let endTime = try input.endTime.map(ScheduleTimeConversion().apply(_:))
+            let artistIDs = try getArtists(artist: input.artist, artists: input.artists)
 
             guard !(input.title == nil && artistIDs.isEmpty)
             else { throw PerformanceError.noArtistsOrTitle }

@@ -103,8 +103,8 @@ struct EventFileTree: FileTreeComponent {
     }
 
 
-    struct StagesConversion: Conversion {
-        var body: some Conversion<Data, [Event.Stage]> {
+    struct StagesConversion: AsyncConversion {
+        var body: some AsyncConversion<Data, [Event.Stage]> {
             Conversions.YamlConversion([StageDTO].self)
                 .mapValues {
                     Event.Stage(name: $0.name, iconImageURL: $0.imageURL)
@@ -125,19 +125,29 @@ struct EventFileTree: FileTreeComponent {
         var body: some Conversion<Data, [Event.ContactNumber]> {
 
             Conversions.YamlConversion([ContactInfoDTO].self)
-                .mapValues {
-                    Event.ContactNumber(
-                        phoneNumber: $0.phoneNumber,
-                        title: $0.title,
-                        description: $0.description
-                    )
-                } unapply: {
-                    ContactInfoDTO(
-                        phoneNumber: $0.phoneNumber,
-                        title: $0.title,
-                        description: $0.description
-                    )
-                }
+
+            Conversions.MapValues(ContactNumberDTOConversion())
+        }
+
+
+        struct ContactNumberDTOConversion: Conversion {
+            typealias Input = ContactInfoDTO
+            typealias Output = Event.ContactNumber
+            func apply(_ input: Input) throws -> Output {
+                Event.ContactNumber(
+                    phoneNumber: input.phoneNumber,
+                    title: input.title,
+                    description: input.description
+                )
+            }
+
+            func unapply(_ output: Output) throws -> Input {
+                ContactInfoDTO(
+                    phoneNumber: output.phoneNumber,
+                    title: output.title,
+                    description: output.description
+                )
+            }
         }
     }
 }
@@ -202,12 +212,11 @@ extension Conversions {
 }
 
 extension Conversion {
-
     func mapValues<OutputElement, NewOutput>(
-        apply: @escaping (OutputElement) throws -> NewOutput,
-        unapply: @escaping (NewOutput) throws -> OutputElement
+        apply: @Sendable @escaping (OutputElement) throws -> NewOutput,
+        unapply: @Sendable @escaping (NewOutput) throws -> OutputElement
     ) -> some Conversion<Input, [NewOutput]> where Output == [OutputElement] {
-        self.map(Conversions.MapValues(Convert(apply: apply, unapply: unapply)))
+        self.map(Conversions.MapValues(AnyConversion(apply: apply, unapply: unapply)))
     }
 
     func mapValues<OutputElement, NewOutput, C>(
@@ -223,8 +232,6 @@ extension Conversion {
     where Output == [OutputElement] {
         self.map(Conversions.MapValues(conversion))
     }
-
-
 }
 
 

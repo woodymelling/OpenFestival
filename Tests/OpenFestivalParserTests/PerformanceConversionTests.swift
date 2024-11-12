@@ -83,7 +83,7 @@ struct PerformanceConversionTests {
         func invalidStartTime() throws {
             let dto = PerformanceDTO(time: "Night PM")
 
-            #expect(throws: Errors(ScheduleTimeDecodingError.invalidDateString)!) {
+            #expect(throws: ScheduleTimeDecodingError.invalidDateString) {
                 try conversion.apply(dto)
             }
         }
@@ -96,7 +96,7 @@ struct PerformanceConversionTests {
                 endTime: "Dawnish"
             )
 
-            #expect(throws: Errors(ScheduleTimeDecodingError.invalidDateString)!) {
+            #expect(throws: ScheduleTimeDecodingError.invalidDateString) {
                 try conversion.apply(dto)
             }
         }
@@ -118,7 +118,7 @@ struct PerformanceConversionTests {
                 time: "10:00 PM"
             )
 
-            #expect(throws: Errors(PerformanceError.artistAndArtists)!) {
+            #expect(throws: PerformanceError.artistAndArtists) {
                 try conversion.apply(dto)
             }
         }
@@ -130,7 +130,7 @@ struct PerformanceConversionTests {
                 time: "10:00 PM"
             )
 
-            #expect(throws: Errors(PerformanceError.emptyArtist)!) {
+            #expect(throws: PerformanceError.emptyArtist) {
                 try conversion.apply(dto)
             }
         }
@@ -142,7 +142,7 @@ struct PerformanceConversionTests {
                 time: "10:00 PM"
             )
 
-            #expect(throws: Errors(PerformanceError.emptyArtists)!) {
+            #expect(throws: PerformanceError.emptyArtists) {
                 try conversion.apply(dto)
             }
         }

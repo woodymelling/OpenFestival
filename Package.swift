@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "OpenFestival",
     platforms: [
-        .macOS(.v14),
+        .macOS(.v15),
         .iOS(.v17)
     ],
     products: [
@@ -16,6 +16,7 @@ let package = Package(
         .library(name: "OpenFestivalViewer", targets: ["OpenFestivalViewer"]),
         .library(name: "OpenFestivalApp", targets: ["OpenFestivalApp"]),
         .library(name: "GitClient", targets: ["GitClient"]),
+        .library(name: "OpenFestivalEditor", targets: ["OpenFestivalEditor"]),
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
@@ -23,7 +24,7 @@ let package = Package(
 
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.11.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
-        .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.3.6"),
+        .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.4.1"),
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "1.0.0"),
         .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.10.0"),
         .package(url: "https://github.com/pointfreeco/swift-validated", from: "0.2.0"),
@@ -96,6 +97,13 @@ let package = Package(
                 "OpenFestivalModels",
                 "OpenFestivalParser",
                 "OpenFestivalViewer",
+                .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+            ]
+        ),
+        .target(
+            name: "OpenFestivalEditor",
+            dependencies: [
+//                "OpenFestivalModels",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
             ]
         ),
