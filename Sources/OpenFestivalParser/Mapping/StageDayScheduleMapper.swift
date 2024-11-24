@@ -38,7 +38,7 @@ extension Validation.ScheduleError {
 
 struct StagelessPerformance: Equatable {
     var customTitle: String?
-    var artistIDs: OrderedSet<Event.Artist.ID>
+    var artistNames: OrderedSet<String>
     var startTime: ScheduleTime
     var endTime: ScheduleTime
 }

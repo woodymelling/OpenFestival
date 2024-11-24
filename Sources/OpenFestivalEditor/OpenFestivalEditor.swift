@@ -8,129 +8,230 @@
 import SwiftUI
 import ComposableArchitecture
 
+@Reducer
+struct EventEditor {
+    @ObservableState
+    struct State {
+        @Shared var event: Event
 
-enum Selection: Hashable {
-    case event
-    case eventInfo
-    case stages
-    case contactNumbers
-    case artists
-    case artist(String)
-    case schedules
-    case schedule(String)
+        init(_ event: Shared<Event>) {
+            self._event = event
 
+            self.sidebar = .init(event: event)
+        }
+
+        var tabs: TabPagesState<Tabs.State> = .init()
+        var sidebar: Sidebar.State
+    }
+
+    @Reducer
+    enum Tabs {
+        case artistEditor(ArtistEditor)
+        case scheduleEditor(ScheduleEditor)
+
+    }
+
+    enum Action {
+        case sidebar(Sidebar.Action)
+        case tabs(TabPagesAction<Tabs.State, Tabs.Action>)
+    }
+
+    var body: some ReducerOf<Self> {
+        Scope(state: \.sidebar, action: \.sidebar) {
+            Sidebar()
+        }
+
+        Reduce { state, action in
+            switch action {
+            case .sidebar(.primaryAction(let tags)):
+                tags.forEach {
+                    switch $0 {
+                    case .directory: break
+                    case .file(let fileType):
+                        switch fileType {
+                        case .artist(let artistID):
+                            guard let artist = Shared(state.$event.artists[id: artistID])
+                            else { break }
+
+                            state.tabs.append(.artistEditor(ArtistEditor.State(artist: artist)))
+
+                        case .schedule(let scheduleID):
+                            guard let schedule = Shared(state.$event.schedule[id: scheduleID])
+                            else { break }
+
+                            state.tabs.append(.scheduleEditor(ScheduleEditor.State(schedule: schedule)))
+
+                        case .eventInfo:
+                            break
+
+                        case .stages:
+                            break
+
+                        case .contactInfo:
+                            break
+
+                        }
+                    }
+                }
+                if let firstSelection = tags.first {
+                    state.tabs.selection = firstSelection
+                }
+                return .none
+            case .sidebar(.contextMenu(let tags, let action)):
+                switch action {
+                case .delete:
+                    tags.forEach {
+                        switch $0 {
+                        case .directory: break
+                        case .file(let fileType):
+                            switch fileType {
+                            case .artist(let artistID):
+                                state.event.artists.remove(id: artistID)
+                            case .schedule(let scheduleID):
+                                state.event.schedule.removeAll {
+                                    $0.metadata.id == .init(scheduleID)
+                                }
+                            case .eventInfo, .stages, .contactInfo:
+                                break
+                            }
+                        }
+                    }
+                    return .none
+                case .openInTab:
+                    return .none
+                case .showInFinder:
+                    return .none
+                }
+
+            case .sidebar, .tabs:
+                return .none
+            }
+        }
+        .forEach(\.tabs, action: \.tabs)
+    }
 }
 
-struct EventEditorView: View {
-    @AppStorage("event-expanded") var eventExpanded = true
+extension EventEditor.Tabs.State: Equatable, Identifiable {
 
-
-    @State var selections: Set<Selection> = []
-
-    @State var artists = ["Boids", "Rhythmbox", "Overgrowth"]
-    @State var tabsStore = Store(initialState: EventEditorTabBar.State()) {
-        EventEditorTabBar()
+    var id: EventTag {
+        switch self {
+        case .artistEditor(let state):
+            .file(.artist(state.artist.id))
+        case .scheduleEditor(let state):
+            .file(.schedule(state.schedule.id))
+        }
     }
+}
+public struct EventEditorView: View {
+    public init() {}
+
+    @Bindable var store = Store(initialState: EventEditor.State(Shared(.testival))) {
+        EventEditor()
+            ._printChanges()
+    }
+
+    public var body: some View {
+        NavigationSplitView {
+            SidebarView(store: store.scope(state: \.sidebar, action: \.sidebar))
+        } detail: {
+            TabPagesView(
+                store: $store.scope(state: \.tabs, action: \.tabs),
+                root: {
+                    Text("No Editor Open")
+                },
+                label: { state in
+                    switch state {
+                    case .artistEditor(let state):
+                        Label("\(state.artist.name)", systemImage: "doc")
+                    case .scheduleEditor(let state):
+                        Label("\(state.schedule.name)", systemImage: "doc")
+                    }
+                },
+                destination: { store in
+                    switch store.case {
+                    case .artistEditor(let store):
+                        ArtistEditorView(store: store)
+                    case .scheduleEditor(let store):
+                        ScheduleEditorView(store: store)
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Reducer
+struct Sidebar {
+    @ObservableState
+    struct State {
+        var selection: Set<EventTag> = []
+        @Shared var event: Event
+        var searchText = ""
+    }
+
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+
+        case primaryAction(Set<EventTag>)
+        case contextMenu(Set<EventTag>, ContextMenuAction)
+
+        enum ContextMenuAction {
+            case openInTab
+            case delete
+            case showInFinder
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+    }
+}
+
+import OpenFestivalParser
+import OpenFestivalModels
+
+struct SidebarView: View {
+    @Bindable var store: StoreOf<Sidebar>
 
     var body: some View {
-        NavigationSplitView {
-            List(selection: $selections) {
-                Folder("My Event", isExpanded: .constant(true)) {
-                    File("event-info", "yaml")
-                        .tag(Selection.eventInfo)
-                    File("stages", "yaml")
-                        .tag(Selection.stages)
-                    File("contact-numbers", "yaml")
-                        .tag(Selection.contactNumbers)
-
-                    Folder("schedules") {
-                        ForEach(["11-6-2024", "11-7-2024"], id: \.self) {
-                            File("\($0)", "yaml")
-                                .tag(Selection.schedule($0))
-                        }
-                    }
-                    .tag(Selection.schedules)
-
-                    Folder("artists", isExpanded: .constant(true)) {
-                        ForEach($artists, id: \.self) {
-
-                            EditableFile(title: $0, fileType: "md")
-                                .tag(Selection.artist($0.wrappedValue))
-                        }
-                    }
-                    .tag(Selection.artists)
-
-
+        List(selection: $store.selection) {
+            EventFileTree()
+                .view(for: store.event)
+        }
+        .searchable(text: $store.searchText, placement: .sidebar)
+        .contextMenu(
+            forSelectionType: EventTag.self,
+            menu: { selections in
+                Button("Open in Tab") {
+                    store.send(.contextMenu(selections, .openInTab))
                 }
-                .tag(Selection.event)
-            }
-            .frame(minWidth: 200)
+                .disabled(selections.contains { $0.isDirectory })
 
-        } detail: {
-            VStack(spacing: 0) {
-                EventEditorTabBarView(store: tabsStore)
-            }
-        }
+                Button("Show in Finder") {
+                    store.send(.contextMenu(selections, .showInFinder))
+                }
 
+                Divider()
+
+                Button("Delete", role: .destructive) {
+                    store.send(.contextMenu(selections, .delete))
+                }
+                .disabled(selections.contains { $0.isDirectory })
+            },
+            primaryAction: { id in
+                store.send(.primaryAction(id))
+            }
+        )
     }
+}
 
-    struct Folder<Content: View>: View {
-        var name: String
-        var content: Content
-
-        init(_ name: String, isExpanded: Binding<Bool>? = nil, @ViewBuilder content: () -> Content) {
-            self.name = name
-            self.bindingIsExpanded = isExpanded
-            self.content = content()
-        }
-
-        @State var localIsExpanded = false
-        var bindingIsExpanded: Binding<Bool>?
-
-        var isExpanded: Binding<Bool> {
-            bindingIsExpanded ?? $localIsExpanded
-        }
-
-        var body: some View {
-            DisclosureGroup(isExpanded: isExpanded) {
-                content
-            } label: {
-                Label(name, systemImage: "folder")
-            }
-
+extension EventTag {
+    var isDirectory: Bool {
+        switch self {
+        case .file: false
+        case .directory: true
         }
     }
-
-    struct File: View {
-        init(_ name: String, _ fileType: String) {
-            self.name = name
-            self.fileType = fileType
-        }
-
-        var name: String
-        var fileType: String
-
-        var body: some View {
-            Label(name, systemImage: "doc")
-        }
-    }
-
-    struct EditableFile: View {
-        @Binding var title: String
-        var fileType: String
-
-        @State var isEditing = false
-
-        var body: some View {
-            HStack(alignment: .bottom, spacing: 0) {
-                Label("", systemImage: "doc")
-
-                TextField("artist name", text: $title)
-            }
-        }
-    }
-
-
 }
 
 extension View {

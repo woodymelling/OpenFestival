@@ -13,7 +13,7 @@ import Foundation
 
 struct ScheduleDayConversion: AsyncConversion {
     typealias Input = FileContent<EventDTO.DaySchedule>
-    typealias Output = Event.Schedule.Day
+    typealias Output = StringlyTyped.Schedule
 
     var body: some AsyncConversion<Input, Output> {
         FileContentConversion {
@@ -29,14 +29,13 @@ struct ScheduleDayConversion: AsyncConversion {
         FileContentToTupleScheduleDayConversion()
     }
 
-
     struct ScheduleDictionaryConversion: Conversion {
         typealias Input = [String: [PerformanceDTO]]
-        typealias Output = [Event.Stage.ID: [StagelessPerformance]]
+        typealias Output = [String: [StagelessPerformance]]
 
         var body: some Conversion<Input, Output> {
             Conversions.MapKVPairs(
-                keyConversion: Event.Stage.ID.Conversion(),
+                keyConversion: Identity<String>(),
                 valueConversion: StagelessPerformanceConversion()
             )
         }
@@ -53,7 +52,6 @@ struct ScheduleDayConversion: AsyncConversion {
             }
         }
     }
-
 
     struct DetermineFullSetTimesConversion: Conversion {
         typealias Input = [TimelessStagelessPerformance]
@@ -97,7 +95,7 @@ struct ScheduleDayConversion: AsyncConversion {
 
                 schedule.append(StagelessPerformance(
                     customTitle: performance.customTitle,
-                    artistIDs: performance.artistIDs,
+                    artistNames: performance.artistNames,
                     startTime: startTime,
                     endTime: endTime
                 ))
@@ -123,7 +121,7 @@ struct ScheduleDayConversion: AsyncConversion {
                     startTime: $0.startTime,
                     endTime: $0.endTime,
                     customTitle: $0.customTitle,
-                    artistIDs: $0.artistIDs
+                    artistNames: $0.artistNames
                 )
             }
 
@@ -139,42 +137,9 @@ struct ScheduleDayConversion: AsyncConversion {
         }
     }
 
-    struct StagedPerformanceConversion: Conversion {
-        typealias Input = [Event.Stage.ID: [StagelessPerformance]]
-        typealias Output = [Event.Stage.ID: [Event.Performance]]
-
-        func apply(_ input: Input) throws -> Output {
-            input.mapValuesWithKeys { key, value in
-                value.map {
-                    Event.Performance(
-                        id: "\($0.customTitle ?? "")-\($0.artistIDs.map(\.rawValue).joined(separator: "-"))-\($0.startTime)-\($0.endTime)",
-                        customTitle: $0.customTitle,
-                        artistIDs: $0.artistIDs,
-                        startTime: Date(), // TODO:
-                        endTime: Date(), // TODO:
-                        stageID: key
-                    )
-                }
-            }
-        }
-
-        func unapply(_ output: Output) throws -> Input {
-            output.mapValues {
-                $0.map {
-                    StagelessPerformance(
-                        customTitle: $0.customTitle,
-                        artistIDs: $0.artistIDs,
-                        startTime: ScheduleTime(from: $0.startTime),
-                        endTime: ScheduleTime(from: $0.endTime)
-                    )
-                }
-            }
-        }
-    }
-
     struct FileContentToTupleScheduleDayConversion: Conversion {
-        typealias Input = FileContent<(String?, CalendarDate?, [Event.Stage.ID: [StagelessPerformance]])>
-        typealias Output = Event.Schedule.Day
+        typealias Input = FileContent<(String?, CalendarDate?, [String: [StagelessPerformance]])>
+        typealias Output = StringlyTyped.Schedule
 
         func apply(_ input: Input) throws -> Output {
             let customTitle = input.data.0
@@ -182,28 +147,23 @@ struct ScheduleDayConversion: AsyncConversion {
 
             let schedule = input.data.2.mapValuesWithKeys { key, value in
                 value.map {
-                    Event.Performance(
-                        id: .init(
-                            makeIDs(
-                                from: $0.customTitle,
-                                $0.artistIDs.map(\.rawValue).joined(separator: "-"),
-                                String(describing: $0.startTime),
-                                key.rawValue
-                            )
-                        ),
+                    StringlyTyped.Schedule.Performance(
+                        id: .init(),
                         customTitle: $0.customTitle,
-                        artistIDs: $0.artistIDs,
+                        artistNames: $0.artistNames,
                         startTime: scheduleDate.atTime($0.startTime),
                         endTime: scheduleDate.atTime($0.endTime),
-                        stageID: key
+                        stageName: key
                     )
                 }
             }
 
-            return Event.Schedule.Day(
-                id: .init(makeIDs(from: customTitle, String(describing: scheduleDate))),
-                date: scheduleDate,
-                customTitle: input.data.0,
+            return StringlyTyped.Schedule(
+                metadata: .init(
+                    id: .init(),
+                    date: scheduleDate,
+                    customTitle: customTitle
+                ),
                 stageSchedules: schedule
             )
         }
@@ -215,7 +175,7 @@ struct ScheduleDayConversion: AsyncConversion {
                     $0.map {
                         StagelessPerformance(
                             customTitle: $0.customTitle,
-                            artistIDs: $0.artistIDs,
+                            artistNames: $0.artistNames,
                             startTime: ScheduleTime(from: $0.startTime),
                             endTime: ScheduleTime(from: $0.endTime)
                         )

@@ -33,11 +33,11 @@ extension Validation.ScheduleError {
 
 
 @MemberwiseInit
-struct TimelessStagelessPerformance: Equatable {
+struct TimelessStagelessPerformance: Equatable, Sendable {
     var startTime: ScheduleTime
     var endTime: ScheduleTime?
     var customTitle: String?
-    var artistIDs: OrderedSet<Event.Artist.ID>
+    var artistNames: OrderedSet<String>
 }
 
 
@@ -52,25 +52,24 @@ extension ScheduleDayConversion {
         func apply(_ input: PerformanceDTO) throws -> TimelessStagelessPerformance {
             let startTime = try ScheduleTimeConversion().apply(input.time)
             let endTime = try input.endTime.map(ScheduleTimeConversion().apply(_:))
-            let artistIDs = try getArtists(artist: input.artist, artists: input.artists)
+            let artistNames = try getArtists(artist: input.artist, artists: input.artists)
 
-            guard !(input.title == nil && artistIDs.isEmpty)
+            guard !(input.title == nil && artistNames.isEmpty)
             else { throw PerformanceError.noArtistsOrTitle }
 
             return TimelessStagelessPerformance(
                 startTime: startTime,
                 endTime: endTime,
                 customTitle: input.title,
-                artistIDs: artistIDs
+                artistNames: artistNames
             )
         }
 
         func unapply(_ output: TimelessStagelessPerformance) throws -> PerformanceDTO {
-            let artistIDs = output.artistIDs.map(\.rawValue)
             return PerformanceDTO(
                 title: output.customTitle,
-                artist: artistIDs.count == 1 ? artistIDs.first : nil,
-                artists: artistIDs.count > 1 ? artistIDs : nil,
+                artist: output.artistNames.count == 1 ? output.artistNames.first : nil,
+                artists: output.artistNames.count > 1 ? Array(output.artistNames) : nil,
                 time: try ScheduleTimeConversion().unapply(output.startTime),
                 endTime: try output.endTime.map(ScheduleTimeConversion().unapply(_:))
             )
@@ -79,7 +78,7 @@ extension ScheduleDayConversion {
 
         typealias PerformanceError = Validation.ScheduleError.PerformanceError
 
-        func getArtists(artist: String?, artists: [String]?) throws -> OrderedSet<Event.Artist.ID> {
+        func getArtists(artist: String?, artists: [String]?) throws -> OrderedSet<String> {
             switch (artist, artists) {
             case (.none, .none): return []
             case (.some, .some): throw PerformanceError.artistAndArtists
@@ -87,13 +86,13 @@ extension ScheduleDayConversion {
                 guard artistName.hasElements
                 else { throw PerformanceError.emptyArtist }
 
-                return OrderedSet([Event.Artist.ID(artistName)])
+                return OrderedSet([artistName])
 
             case (.none, .some(let artists)):
                 guard artists.hasElements
                 else { throw PerformanceError.emptyArtists  }
 
-                return OrderedSet(artists.map(Event.Artist.ID.init(rawValue:)))
+                return OrderedSet(artists)
             }
         }
     }

@@ -17,7 +17,7 @@ import Dependencies
  in places where the time zone doesn't matter. It uses the logic of Foundation's Date
  to transform the current time into year/month/day based on TimeZone.current.
  */
-public struct CalendarDate: Equatable, Hashable {
+public struct CalendarDate: Equatable, Hashable, Sendable {
     public var year, month, day: Int
 
     public init(year: Int, month: Int, day: Int) {

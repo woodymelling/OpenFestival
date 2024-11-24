@@ -10,7 +10,7 @@ import Foundation
 
 struct MarkdownWithFrontMatter<FrontMatter> {
     let frontMatter: FrontMatter?
-    let body: String
+    let body: String?
 
     struct Parser {}
 }
@@ -28,7 +28,9 @@ extension MarkdownWithFrontMatter.Parser: Parser, ParserPrinter where FrontMatte
                 Whitespace(1, .vertical)
             }
 
-            Rest().map(.string)
+            Optionally {
+                Rest().map(.string)
+            }
         }
     }
 }

@@ -12,13 +12,13 @@ import AsyncSwiftGit
 
 
 @DependencyClient
-public struct GitClient {
-    public var cloneRepository: (_ from: URL, _ destination: URL) async throws -> Void
-    public var pull: (_ at: URL) async throws -> Void
+public struct GitClient: Sendable {
+    public var cloneRepository: @Sendable (_ from: URL, _ destination: URL) async throws -> Void
+    public var pull: @Sendable (_ at: URL) async throws -> Void
 }
 
 extension GitClient: DependencyKey {
-    public static var liveValue = GitClient(
+    public static let liveValue = GitClient(
         cloneRepository: { url, destinationPath in
             let repository = try await Repository.clone(from: url, to: destinationPath)
         },

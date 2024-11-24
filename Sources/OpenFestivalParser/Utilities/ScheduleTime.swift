@@ -9,7 +9,7 @@ import Foundation
 
 private let formatter = DateFormatter()
 
-public struct ScheduleTime: Codable {
+public struct ScheduleTime: Codable, Sendable {
     var hour: Int
     var minute: Int
 

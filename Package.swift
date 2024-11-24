@@ -47,7 +47,6 @@ let package = Package(
             name: "OpenFestivalParser",
             dependencies: [
                 "Yams",
-                "GitClient",
                 .product(name: "FileTree", package: "swift-file-tree"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "DependenciesMacros", package: "swift-dependencies"),
@@ -103,7 +102,7 @@ let package = Package(
         .target(
             name: "OpenFestivalEditor",
             dependencies: [
-//                "OpenFestivalModels",
+                "OpenFestivalParser",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
             ]
         ),

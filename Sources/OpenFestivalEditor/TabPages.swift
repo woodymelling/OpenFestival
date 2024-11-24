@@ -1,177 +1,43 @@
 //
-//  ArtistEditor.swift
+//  TabPages.swift
 //  OpenFestival
 //
-//  Created by Woodrow Melling on 11/9/24.
+//  Created by Woodrow Melling on 11/12/24.
 //
-
-
-
 import ComposableArchitecture
 import SwiftUI
-
-
-@Reducer
-struct ArtistEditor {
-    @ObservableState
-    struct State: Equatable {
-        var name: String
-    }
-}
-struct ArtistEditorView: View {
-    let store: StoreOf<ArtistEditor>
-    var body: some View {
-        Label("Artists Editor for: \(store.name)", systemImage: "person")
-    }
-}
-
-@Reducer
-struct ScheduleEditor {
-    @ObservableState
-    struct State: Equatable {
-        var name: String
-    }
-}
-
-struct ScheduleEditorView: View {
-    let store: StoreOf<ScheduleEditor>
-    var body: some View {
-        VStack {
-            Label("Schedule Editor for: \(store.name)", systemImage: "calendar")
-        }
-    }
-}
-
-@Reducer
-struct EventEditorTabBar {
-    @ObservableState
-    struct State {
-        var editorTabs: TabPagesState<Tabs.State> = .init(
-            pages: [
-                .artistEditor(ArtistEditor.State(name: "Boids")),
-                .scheduleEditor(ScheduleEditor.State(name: "11-10-2024")),
-                .artistEditor(ArtistEditor.State(name: "Rhythmbox")),
-                .scheduleEditor(ScheduleEditor.State(name: "11-11-2024")),
-                .artistEditor(ArtistEditor.State(name: "Overgrowth")),
-            ]
-        )
-    }
-
-    enum Action {
-        case editorTabs(TabPagesAction<Tabs.State, Tabs.Action>)
-
-        case didTapLaunchArtists
-        case didTapLaunchSchedule
-    }
-
-    @Reducer
-    enum Tabs {
-        case artistEditor(ArtistEditor)
-        case scheduleEditor(ScheduleEditor)
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce<State, Action> { state, action in
-            switch action {
-            case .didTapLaunchArtists:
-                state.editorTabs.append(.artistEditor(ArtistEditor.State(name: "Oaktrail")))
-                return .none
-            case .didTapLaunchSchedule:
-
-                state.editorTabs.append(.scheduleEditor(ScheduleEditor.State(name: "11-10-24")))
-                return .none
-            case .editorTabs:
-                return .none
-            }
-        }
-        .forEach(\.editorTabs, action: \.editorTabs) {
-            Reduce { state, action in
-                return .none
-            }
-            Tabs.body
-        }
-        ._printChanges()
-    }
-}
-
-struct EventEditorTabBarView: View {
-    @Bindable var store: StoreOf<EventEditorTabBar>
-
-    var body: some View {
-        TabPagesView(
-            store: $store.scope(state: \.editorTabs, action: \.editorTabs),
-            root: {
-                VStack {
-                    Text("Root View")
-                    Button("Launch Artists") {
-                        store.send(.didTapLaunchArtists)
-                    }
-                    Button("Launch Schedule") {
-                        store.send(.didTapLaunchSchedule)
-                    }
-                }
-            },
-            label: { state in
-                switch state {
-                case .artistEditor(let state):
-                    Label("\(state.name)", systemImage: "doc")
-                case .scheduleEditor(let state):
-                    Label("\(state.name)", systemImage: "doc")
-                }
-            },
-            destination: { store in
-                switch store.case {
-                case .artistEditor(let store):
-                    ArtistEditorView(store: store)
-                case .scheduleEditor(let store):
-                    ScheduleEditorView(store: store)
-                }
-            }
-        )
-    }
-}
-
-extension EventEditorTabBar.Tabs.State: Equatable {}
+import Foundation
 
 
 // MARK: TabPagesReducer
 @ObservableState
-public struct TabPagesState<Element> {
-    var selection: TabPageID? // TODO: Shared?
-    var pages: IdentifiedArrayOf<TabPageIdentified<Element>> = .init()
+public struct TabPagesState<Element: Identifiable>{
+    var selection: Element.ID? // TODO: Shared?, Identified by the elements ID somehow?
+    var pages: IdentifiedArrayOf<Element> = .init()
 
     init() { }
 
-    init<C: Collection>(pages: C) where C.Element == Element {
-        @Dependency(\.uuid) var uuid
-        self.pages = IdentifiedArray(uncheckedUniqueElements: pages.map {
-            TabPageIdentified(id: uuid(), element: $0)
-        })
-
-        self.selection = self.pages.first?.id
-    }
-
     mutating func append(_ element: Element) {
-        @Dependency(\.uuid) var uuid
-        pages.append(.init(id: uuid(), element: element))
+        pages.append(element)
     }
 }
 extension TabPagesState: Equatable where Element: Equatable {}
 extension TabPagesState: Hashable where Element: Hashable {}
-public typealias TabPageID = UUID
+extension TabPagesState: Sendable where Element: Sendable, Element.ID: Sendable {}
+//public typealias TabPageID = UUID
+//
+//@ObservableState
+//struct TabPageIdentified<T>: Identifiable {
+//    var id: TabPageID
+//    var element: T
+//}
 
-@ObservableState
-struct TabPageIdentified<T>: Identifiable {
-    var id: TabPageID
-    var element: T
-}
-
-extension TabPageIdentified: Equatable where T: Equatable {}
-extension TabPageIdentified: Hashable where T: Hashable {}
+//extension TabPageIdentified: Equatable where T: Equatable {}
+//extension TabPageIdentified: Hashable where T: Hashable {}
 
 @CasePathable
-public enum TabPagesAction<State: Equatable, Action>: BindableAction {
-    case page(IdentifiedAction<TabPageID, TabPageAction<Action>>)
+public enum TabPagesAction<State: Equatable & Identifiable, Action>: BindableAction where State.ID: Sendable {
+    case page(IdentifiedAction<State.ID, TabPageAction<Action>>)
     case binding(BindingAction<TabPagesState<State>>)
 }
 
@@ -183,7 +49,7 @@ public enum TabPageAction<Element> {
 
 
 @Reducer
-public struct TabPages<Base: Reducer, Destination: Reducer>: Reducer where Destination.State: Equatable {
+public struct TabPages<Base: Reducer, Destination: Reducer>: Reducer where Destination.State: Equatable & Identifiable, Destination.State.ID: Sendable {
     let base: Base
     let toTabState: WritableKeyPath<Base.State, TabPagesState<Destination.State>>
     let toTabAction: CaseKeyPath<Base.Action, TabPagesAction<Destination.State, Destination.Action>>
@@ -210,7 +76,9 @@ public struct TabPages<Base: Reducer, Destination: Reducer>: Reducer where Desti
                 }
             }
             .forEach(\.pages, action: \.page) {
-                Scope(state: \.element, action: \.page) {
+                EmptyReducer()
+
+                Scope(state: \.self, action: \.page) {
                     destination
                 }
             }
@@ -221,7 +89,7 @@ public struct TabPages<Base: Reducer, Destination: Reducer>: Reducer where Desti
 
     func reduceTab(
         state: inout TabPagesState<Destination.State>,
-        id: TabPageID,
+        id: Destination.State.ID,
         action: TabAction
     ) -> Effect<TabPagesAction<Destination.State, Destination.Action>> {
         switch action {
@@ -315,17 +183,18 @@ extension Reducer {
     }
 }
 extension SwiftUI.Bindable {
-  /// Derives a binding to a store focused on ``StackState`` and ``StackAction``.
-  ///
-  /// See ``SwiftUI/Binding/scope(state:action:fileID:line:)`` defined on `Binding` for more
-  /// information.
-  public func scope<State: ObservableState, Action, ElementState, ElementAction>(
-    state: KeyPath<State, TabPagesState<ElementState>>,
-    action: CaseKeyPath<Action, TabPagesAction<ElementState, ElementAction>>
-  ) -> Binding<Store<TabPagesState<ElementState>, TabPagesAction<ElementState, ElementAction>>>
-  where Value == Store<State, Action> {
-      self[state: state, action: action]
-  }
+    /// Derives a binding to a store focused on ``StackState`` and ``StackAction``.
+    ///
+    /// See ``SwiftUI/Binding/scope(state:action:fileID:line:)`` defined on `Binding` for more
+    /// information.
+    @MainActor
+    public func scope<State: ObservableState, Action, ElementState, ElementAction>(
+        state: KeyPath<State, TabPagesState<ElementState>>,
+        action: CaseKeyPath<Action, TabPagesAction<ElementState, ElementAction>>
+    ) -> Binding<Store<TabPagesState<ElementState>, TabPagesAction<ElementState, ElementAction>>>
+    where Value == Store<State, Action> {
+        self[state: state, action: action]
+    }
 }
 
 extension Store where State: ObservableState {
@@ -342,12 +211,12 @@ extension Store where State: ObservableState {
 
 
 struct TabPagesView<
-    State: ObservableState & Equatable,
+    State: ObservableState & Equatable & Identifiable,
     Action,
     Root: View,
     Label: View,
     Destination: View
->: View {
+>: View where State.ID: Sendable {
     init(
         store: Binding<Store<TabPagesState<State>, TabPagesAction<State, Action>>>,
         @ViewBuilder root: @escaping () -> Root,
@@ -366,14 +235,15 @@ struct TabPagesView<
     let destination: (Store<State, Action>) -> Destination
 
 
+//    var constant: [State]
     var body: some View {
         VStack(spacing: 0) {
-            TopRowTabs (
+            TopRowTabs(
                 selection: $store.selection,
-                tabs: $store.pages.elementsUniqued, // This could be a performance issue, with 
+                tabs: $store.pages.elementsUniqued,
                 send: { store.send(.page($0)) },
                 tabLabel: { tab in
-                    label(tab.element)
+                    label(tab)
                 }
             )
             .fixedSize(horizontal: false, vertical: true)
@@ -382,7 +252,7 @@ struct TabPagesView<
                 if let selection = store.selection,
                    let childStore = store.scope(state: \.pages[id: selection], action: \.page[id: selection])
                 {
-                    destination(childStore.scope(state: \.element, action: \.page))
+                    destination(childStore.scope(state: \.self, action: \.page))
                 } else {
                     root()
                 }
@@ -407,37 +277,10 @@ struct Identified<T, ID: Hashable>: Identifiable {
     }
 }
 
-@dynamicMemberLookup
-struct WithOffset<Index: Comparable, Value> {
-    var offset: Index
-    var value: Value
-
-    subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> T {
-        value[keyPath: keyPath]
-    }
-}
-
-
-extension WithOffset: Identifiable where Value: Identifiable {
-    var id: Value.ID { value.id }
-}
-
-extension Array {
-    var withOffset: [WithOffset<Index, Element>] {
-        get {
-            zip(self.indices, self).map { WithOffset(offset: $0, value: $1) }
-        }
-
-        set {
-            self = newValue.map(\.value)
-        }
-    }
-}
-
 extension IdentifiedArray where Element: Identifiable, Element.ID == ID {
     var elementsUniqued: [Element] {
         get { self.elements }
-        set { self = Self(uniqueElements: newValue) }
+        set { self = Self(uncheckedUniqueElements: newValue) }
     }
 }
 
@@ -445,7 +288,7 @@ struct TopRowTabs<
     State: Identifiable,
     Action,
     TabLabel: View
->: View {
+>: View where State.ID: Sendable {
     @Binding var selection: State.ID?
     @Binding var tabs: [State]
     var send: (IdentifiedAction<State.ID, TabPageAction<Action>>) -> Void
@@ -454,14 +297,14 @@ struct TopRowTabs<
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 0) {
-                ForEach($tabs.withOffset) { tab, _ in
+                ForEach(Array(tabs.enumerated()), id: \.element.id) { offset, tab in
                     TabWithStructure(
                         send: { self.send(.element(id: tab.id, action: .tab($0))) },
-                        content: { tabLabel(tab.value) }
+                        content: { tabLabel(tab) }
                     )
                     .environment(\.isSelectedTab, selection == tab.id)
-                    .environment(\.isFirstTab, tab.offset == tabs.startIndex)
-                    .environment(\.isLastTab, tab.offset == tabs.endIndex - 1)
+                    .environment(\.isFirstTab, offset == tabs.startIndex)
+                    .environment(\.isLastTab, offset == tabs.endIndex - 1)
                     .environment(\.isOnlyTab, tabs.count == 1)
                 }
             }
@@ -469,9 +312,6 @@ struct TopRowTabs<
         .background(.background)
         .scrollIndicators(.never)
     }
-
-
-
 }
 
 
@@ -545,7 +385,7 @@ struct Tab<Content: View>: View {
         .padding(.leading, 1)
         .padding(.trailing, 15)
         .padding(.vertical, 4)
-        .frame(minWidth: 100, minHeight: 40)
+        .frame(minWidth: 100, minHeight: 20)
         .contentShape(.rect)
         .background(
             isSelected ?
@@ -588,12 +428,4 @@ struct Tab<Content: View>: View {
             .buttonStyle(.accessoryBar)
         }
     }
-}
-
-#Preview(
-    traits: .fixedLayout(width: 500, height: 300)
-) {
-    EventEditorTabBarView(store: Store(initialState: EventEditorTabBar.State()) {
-        EventEditorTabBar()
-    })
 }

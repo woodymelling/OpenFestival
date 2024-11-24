@@ -8,6 +8,8 @@
 import FileTree
 import OpenFestivalModels
 import Yams
+import IssueReporting
+import Collections
 
 extension Organization {
     static let fileTree = FileTree {
@@ -21,72 +23,184 @@ extension Organization {
     }
 }
 
-struct EventFileTree: FileTreeComponent {
-    typealias FileType = Event
+public enum EventTag: Hashable, Sendable {
+    case file(File)
+    case directory(Directory)
 
-    var body: some FileTreeComponent<Event> {
+    public enum File: Hashable, Sendable {
+        case eventInfo
+        case contactInfo
+        case stages
+        case schedule(Event.Schedule.ID)
+        case artist(Event.Artist.ID)
+    }
+
+    public enum Directory: Hashable, Sendable {
+        case schedules, artists
+    }
+}
+
+public struct EventFileTree: FileTreeViewable {
+    public init() {}
+
+    public var body: some FileTreeComponent<Event> & FileTreeViewable {
         FileTree {
             StaticFile("event-info", .yaml)
                 .map(Conversions.YamlConversion(EventInfoDTO.self))
+                .tag(EventTag.file(.eventInfo))
 
             StaticFile("contact-info", .yaml)
                 .map(ContactInfoConversion())
+                .tag(EventTag.file(.contactInfo))
 
             StaticFile("stages", .yaml)
                 .map(StagesConversion())
+                .tag(EventTag.file(.stages))
 
             StaticDirectory("schedules") {
                 Many {
                     File($0, .yaml)
-                        .map {
-                            FileContentConversion {
-                                Conversions.YamlConversion(EventDTO.DaySchedule.self)
-                            }
-                            
-                            ScheduleDayConversion()
-                        }
+                        .map(ScheduleConversion())
+                        .tag { EventTag.file(.schedule($0) )}
                 }
             }
+            .tag(EventTag.directory(.schedules))
 
             StaticDirectory("artists") {
                 Many {
                     File($0, .markdown)
                         .map(ArtistConversion())
+                        .tag { EventTag.file(.artist($0)) }
                 }
             }
+            .tag(EventTag.directory(.artists))
         }
         .map(EventConversion())
     }
 
-    struct EventConversion: Conversion {
+    struct ScheduleConversion: AsyncConversion {
+        var body: some AsyncConversion<FileContent<Data>, StringlyTyped.Schedule> {
+            FileContentConversion {
+                Conversions.YamlConversion(EventDTO.DaySchedule.self)
+            }
 
-        typealias Input = (EventInfoDTO, [Event.ContactNumber], [Event.Stage], [Event.Schedule.Day], [Event.Artist])
+            ScheduleDayConversion()
+        }
+    }
+
+    struct EventConversion: Conversion {
+        typealias Input = (EventInfoDTO, [Event.ContactNumber], [Event.Stage], [StringlyTyped.Schedule], [Event.Artist])
         typealias Output = Event
 
         func apply(_ input: Input) throws -> Event {
-            Event(
+            let artists = input.4
+            let artistIDForName = Dictionary(uniqueKeysWithValues: artists.map { ($0.name, $0.id) })
+
+            let stages = input.2
+            let stageIDForName = Dictionary(uniqueKeysWithValues: stages.map { ($0.name, $0.id) } )
+
+            let schedule = input.3.map {
+                Event.Schedule(
+                    id: $0.id,
+                    date: $0.metadata.date,
+                    customTitle: $0.metadata.customTitle,
+                    stageSchedules: Dictionary(
+                        uniqueKeysWithValues: $0.stageSchedules.compactMap { stageName, performances in
+                            guard let stageID = stageIDForName[stageName]
+                            else {
+                                reportIssue("No stage found for \(stageName)")
+                                return nil
+                            }
+
+                            let performance = performances.map {
+                                let artistIDs: [Event.Performance.ArtistReference] = $0.artistNames.map {
+                                    artistIDForName[$0].map { .known($0) } ?? .anonymous(name: $0)
+                                }
+
+                                return Event.Performance(
+                                    id: $0.id,
+                                    customTitle: $0.customTitle,
+                                    artistIDs: OrderedSet(artistIDs),
+                                    startTime: $0.startTime,
+                                    endTime: $0.endTime,
+                                    stageID: stageID
+                                )
+                            }
+
+                            return (stageID, performance)
+                        }
+
+                        
+                    )
+                )
+            }
+
+            return Event(
+                id: .init(),
                 name: input.0.name ?? "",
                 // TODO?
                 timeZone: try TimeZoneConversion().apply(input.0.timeZone) ?? TimeZone.current,
                 imageURL: input.0.imageURL,
                 siteMapImageURL: input.0.siteMapImageURL,
                 address: input.0.address,
-                latitude: nil,
                 // TODO:
+                latitude: nil,
                 longitude: nil,
                 contactNumbers: input.1,
                 artists: IdentifiedArray(uniqueElements: input.4),
                 stages: IdentifiedArray(uniqueElements: input.2),
-                schedule: Event.Schedule(days: input.3),
+                schedule: IdentifiedArray(uniqueElements: schedule),
                 colorScheme: nil // TODO:
             )
         }
 
         func unapply(_ output: Event) throws -> Input {
-            fatalError()
+            let schedules = output.schedule.map {
+
+                StringlyTyped.Schedule(
+                   metadata: $0.metadata,
+                   stageSchedules: Dictionary(
+                    uniqueKeysWithValues: $0.stageSchedules.map { stageID, performances in
+                        guard let stageName = output.stages[id: stageID]?.name else {
+                            fatalError("Missing stage name for \(stageID)")
+                        }
+                        let stringlyTypedPerformances = performances.map { performance in
+                            StringlyTyped.Schedule.Performance(
+                                id: performance.id,
+                                artistNames: OrderedSet(performance.artistIDs.compactMap {
+                                    switch $0 {
+                                    case .known(let artistID):
+                                        output.artists[id: artistID]?.name
+                                    case .anonymous(let artistName):
+                                        artistName
+                                    }
+                                }),
+                                startTime: performance.startTime,
+                                endTime: performance.endTime,
+                                stageName: stageName
+                            )
+                        }
+
+                        return (stageName, stringlyTypedPerformances)
+                   })
+               )
+            }
+
+            return (
+                EventInfoDTO(
+                    name: output.name,
+                    address: output.address,
+                    timeZone: output.timeZone.identifier,
+                    imageURL: output.imageURL,
+                    siteMapImageURL: output.siteMapImageURL,
+                    colorScheme: nil
+                ),
+                output.contactNumbers,
+                Array(output.stages),
+                schedules,
+                Array(output.artists)
+            )
         }
-
-
 
         struct TimeZoneConversion: Conversion {
             typealias Input = String?
@@ -107,7 +221,11 @@ struct EventFileTree: FileTreeComponent {
         var body: some AsyncConversion<Data, [Event.Stage]> {
             Conversions.YamlConversion([StageDTO].self)
                 .mapValues {
-                    Event.Stage(name: $0.name, iconImageURL: $0.imageURL)
+                    Event.Stage(
+                        id: .init(),
+                        name: $0.name,
+                        iconImageURL: $0.imageURL
+                    )
                 } unapply: {
                     StageDTO(
                         name: $0.name,
@@ -123,9 +241,7 @@ struct EventFileTree: FileTreeComponent {
         typealias Output = [Event.ContactNumber]
 
         var body: some Conversion<Data, [Event.ContactNumber]> {
-
             Conversions.YamlConversion([ContactInfoDTO].self)
-
             Conversions.MapValues(ContactNumberDTOConversion())
         }
 
@@ -135,6 +251,7 @@ struct EventFileTree: FileTreeComponent {
             typealias Output = Event.ContactNumber
             func apply(_ input: Input) throws -> Output {
                 Event.ContactNumber(
+                    id: .init(),
                     phoneNumber: input.phoneNumber,
                     title: input.title,
                     description: input.description
@@ -152,9 +269,6 @@ struct EventFileTree: FileTreeComponent {
     }
 }
 
-func makeIDs(from items: String?...) -> String {
-    items.compactMap(\.self).joined(separator: "-")
-}
 
 extension Dictionary {
     func mapValuesWithKeys<NewValue>(_ transform: (Key, Value) -> NewValue) -> [Key: NewValue] {
@@ -236,7 +350,7 @@ extension Conversion {
 
 
 extension FileExtension {
-    static var markdown: FileExtension = "md"
+    static let markdown: FileExtension = "md"
 }
 
 struct ArtistConversion: Conversion {
@@ -248,15 +362,14 @@ struct ArtistConversion: Conversion {
 
         FileToArtistConversion()
     }
-}
 
-extension ArtistConversion {
     struct FileToArtistConversion: Conversion {
         typealias Input = FileContent<MarkdownWithFrontMatter<ArtistInfoFrontMatter>>
         typealias Output = Event.Artist
 
-        func apply(_ input: FileContent<MarkdownWithFrontMatter<ArtistInfoFrontMatter>>) throws -> Event.Artist {
+        func apply(_ input: Input) throws -> Output {
             Event.Artist(
+                id: .init(),
                 name: input.fileName,
                 bio: input.data.body,
                 imageURL: input.data.frontMatter?.imageURL,
@@ -264,7 +377,7 @@ extension ArtistConversion {
             )
         }
 
-        func unapply(_ output: Event.Artist) throws -> FileContent<MarkdownWithFrontMatter<ArtistInfoFrontMatter>> {
+        func unapply(_ output: Output) throws -> Input {
             FileContent(
                 fileName: output.name,
                 data: MarkdownWithFrontMatter(
@@ -272,7 +385,7 @@ extension ArtistConversion {
                         imageURL: output.imageURL,
                         links: output.links.map { .init(url: $0.url, label: $0.label )}
                     ).nilIfEmpty,
-                    body: output.bio ?? ""
+                    body: output.bio?.nilIfEmpty
                 )
             )
         }
