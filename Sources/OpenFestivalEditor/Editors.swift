@@ -18,12 +18,26 @@ struct ArtistEditor {
     struct State: Equatable {
         @Shared var artist: Event.Artist
     }
+
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+    }
+
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+    }
 }
 
 struct ArtistEditorView: View {
-    let store: StoreOf<ArtistEditor>
+    @Bindable var store: StoreOf<ArtistEditor>
     var body: some View {
-        Label("Artists Editor for: \(store.artist.name)", systemImage: "person")
+        VStack {
+
+            Label("Artists Editor for: \(store.artist.name)", systemImage: "person")
+            TextField("Name", text: $store.artist.name)
+                .textFieldStyle(.roundedBorder)
+        }
+
     }
 }
 

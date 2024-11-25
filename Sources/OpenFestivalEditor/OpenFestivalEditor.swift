@@ -44,38 +44,7 @@ struct EventEditor {
         Reduce { state, action in
             switch action {
             case .sidebar(.primaryAction(let tags)):
-                tags.forEach {
-                    switch $0 {
-                    case .directory: break
-                    case .file(let fileType):
-                        switch fileType {
-                        case .artist(let artistID):
-                            guard let artist = Shared(state.$event.artists[id: artistID])
-                            else { break }
-
-                            state.tabs.append(.artistEditor(ArtistEditor.State(artist: artist)))
-
-                        case .schedule(let scheduleID):
-                            guard let schedule = Shared(state.$event.schedule[id: scheduleID])
-                            else { break }
-
-                            state.tabs.append(.scheduleEditor(ScheduleEditor.State(schedule: schedule)))
-
-                        case .eventInfo:
-                            break
-
-                        case .stages:
-                            break
-
-                        case .contactInfo:
-                            break
-
-                        }
-                    }
-                }
-                if let firstSelection = tags.first {
-                    state.tabs.selection = firstSelection
-                }
+                state.openTabs(tags: tags)
                 return .none
             case .sidebar(.contextMenu(let tags, let action)):
                 switch action {
@@ -98,6 +67,7 @@ struct EventEditor {
                     }
                     return .none
                 case .openInTab:
+                    state.openTabs(tags: tags)
                     return .none
                 case .showInFinder:
                     return .none
@@ -111,8 +81,48 @@ struct EventEditor {
     }
 }
 
-extension EventEditor.Tabs.State: Equatable, Identifiable {
+extension EventEditor.State {
+    mutating func openTabs(tags: Set<EventTag>) {
+        for tag in tags {
+            guard !tabs.pages.ids.contains(tag)
+            else { continue }
 
+            switch tag {
+            case .directory: break
+            case .file(let fileType):
+                switch fileType {
+                case .artist(let artistID):
+                    guard let artist = Shared(self.$event.artists[id: artistID])
+                    else { break }
+
+                    self.tabs.append(.artistEditor(ArtistEditor.State(artist: artist)))
+
+                case .schedule(let scheduleID):
+                    guard let schedule = Shared(self.$event.schedule[id: scheduleID])
+                    else { break }
+
+                    self.tabs.append(.scheduleEditor(ScheduleEditor.State(schedule: schedule)))
+
+                case .eventInfo:
+                    break
+
+                case .stages:
+                    break
+
+                case .contactInfo:
+                    break
+
+                }
+            }
+        }
+
+        if let firstSelection = tags.first {
+            self.tabs.selection = firstSelection
+        }
+    }
+}
+
+extension EventEditor.Tabs.State: Equatable, Identifiable {
     var id: EventTag {
         switch self {
         case .artistEditor(let state):
@@ -122,6 +132,8 @@ extension EventEditor.Tabs.State: Equatable, Identifiable {
         }
     }
 }
+
+
 public struct EventEditorView: View {
     public init() {}
 
@@ -242,5 +254,5 @@ extension View {
 
 #Preview {
     EventEditorView()
-        .frame(width: 700, height: 500)
+//        .frame(width: 700, height: 500)
 }

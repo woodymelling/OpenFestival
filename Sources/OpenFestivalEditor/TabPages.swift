@@ -425,7 +425,9 @@ struct Tab<Content: View>: View {
                 Label("Close", systemImage: "xmark")
             }
             .labelStyle(.iconOnly)
+            #if os(macOS)
             .buttonStyle(.accessoryBar)
+            #endif
         }
     }
 }
