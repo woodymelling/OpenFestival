@@ -208,7 +208,7 @@ struct SidebarView: View {
     var body: some View {
         List(selection: $store.selection) {
             EventFileTree()
-                .view(for: store.event)
+                .view(for: store.event, filteringFor: store.searchText)
         }
         .searchable(text: $store.searchText, placement: .sidebar)
         .contextMenu(

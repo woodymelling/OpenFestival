@@ -32,7 +32,6 @@ struct ArtistEditorView: View {
     @Bindable var store: StoreOf<ArtistEditor>
     var body: some View {
         VStack {
-
             Label("Artists Editor for: \(store.artist.name)", systemImage: "person")
             TextField("Name", text: $store.artist.name)
                 .textFieldStyle(.roundedBorder)
