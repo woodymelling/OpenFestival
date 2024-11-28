@@ -11,7 +11,6 @@ import ComposableArchitecture
 import SwiftUI
 import OpenFestivalModels
 
-
 @Reducer
 struct ArtistEditor {
     @ObservableState
@@ -36,7 +35,6 @@ struct ArtistEditorView: View {
             TextField("Name", text: $store.artist.name)
                 .textFieldStyle(.roundedBorder)
         }
-
     }
 }
 

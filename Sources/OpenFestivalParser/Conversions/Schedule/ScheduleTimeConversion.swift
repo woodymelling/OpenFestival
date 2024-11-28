@@ -5,7 +5,7 @@
 //  Created by Woodrow Melling on 10/28/24.
 //
 
-import Parsing
+import Conversions
 import Foundation
 
 struct ScheduleTimeConversion: Conversion {

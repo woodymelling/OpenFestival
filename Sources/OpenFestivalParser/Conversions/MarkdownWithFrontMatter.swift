@@ -6,6 +6,7 @@
 //
 
 import Parsing
+import Conversions
 import Foundation
 
 struct MarkdownWithFrontMatter<FrontMatter> {

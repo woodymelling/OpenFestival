@@ -10,6 +10,8 @@ import OpenFestivalModels
 import Yams
 import IssueReporting
 import Collections
+import Conversions
+
 
 extension Organization {
     static let fileTree = FileTree {
@@ -326,21 +328,21 @@ extension Conversions {
 }
 
 extension Conversion {
-    func mapValues<OutputElement, NewOutput>(
+    func mapValues<OutputElement: Sendable, NewOutput: Sendable>(
         apply: @Sendable @escaping (OutputElement) throws -> NewOutput,
         unapply: @Sendable @escaping (NewOutput) throws -> OutputElement
     ) -> some Conversion<Input, [NewOutput]> where Output == [OutputElement] {
         self.map(Conversions.MapValues(AnyConversion(apply: apply, unapply: unapply)))
     }
 
-    func mapValues<OutputElement, NewOutput, C>(
+    func mapValues<OutputElement: Sendable, NewOutput: Sendable, C>(
         _ conversion: some Conversion<OutputElement, NewOutput>
     ) -> some Conversion<Input, [NewOutput]>
     where Output == [OutputElement] {
         self.map(Conversions.MapValues(conversion))
     }
 
-    func mapValues<OutputElement, NewOutput, C>(
+    func mapValues<OutputElement: Sendable, NewOutput: Sendable, C>(
         @ConversionBuilder _ conversion: () -> some Conversion<OutputElement, NewOutput>
     ) -> some Conversion<Input, [NewOutput]>
     where Output == [OutputElement] {
@@ -396,15 +398,17 @@ struct ArtistConversion: Conversion {
 
 import Foundation
 
+import Parsing
+import Conversions
+import OpenFestivalModels
+
+
 struct OpenFestivalDecoder {
     public func decode(from url: URL) async throws -> Event {
         return try await EventFileTree().read(from: url)
     }
 
 }
-
-import Parsing
-import OpenFestivalModels
 
 
 extension Collection {

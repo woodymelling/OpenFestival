@@ -1,4 +1,5 @@
 {
+  "originHash" : "88d6aa5492c94d47d2d922ef0124e82c25c2335cb55611f488826b7a4f4606b7",
   "pins" : [
     {
       "identity" : "asyncswiftgit",
@@ -114,7 +115,7 @@
       "location" : "https://github.com/woodymelling/swift-file-tree",
       "state" : {
         "branch" : "develop",
-        "revision" : "8cc3462d2750b8ce03972aff4b5d8fa51733cb19"
+        "revision" : "b2393975545bba00d38c1a1cb04f97bd4fa22d33"
       }
     },
     {
@@ -156,10 +157,10 @@
     {
       "identity" : "swift-parsing",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-parsing",
+      "location" : "https://github.com/woodymelling/swift-parsing",
       "state" : {
-        "revision" : "a0e7d73f462c1c38c59dc40a3969ac40cea42950",
-        "version" : "0.13.0"
+        "branch" : "async-parsing",
+        "revision" : "1ac69c22b624d878293cb8b78d84ca236db50b89"
       }
     },
     {
@@ -244,5 +245,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

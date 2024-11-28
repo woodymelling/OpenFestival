@@ -29,7 +29,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.10.0"),
         .package(url: "https://github.com/pointfreeco/swift-validated", from: "0.2.0"),
         .package(url: "https://github.com/pointfreeco/swift-prelude", branch: "main"),
-        .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.13.0"),
+        .package(url: "https://github.com/woodymelling/swift-parsing", branch: "async-parsing"),
 
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),

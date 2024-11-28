@@ -7,6 +7,8 @@
 
 import SwiftUI
 import ComposableArchitecture
+import OpenFestivalParser
+import OpenFestivalModels
 
 @Reducer
 struct EventEditor {
@@ -28,7 +30,6 @@ struct EventEditor {
     enum Tabs {
         case artistEditor(ArtistEditor)
         case scheduleEditor(ScheduleEditor)
-
     }
 
     enum Action {
@@ -199,8 +200,6 @@ struct Sidebar {
     }
 }
 
-import OpenFestivalParser
-import OpenFestivalModels
 
 struct SidebarView: View {
     @Bindable var store: StoreOf<Sidebar>
