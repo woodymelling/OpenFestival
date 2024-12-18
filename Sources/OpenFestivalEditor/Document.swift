@@ -8,16 +8,16 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct OpenFestivalFileDocument: FileDocument {
-    static let readableContentTypes: [UTType] = [.directory]
-
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        
-    }
-    
-    init(configuration: ReadConfiguration) throws {
-
-    }
-
-
-}
+//struct OpenFestivalFileDocument: FileDocument {
+//    static let readableContentTypes: [UTType] = [.directory]
+//
+//    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+//        
+//    }
+//    
+//    init(configuration: ReadConfiguration) throws {
+//
+//    }
+//
+//
+//}

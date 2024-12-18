@@ -5,22 +5,21 @@
 //  Created by Woodrow Melling on 9/30/24.
 //
 
-import FileTree
+@preconcurrency import FileTree
 import OpenFestivalModels
 import Yams
 import IssueReporting
 import Collections
 import Conversions
+import Foundation
 
 
 extension Organization {
     static let fileTree = FileTree {
         File("organization-info", .yaml)
 
-        Many {
-            Directory($0) {
-                EventFileTree()
-            }
+        Directory.Many {
+            EventFileTree()
         }
     }
 }
@@ -47,41 +46,38 @@ public struct EventFileTree: FileTreeViewable {
 
     public var body: some FileTreeComponent<Event> & FileTreeViewable {
         FileTree {
-            StaticFile("event-info", .yaml)
-                .map(Conversions.YamlConversion(EventInfoDTO.self))
+            File("event-info", .yaml)
+                .convert(Conversions.YamlConversion(EventInfoDTO.self))
                 .tag(EventTag.file(.eventInfo))
 
-            StaticFile("contact-info", .yaml)
-                .map(ContactInfoConversion())
+            File("contact-info", .yaml)
+                .convert(ContactInfoConversion())
                 .tag(EventTag.file(.contactInfo))
 
-            StaticFile("stages", .yaml)
-                .map(StagesConversion())
+            File("stages", .yaml)
+                .convert(StagesConversion())
                 .tag(EventTag.file(.stages))
 
-            StaticDirectory("schedules") {
-                Many {
-                    File($0, .yaml)
-                        .map(ScheduleConversion())
-                        .tag { EventTag.file(.schedule($0) )}
-                }
+            Directory("schedules") {
+                File.Many(withExtension: .yaml)
+                    .map(ScheduleConversion())
+                    .tag { EventTag.file(.schedule($0.id)) }
+
             }
             .tag(EventTag.directory(.schedules))
 
-            StaticDirectory("artists") {
-                Many {
-                    File($0, .markdown)
-                        .map(ArtistConversion())
-                        .tag { EventTag.file(.artist($0)) }
-                }
+            Directory("artists") {
+                File.Many(withExtension: "md")
+                    .map(ArtistConversion())
+                    .tag { EventTag.file(.artist($0.id)) }
             }
             .tag(EventTag.directory(.artists))
         }
-        .map(EventConversion())
+        .convert(EventConversion())
     }
 
-    struct ScheduleConversion: AsyncConversion {
-        var body: some AsyncConversion<FileContent<Data>, StringlyTyped.Schedule> {
+    struct ScheduleConversion: Conversion {
+        var body: some Conversion<FileContent<Data>, StringlyTyped.Schedule> {
             FileContentConversion {
                 Conversions.YamlConversion(EventDTO.DaySchedule.self)
             }
@@ -132,7 +128,7 @@ public struct EventFileTree: FileTreeViewable {
                             return (stageID, performance)
                         }
 
-                        
+
                     )
                 )
             }
@@ -160,32 +156,32 @@ public struct EventFileTree: FileTreeViewable {
             let schedules = output.schedule.map {
 
                 StringlyTyped.Schedule(
-                   metadata: $0.metadata,
-                   stageSchedules: Dictionary(
-                    uniqueKeysWithValues: $0.stageSchedules.map { stageID, performances in
-                        guard let stageName = output.stages[id: stageID]?.name else {
-                            fatalError("Missing stage name for \(stageID)")
-                        }
-                        let stringlyTypedPerformances = performances.map { performance in
-                            StringlyTyped.Schedule.Performance(
-                                id: performance.id,
-                                artistNames: OrderedSet(performance.artistIDs.compactMap {
-                                    switch $0 {
-                                    case .known(let artistID):
-                                        output.artists[id: artistID]?.name
-                                    case .anonymous(let artistName):
-                                        artistName
-                                    }
-                                }),
-                                startTime: performance.startTime,
-                                endTime: performance.endTime,
-                                stageName: stageName
-                            )
-                        }
+                    metadata: $0.metadata,
+                    stageSchedules: Dictionary(
+                        uniqueKeysWithValues: $0.stageSchedules.map { stageID, performances in
+                            guard let stageName = output.stages[id: stageID]?.name else {
+                                fatalError("Missing stage name for \(stageID)")
+                            }
+                            let stringlyTypedPerformances = performances.map { performance in
+                                StringlyTyped.Schedule.Performance(
+                                    id: performance.id,
+                                    artistNames: OrderedSet(performance.artistIDs.compactMap {
+                                        switch $0 {
+                                        case .known(let artistID):
+                                            output.artists[id: artistID]?.name
+                                        case .anonymous(let artistName):
+                                            artistName
+                                        }
+                                    }),
+                                    startTime: performance.startTime,
+                                    endTime: performance.endTime,
+                                    stageName: stageName
+                                )
+                            }
 
-                        return (stageName, stringlyTypedPerformances)
-                   })
-               )
+                            return (stageName, stringlyTypedPerformances)
+                        })
+                )
             }
 
             return (
@@ -219,8 +215,8 @@ public struct EventFileTree: FileTreeViewable {
     }
 
 
-    struct StagesConversion: AsyncConversion {
-        var body: some AsyncConversion<Data, [Event.Stage]> {
+    struct StagesConversion: Conversion {
+        var body: some Conversion<Data, [Event.Stage]> {
             Conversions.YamlConversion([StageDTO].self)
                 .mapValues {
                     Event.Stage(

@@ -10,11 +10,11 @@ import FileTree
 import Foundation
 import Conversions
 
-struct ScheduleDayConversion: AsyncConversion {
+struct ScheduleDayConversion: Conversion {
     typealias Input = FileContent<EventDTO.DaySchedule>
     typealias Output = StringlyTyped.Schedule
 
-    var body: some AsyncConversion<Input, Output> {
+    var body: some Conversion<Input, Output> {
         FileContentConversion {
             EventDTO.DaySchedule.TupleConversion()
 

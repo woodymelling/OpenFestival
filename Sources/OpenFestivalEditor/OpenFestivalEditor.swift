@@ -70,7 +70,13 @@ struct EventEditor {
                 case .openInTab:
                     state.openTabs(tags: tags)
                     return .none
+
                 case .showInFinder:
+                    return .none
+
+                case .createNewArtist:
+                    return .none
+                case .createNewSchedule:
                     return .none
                 }
 
@@ -112,12 +118,11 @@ extension EventEditor.State {
 
                 case .contactInfo:
                     break
-
                 }
             }
         }
 
-        if let firstSelection = tags.first {
+        if let firstSelection = tags.first, tabs.pages.ids.contains(firstSelection) {
             self.tabs.selection = firstSelection
         }
     }
@@ -136,12 +141,18 @@ extension EventEditor.Tabs.State: Equatable, Identifiable {
 
 
 public struct EventEditorView: View {
-    public init() {}
-
-    @Bindable var store = Store(initialState: EventEditor.State(Shared(.testival))) {
-        EventEditor()
-            ._printChanges()
+    init(store: StoreOf<EventEditor>) {
+        self.store = store
     }
+
+    public init() {
+        self.store = Store(initialState: EventEditor.State(Shared(.testival))) {
+            EventEditor()
+                ._printChanges()
+        }
+    }
+
+    @Bindable var store: StoreOf<EventEditor>
 
     public var body: some View {
         NavigationSplitView {
@@ -192,6 +203,8 @@ struct Sidebar {
             case openInTab
             case delete
             case showInFinder
+            case createNewSchedule
+            case createNewArtist
         }
     }
 
@@ -200,6 +213,30 @@ struct Sidebar {
     }
 }
 
+extension EventTag {
+    var availableActions: Set<Sidebar.Action.ContextMenuAction> {
+        var actions: Set<Sidebar.Action.ContextMenuAction> = []
+
+        actions.include(.showInFinder)
+        switch self {
+        case .file:
+            actions.include(.delete, .openInTab)
+        case .directory(.schedules):
+            actions.include(.createNewSchedule)
+        case .directory(.artists):
+            actions.include(.createNewArtist)
+        }
+        return actions
+    }
+}
+
+extension SetAlgebra {
+    mutating func include(_ elements: Element...) {
+        for element in elements {
+            self.insert(element)
+        }
+    }
+}
 
 struct SidebarView: View {
     @Bindable var store: StoreOf<Sidebar>
@@ -209,28 +246,48 @@ struct SidebarView: View {
             EventFileTree()
                 .view(for: store.event, filteringFor: store.searchText)
         }
-        .searchable(text: $store.searchText, placement: .sidebar)
         .contextMenu(
-            forSelectionType: EventTag.self,
-            menu: { selections in
-                Button("Open in Tab") {
-                    store.send(.contextMenu(selections, .openInTab))
-                }
-                .disabled(selections.contains { $0.isDirectory })
+            availableActions: \EventTag.availableActions,
+            menu: { selections, actions in
+                if actions.contains(.createNewArtist) {
+                    Button("Create New Artist") {
+                        store.send(.contextMenu(selections, .createNewArtist))
+                    }
 
-                Button("Show in Finder") {
-                    store.send(.contextMenu(selections, .showInFinder))
+                    Divider()
+                }
+
+                if actions.contains(.createNewSchedule) {
+                    Button("Create New Schedule") {
+                        store.send(.contextMenu(selections, .createNewSchedule))
+                    }
+
+                    Divider()
+                }
+
+                if actions.contains(.openInTab) {
+                    Button("Open in Tab") {
+                        store.send(.contextMenu(selections, .openInTab))
+                    }
+                }
+
+                if actions.contains(.showInFinder) {
+                    Button("Show in Finder") {
+                        store.send(.contextMenu(selections, .showInFinder))
+                    }
+                    .disabled(true)
                 }
 
                 Divider()
 
-                Button("Delete", role: .destructive) {
-                    store.send(.contextMenu(selections, .delete))
+                if actions.contains(.delete) {
+                    Button("Delete") {
+                        store.send(.contextMenu(selections, .delete))
+                    }
                 }
-                .disabled(selections.contains { $0.isDirectory })
             },
-            primaryAction: { id in
-                store.send(.primaryAction(id))
+            primaryAction: {
+                store.send(.primaryAction($0))
             }
         )
     }
@@ -252,6 +309,81 @@ extension View {
 }
 
 #Preview {
-    EventEditorView()
+    EventEditorView(store: Store(initialState: EventEditor.State(Shared(.testival))) {
+        EventEditor()
+            ._printChanges()
+    })
 //        .frame(width: 700, height: 500)
 }
+
+
+extension View {
+    /**
+     Adds a tag-based context menu to a view.
+
+     - Parameters:
+        - availableActions: A closure returning a set of actions for a given selection.
+        - menu: A closure building the menu, given the selected items and their common actions.
+        - primaryAction: A closure handling a primary action for the selected items.
+
+     - Returns: A view with the specified context menu.
+
+     ### Example:
+     ```swift
+     enum Action {
+        case actionOne
+        case actionTwo
+     }
+
+     enum Tag {
+        case one
+        case two
+
+        var availableActions: Set<Action> {
+            switch self {
+                case .one: [.actionOne]
+                case .two: [.actionTwo]
+            }
+        }
+     }
+
+     List(selection: $selection) {
+         ItemOne()
+            .tag(Tag.one)
+
+         ItemTwo()
+            .tag(Tag.two)
+     }
+     .contextMenu(
+         availableActions: \Item.availableActions,
+         menu: { selections, actions in
+             if actions.contains(.actionOne) {
+                 Button("Action One") { handleAction(selections, .actionOne) }
+             }
+
+             if actions.contains(.actionTwo) {
+                 Button("Action Two", role: .destructive) { handleAction(selections, .actionTwo) }
+             }
+         },
+         primaryAction: { handlePrimaryAction($0) }
+     )
+     ```
+     */
+    func contextMenu<SelectionType: Hashable, Action, Content: View>(
+        availableActions: @escaping (SelectionType) -> Set<Action>,
+        @ViewBuilder menu: @escaping (Set<SelectionType>, Set<Action>) -> Content,
+        primaryAction: @escaping (Set<SelectionType>) -> Void
+    ) -> some View {
+        self.contextMenu(
+            forSelectionType: SelectionType.self,
+            menu: { selections in
+                let commonActions = selections
+                    .map(availableActions)
+                    .reduce(nil) { $0?.intersection($1) ?? $1 } ?? []
+                menu(selections, commonActions)
+            },
+            primaryAction: primaryAction
+        )
+    }
+}
+

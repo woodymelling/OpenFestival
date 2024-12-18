@@ -20,7 +20,7 @@ let package = Package(
         .executable(name: "openfestival", targets: ["OpenFestivalCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/woodymelling/swift-file-tree", branch: "develop"),
+        .package(url: "https://github.com/woodymelling/swift-file-tree", from: "0.2.1"),
 
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.11.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
@@ -29,7 +29,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.10.0"),
         .package(url: "https://github.com/pointfreeco/swift-validated", from: "0.2.0"),
         .package(url: "https://github.com/pointfreeco/swift-prelude", branch: "main"),
-        .package(url: "https://github.com/woodymelling/swift-parsing", branch: "async-parsing"),
+        .package(url: "https://github.com/woodymelling/swift-parsing", from: "0.1.0"),
 
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
@@ -54,6 +54,7 @@ let package = Package(
                 .product(name: "Validated", package: "swift-validated"),
                 .product(name: "Prelude", package: "swift-prelude"),
                 .product(name: "Parsing", package: "swift-parsing"),
+                .product(name: "Conversions", package: "swift-parsing"),
                 .target(name: "OpenFestivalModels"),
             ]
         ),
