@@ -16,7 +16,7 @@ public typealias OpenFestivalIDType = UUID
 @MemberwiseInit(.public)
 public struct Organization {
     public var id: Tagged<Self, OpenFestivalIDType>
-    public struct Info: Decodable {
+    public struct Info: Decodable, Equatable {
 
         public init(name: String, imageURL: URL? = nil) {
             self.name = name

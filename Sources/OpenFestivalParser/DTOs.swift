@@ -14,7 +14,7 @@ enum DTOs {}
 
 extension DTOs {
     struct Organization {
-        struct Info: Codable {
+        struct Info: Codable, Equatable {
             var name: String
             var imageURL: URL?
             var address: String?

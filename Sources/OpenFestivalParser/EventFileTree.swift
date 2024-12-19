@@ -13,29 +13,55 @@ import Collections
 import Conversions
 import Foundation
 
-
 extension Organization {
-    static let fileTree = FileTree {
-        File("organization-info", .yaml)
+    @FileTreeBuilder
+    var fileTree: some FileTreeViewable {
+        Organization.Info.file
 
-        Directory.Many {
-            EventFileTree()
-        }
-    }
-}
-
-public struct OrganizationFileTree: FileTreeViewable {
-    public init() {}
-
-    public var body: some FileTreeComponent<Organization> & FileTreeViewable {
-        FileTree {
-            Many.Directory {
-                File("organization-info", .yaml)
-                    .convert(Conversions.YamlConversion(DTOs.Organization.Info.self))
+        Directory("schedules") {
+            Directory.Many {
+                EventFileTree()
             }
         }
     }
 }
+
+// MARK: Organization
+extension Organization.Info {
+    static var file: some FileTreeViewable<Organization.Info> {
+        File("organization-info", .yaml)
+            .convert {
+                Conversions.YamlConversion<Self.YamlRepresentation>()
+
+                Convert {
+                    Organization.Info(
+                        name: $0.name,
+                        imageURL: $0.imageURL
+                    )
+                } unapply: { 
+                    YamlRepresentation(
+                        name: $0.name,
+                        imageURL: $0.imageURL,
+                        address: nil,
+                        timeZone: nil,
+                        siteMapImageURL: nil,
+                        colorScheme: nil
+                    )
+                }
+            }
+    }
+
+    struct YamlRepresentation: Codable, Equatable {
+        var name: String
+        var imageURL: URL?
+        var address: String?
+        var timeZone: String?
+        var siteMapImageURL: URL?
+        var colorScheme: ColorScheme?
+    }
+}
+
+typealias Convert = AnyConversion
 
 public enum EventTag: Hashable, Sendable {
     case file(File)
@@ -54,6 +80,7 @@ public enum EventTag: Hashable, Sendable {
     }
 }
 
+// MARK: Event
 public struct EventFileTree: FileTreeViewable {
     public init() {}
 
@@ -278,6 +305,10 @@ public struct EventFileTree: FileTreeViewable {
             }
         }
     }
+}
+
+extension Event {
+    
 }
 
 
