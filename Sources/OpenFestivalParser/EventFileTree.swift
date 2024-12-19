@@ -24,6 +24,19 @@ extension Organization {
     }
 }
 
+public struct OrganizationFileTree: FileTreeViewable {
+    public init() {}
+
+    public var body: some FileTreeComponent<Organization> & FileTreeViewable {
+        FileTree {
+            Many.Directory {
+                File("organization-info", .yaml)
+                    .convert(Conversions.YamlConversion(DTOs.Organization.Info.self))
+            }
+        }
+    }
+}
+
 public enum EventTag: Hashable, Sendable {
     case file(File)
     case directory(Directory)
@@ -79,7 +92,7 @@ public struct EventFileTree: FileTreeViewable {
     struct ScheduleConversion: Conversion {
         var body: some Conversion<FileContent<Data>, StringlyTyped.Schedule> {
             FileContentConversion {
-                Conversions.YamlConversion(EventDTO.DaySchedule.self)
+                Conversions.YamlConversion(DTOs.Event.DaySchedule.self)
             }
 
             ScheduleDayConversion()
@@ -292,9 +305,9 @@ extension Tagged {
 
 typealias Identity = Conversions.Identity
 
-extension EventDTO.DaySchedule {
+extension DTOs.Event.DaySchedule {
     struct TupleConversion: Conversion {
-        typealias Input = EventDTO.DaySchedule
+        typealias Input = DTOs.Event.DaySchedule
         typealias Output = (String?, CalendarDate?, [String: [PerformanceDTO]])
 
         func apply(_ input: Input) throws -> Output {

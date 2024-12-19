@@ -9,25 +9,34 @@ import Foundation
 import OpenFestivalModels
 import MemberwiseInit
 
-struct OrganizationDTO {
-    struct OrganizationInfo: Decodable {
-        var name: String
-        var imageURL: URL?
+
+enum DTOs {}
+
+extension DTOs {
+    struct Organization {
+        struct Info: Codable {
+            var name: String
+            var imageURL: URL?
+            var address: String?
+            var timeZone: String?
+            var siteMapImageURL: URL?
+            var colorScheme: ColorScheme?
+        }
+
+        var info: Info
+        var events: [Event]
     }
 
-    var info: OrganizationInfo
-    var events: [EventDTO]
+    struct Event {
+        var eventInfo: EventInfoDTO
+        var contactInfo: [ContactInfoDTO]?
+        var stages: [StageDTO]
+        var artists: [ArtistDTO]
+        var schedule: Schedule
+    }
 }
 
-struct EventDTO {
-    var eventInfo: EventInfoDTO
-    var contactInfo: [ContactInfoDTO]?
-    var stages: [StageDTO]
-    var artists: [ArtistDTO]
-    var schedule: Schedule
-}
-
-extension EventDTO {
+extension DTOs.Event {
     struct Schedule: Decodable, Equatable {
         var daySchedules: [String : DaySchedule]
     }
@@ -60,6 +69,11 @@ extension EventDTO {
     }
 }
 
+struct ColorScheme: Equatable, Codable {
+    var primaryColor: String?
+    var workshopsColor: String?
+}
+
 struct EventInfoDTO: Codable, Equatable {
     var name: String?
     var address: String?
@@ -69,11 +83,6 @@ struct EventInfoDTO: Codable, Equatable {
     var siteMapImageURL: URL?
 
     var colorScheme: ColorScheme?
-
-    struct ColorScheme: Equatable, Codable {
-        var primaryColor: String?
-        var workshopsColor: String?
-    }
 }
 
 struct StageDTO: Codable, Equatable {

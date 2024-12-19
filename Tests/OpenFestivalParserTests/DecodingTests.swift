@@ -157,7 +157,7 @@ struct YamlCodingTests {
             title: "The Wind Down"
         """.utf8)
 
-        let expectedResult = EventDTO.DaySchedule(performances: [
+        let expectedResult = DTOs.Event.DaySchedule(performances: [
             "Bass Haven": [
                 PerformanceDTO(title: nil, artist: "Prism Sound", artists: nil, time: "10:00 PM"),
                 PerformanceDTO(title: "Subsonic B2B Sylvan", artist: nil, artists: ["Subsonic", "Sylvan Beats"], time: "11:30 PM"),
@@ -177,11 +177,11 @@ struct YamlCodingTests {
             ]
         ])
 
-        let result = try Conversions.YamlConversion<EventDTO.DaySchedule>().apply(yaml)
+        let result = try Conversions.YamlConversion<DTOs.Event.DaySchedule>().apply(yaml)
 
         expectNoDifference(result, expectedResult)
 
-        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion<EventDTO.DaySchedule>().inverted())
+        try expect(expectedResult, toRoundtripUsing: Conversions.YamlConversion<DTOs.Event.DaySchedule>().inverted())
     }
 
     @Test

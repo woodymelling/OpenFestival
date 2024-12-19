@@ -21,7 +21,7 @@ struct DayScheduleConversionTests {
 
     @Test
     func multiStage() async throws {
-        let dto = FileContent(fileName: "2024-06-12", data: EventDTO.DaySchedule(
+        let dto = FileContent(fileName: "2024-06-12", data: DTOs.Event.DaySchedule(
             date: CalendarDate(year: 2024, month: 6, day: 12),
             performances: [
                 "Bass Haven": [
@@ -115,7 +115,7 @@ struct DayScheduleConversionTests {
 
     @Test
     func testSingleStage() async throws {
-        let dto = FileContent(fileName: "2024-06-12", data: EventDTO.DaySchedule(
+        let dto = FileContent(fileName: "2024-06-12", data: DTOs.Event.DaySchedule(
             date: day,
             performances: [
                 "Bass Haven": [

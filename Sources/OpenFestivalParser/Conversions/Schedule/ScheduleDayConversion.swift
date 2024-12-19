@@ -11,12 +11,12 @@ import Foundation
 import Conversions
 
 struct ScheduleDayConversion: Conversion {
-    typealias Input = FileContent<EventDTO.DaySchedule>
+    typealias Input = FileContent<DTOs.Event.DaySchedule>
     typealias Output = StringlyTyped.Schedule
 
     var body: some Conversion<Input, Output> {
         FileContentConversion {
-            EventDTO.DaySchedule.TupleConversion()
+            DTOs.Event.DaySchedule.TupleConversion()
 
             Conversions.Tuple(
                 Identity<String?>(),
