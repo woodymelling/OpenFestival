@@ -133,16 +133,17 @@ public struct TabBar {
                 }
 
             case .didHighlightCard(let performanceID):
-                @SharedReader(.event) var event
-                guard let performance = event.schedule[id: performanceID],
-                      let performanceDay = event.schedule.dayFor(performanceID)
-                else { return .none }
-
-                state.selectedTab = .schedule
-                state.schedule.selectedStage = performance.stageID
-                state.schedule.selectedDay = performanceDay
-                state.schedule.destination = nil
-                state.schedule.showingPerformanceID = performanceID
+                reportIssue("Need to Reimplement")
+//                @SharedReader(.event) var event
+//                guard let performance = event.schedule[id: performanceID],
+//                      let performanceDay = event.schedule.dayFor(performanceID)
+//                else { return .none }
+//
+//                state.selectedTab = .schedule
+//                state.schedule.selectedStage = performance.stageID
+//                state.schedule.selectedDay = performanceDay
+//                state.schedule.destination = nil
+//                state.schedule.showingPerformanceID = performanceID
                 return .none
 
             case .binding, .schedule, .artistList, .more:
@@ -209,7 +210,9 @@ public extension PersistenceReaderKey where Self == PersistenceKeyDefault<InMemo
 
 
 #Preview {
-    TabBarView(store: Store(initialState: TabBar.State(), reducer: {
-        TabBar()
-    }))
+    EventViewerView(
+        store: Store(initialState: EventViewer.State(event: .testival)) {
+            EventViewer()
+        }
+    )
 }

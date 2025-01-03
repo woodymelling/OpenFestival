@@ -83,6 +83,8 @@ struct EventInfoDTO: Codable, Equatable {
     var siteMapImageURL: URL?
 
     var colorScheme: ColorScheme?
+
+    var contactNumber: [ContactInfoDTO]
 }
 
 struct StageDTO: Codable, Equatable {

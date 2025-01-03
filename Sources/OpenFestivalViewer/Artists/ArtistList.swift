@@ -50,7 +50,11 @@ public struct ArtistList {
             switch action {
 
             case let .didTapArtist(artistID):
-                state.artistDetail = ArtistDetail.State(id: artistID)
+
+                guard let artist = state.event.artists[id: artistID]
+                else { return .none }
+
+                state.artistDetail = ArtistDetail.State(artist: artist)
                 return .none
 
             case .binding, .artistDetail:
@@ -97,7 +101,8 @@ public struct ArtistListView: View {
         @Environment(\.showingArtistImages) var showArtistImage
 
         var performances: [Event.Performance] {
-            return activeEvent.schedule[for: artist.id]
+            []
+//            return activeEvent.schedule[for: artist.id]
         }
 
         public var body: some View {

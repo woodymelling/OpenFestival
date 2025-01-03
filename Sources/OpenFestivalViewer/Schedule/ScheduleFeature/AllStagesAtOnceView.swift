@@ -14,23 +14,26 @@ struct AllStagesAtOnceView: View {
     let store: StoreOf<Schedule>
 
     var schedule: [TimelineWrapper<Event.Performance>] {
-        @SharedReader(.event) var event
-
-        let orderedStageIndexes: [Event.Stage.ID : Int] = event.stages.enumerated().reduce(into: [:]) {
-            $0[$1.element.id] = $1.offset
-        }
-
-        let performances = store.event.schedule[on: store.selectedDay]
-
-        return performances.compactMap {
-            guard let column: Int = orderedStageIndexes[$0.stageID]
-            else { return nil }
-
-            return TimelineWrapper(
-                groupWidth: column..<column,
-                item: $0
-            )
-        }
+        return []
+//        @SharedReader(.event) var event
+//
+//        let orderedStageIndexes: [Event.Stage.ID : Int] = event.stages.enumerated().reduce(into: [:]) {
+//            $0[$1.element.id] = $1.offset
+//        }
+//
+//        return []
+//
+//        let performances = store.event.schedule[on: store.selectedDay]
+//
+//        return performances.compactMap {
+//            guard let column: Int = orderedStageIndexes[$0.stageID]
+//            else { return nil }
+//
+//            return TimelineWrapper(
+//                groupWidth: column..<column,
+//                item: $0
+//            )
+//        }
     }
 
     var body: some View {

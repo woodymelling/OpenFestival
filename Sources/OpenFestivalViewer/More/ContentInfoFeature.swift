@@ -105,11 +105,13 @@ struct ContactInfoView_Previews: PreviewProvider {
                     initialState: ContactInfoFeature.State(
                         contactNumbers: [
                             .init(
+                                id: .init(),
                                 title: "Emergency Services",
                                 phoneNumber: "5555551234",
                                 description: "This will connect you directly with our switchboard, and alert the appropriate services."
                             ),
                             .init(
+                                id: .init(),
                                 title: "General Information Line",
                                 phoneNumber: "5555554321",
                                 description: "For general information, questions or concerns, or to report any sanitation issues within the WW grounds, please contact this number."

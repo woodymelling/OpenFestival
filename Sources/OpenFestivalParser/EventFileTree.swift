@@ -13,15 +13,35 @@ import Collections
 import Conversions
 import Foundation
 
-extension Organization {
-    @FileTreeBuilder
-    var fileTree: some FileTreeViewable {
-        Organization.Info.file
 
-        Directory("schedules") {
-            Directory.Many {
-                EventFileTree()
+
+extension Organization {
+    var fileTree: some FileTreeViewable<Organization> {
+        FileTree {
+            Organization.Info.file
+
+            Directory("schedules") {
+                Directory.Many {
+                    EventFileTree()
+                }
             }
+        }
+        .convert(fileConversion)
+    }
+
+    var fileConversion: some Conversion<(Organization.Info, [DirectoryContent<Event>]), Organization> {
+        Convert {
+            Organization.init(
+                id: .init(),
+                info: $0.0,
+                events: $0.1.map(\.components)
+            )
+
+        } unapply: {
+            (
+                $0.info,
+                $0.events.map { DirectoryContent(directoryName: $0.info.name, components: $0)}
+            )
         }
     }
 }
@@ -61,6 +81,14 @@ extension Organization.Info {
     }
 }
 
+extension Event.Info {
+    static var file: some FileTreeViewable<EventInfoDTO> {
+        File("event-info", .yaml)
+            .convert(Conversions.YamlConversion(EventInfoDTO.self))
+            .tag(EventTag.file(.eventInfo))
+    }
+}
+
 typealias Convert = AnyConversion
 
 public enum EventTag: Hashable, Sendable {
@@ -86,13 +114,7 @@ public struct EventFileTree: FileTreeViewable {
 
     public var body: some FileTreeComponent<Event> & FileTreeViewable {
         FileTree {
-            File("event-info", .yaml)
-                .convert(Conversions.YamlConversion(EventInfoDTO.self))
-                .tag(EventTag.file(.eventInfo))
-
-            File("contact-info", .yaml)
-                .convert(ContactInfoConversion())
-                .tag(EventTag.file(.contactInfo))
+            Event.Info.file
 
             File("stages", .yaml)
                 .convert(StagesConversion())
@@ -102,7 +124,6 @@ public struct EventFileTree: FileTreeViewable {
                 File.Many(withExtension: .yaml)
                     .map(ScheduleConversion())
                     .tag { EventTag.file(.schedule($0.id)) }
-
             }
             .tag(EventTag.directory(.schedules))
 
@@ -127,17 +148,17 @@ public struct EventFileTree: FileTreeViewable {
     }
 
     struct EventConversion: Conversion {
-        typealias Input = (EventInfoDTO, [Event.ContactNumber], [Event.Stage], [StringlyTyped.Schedule], [Event.Artist])
+        typealias Input = (EventInfoDTO, [Event.Stage], [StringlyTyped.Schedule], [Event.Artist])
         typealias Output = Event
 
         func apply(_ input: Input) throws -> Event {
-            let artists = input.4
+            let artists = input.3
             let artistIDForName = Dictionary(uniqueKeysWithValues: artists.map { ($0.name, $0.id) })
 
-            let stages = input.2
+            let stages = input.1
             let stageIDForName = Dictionary(uniqueKeysWithValues: stages.map { ($0.name, $0.id) } )
 
-            let schedule = input.3.map {
+            let schedule = input.2.map {
                 Event.Schedule(
                     id: $0.id,
                     date: $0.metadata.date,
@@ -167,8 +188,6 @@ public struct EventFileTree: FileTreeViewable {
 
                             return (stageID, performance)
                         }
-
-
                     )
                 )
             }
@@ -184,9 +203,16 @@ public struct EventFileTree: FileTreeViewable {
                 // TODO:
                 latitude: nil,
                 longitude: nil,
-                contactNumbers: input.1,
-                artists: IdentifiedArray(uniqueElements: input.4),
-                stages: IdentifiedArray(uniqueElements: input.2),
+                contactNumbers: input.0.contactNumber.map {
+                    .init(
+                        id: .init(),
+                        phoneNumber: $0.phoneNumber,
+                        title: $0.title,
+                        description: $0.description
+                    )
+                },
+                artists: IdentifiedArray(uniqueElements: artists),
+                stages: IdentifiedArray(uniqueElements: input.1),
                 schedule: IdentifiedArray(uniqueElements: schedule),
                 colorScheme: nil // TODO:
             )
@@ -226,14 +252,16 @@ public struct EventFileTree: FileTreeViewable {
 
             return (
                 EventInfoDTO(
-                    name: output.name,
-                    address: output.address,
-                    timeZone: output.timeZone.identifier,
-                    imageURL: output.imageURL,
-                    siteMapImageURL: output.siteMapImageURL,
-                    colorScheme: nil
+                    name: output.info.name,
+                    address: output.info.address,
+                    timeZone: output.info.timeZone.identifier,
+                    imageURL: output.info.imageURL,
+                    siteMapImageURL: output.info.siteMapImageURL,
+                    colorScheme: nil,
+                    contactNumber: output.info.contactNumbers.map {
+                        .init(phoneNumber: $0.phoneNumber, title: $0.title, description: $0.description)
+                    }
                 ),
-                output.contactNumbers,
                 Array(output.stages),
                 schedules,
                 Array(output.artists)

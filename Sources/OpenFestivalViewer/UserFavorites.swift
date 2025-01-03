@@ -13,7 +13,12 @@ public typealias FavoriteArtists = Set<Event.Artist.ID>
 
 public extension FavoriteArtists {
     func contains(_ performance: Event.Performance) -> Bool {
-        performance.artistIDs.contains(where: { self.contains($0) })
+        performance.artistIDs.contains(where: {
+            switch $0 {
+            case .known(let artistID): self.contains(artistID)
+            case .anonymous: false
+            }
+        })
     }
 
     subscript(_ artist: Event.Artist.ID) -> Bool {

@@ -39,7 +39,7 @@ struct SiteMapView: View {
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .zoomable()
+//                    .zoomable()
             } else if state.error != nil {
                 Color.red // Indicates an error
             } else {

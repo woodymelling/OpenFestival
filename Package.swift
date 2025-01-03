@@ -81,6 +81,9 @@ let package = Package(
             ],
             resources: [
                 .process("Media")
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
             ]
         ),
         .target(

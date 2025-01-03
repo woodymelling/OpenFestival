@@ -10,7 +10,7 @@ import Dependencies
 import OpenFestivalModels
 
 struct SelectedDateEnvironmentKey: EnvironmentKey {
-    static var defaultValue: CalendarDate = .today
+    static let defaultValue: CalendarDate = .today
 }
 
 extension EnvironmentValues {
@@ -49,7 +49,7 @@ struct TimeIndicatorView: View {
                             Rectangle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [.clear, Color(uiColor: .systemBackground), Color(uiColor: .systemBackground), .clear],
+                                        colors: [.clear, .red, .red, .clear],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )

@@ -14,19 +14,9 @@ import OpenFestivalModels
 public struct PerformanceDetails {
     @ObservableState
     public struct State {
-        var performanceID: Event.Performance.ID
+        var performance: Event.Performance
         @SharedReader(.event) var event
 
-        var performance: Event.Performance? {
-
-            return event.schedule[id: performanceID]
-        }
-
-        var artists: [Event.Artist] {
-            (performance?.artistIDs ?? []).compactMap {
-                event.artists[id: $0]
-            }
-        }
 
         @Presents var destination: Destination.State?
     }
@@ -37,7 +27,7 @@ public struct PerformanceDetails {
     }
 
     public enum Action {
-        case didTapArtist(Event.Artist.ID)
+        case didTapArtist(Event.Performance.ArtistReference)
         case destination(PresentationAction<Destination.Action>)
     }
 
@@ -45,8 +35,14 @@ public struct PerformanceDetails {
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .didTapArtist(let artistID):
-                state.destination = .artistDetail(ArtistDetail.State(id: artistID))
+            case .didTapArtist(let artistReference):
+                @SharedReader(.event) var event
+
+                guard case let .known(artistID) = artistReference,
+                    let artist = event.artists[id: artistID]
+                else{ return .none }
+
+                state.destination = .artistDetail(ArtistDetail.State(artist: artist))
                 return .none
 
             case .destination:
@@ -63,19 +59,18 @@ struct PerformanceDetailView: View {
 
     var body: some View {
         List {
-            if let performance = store.performance {
-                Section {
-                    PerformanceDetailRow(for: performance)
-                }
+            Section {
+                PerformanceDetailRow(for: store.performance)
+            }
 
-                Section("Artists") {
-                    ForEach(store.artists) { artist in
-                        Button(artist.name) {
-                            store.send(.didTapArtist(artist.id))
-                        }
-                        .buttonStyle(.navigationLink)
-                    }
-                }
+            Section("Artists") {
+                Text("Reimplement")
+//                ForEach(store.performance.artistIDs, id: \.self) { artist in
+//                    Button(artist.name) {
+//                        store.send(.didTapArtist(artist.id))
+//                    }
+//                    .buttonStyle(.navigationLink)
+//                }
             }
         }
         .navigationDestination(
@@ -85,13 +80,13 @@ struct PerformanceDetailView: View {
     }
 }
 
-#Preview {
-    PerformanceDetailView(
-        store: Store(
-            initialState: PerformanceDetails.State(performanceID: Event.testival.schedule.performances.first(where: { $0.artistIDs.count > 1})!.id),
-            reducer: {
-                PerformanceDetails()
-            }
-        )
-    )
-}
+//#Preview {
+//    PerformanceDetailView(
+//        store: Store(
+//            initialState: PerformanceDetails.State(performanceID: Event.testival.schedule.first(where: { $0.artistIDs.count > 1})!.id),
+//            reducer: {
+//                PerformanceDetails()
+//            }
+//        )
+//    )
+//}

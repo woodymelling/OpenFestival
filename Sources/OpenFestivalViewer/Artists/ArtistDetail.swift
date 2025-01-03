@@ -17,21 +17,18 @@ public struct ArtistDetail {
     public init() {}
 
     @ObservableState
-    public struct State: Equatable, Identifiable {
-        public init(id: Event.Artist.ID) {
-            self.id = id
+    public struct State: Equatable {
+        public init(artist: Event.Artist) {
+            self.artist = artist
         }
-        public var id: Event.Artist.ID
 
         @Shared(.favoriteArtists) var favoriteArtists
         @SharedReader(.event) var event
 
-        public var artist: Event.Artist? {
-            event.artists[id: self.id]
-        }
+        public var artist: Event.Artist
 
         var isFavorite: Bool {
-            favoriteArtists.contains(id)
+            favoriteArtists.contains(artist.id)
         }
 
         @Presents var destination: Destination.State?
@@ -63,7 +60,7 @@ public struct ArtistDetail {
                 return .none
 
             case .favoriteArtistButtonTapped:
-                state.favoriteArtists.toggle(state.id)
+                state.favoriteArtists.toggle(state.artist.id)
                 return .none
 
             case .didTapURL(let url):
@@ -86,68 +83,65 @@ public struct ArtistDetailView: View {
     }
 
     public var body: some View {
-        if let artist = store.artist {
-            VStack(spacing: 1) {
-                Header(artist: artist) {
-                    Text(artist.name)
-                        .font(.largeTitle)
-                        .fontWeight(.semibold)
-                        .padding(.leading)
-                }
-
-                List {
-                    ForEach(
-                        store.event.schedule[for: store.id].sorted(by: \.startTime)
-                    ) { performance in
-                        Button {
-                            store.send(.didTapPerformance(performance.id))
-                        } label: {
-                            PerformanceDetailRow(for: performance)
-                        }
-                        .buttonStyle(.navigationLink)
-                    }
-
-                    if let bio = artist.bio, !bio.isEmpty {
-                        Text(bio)
-                    }
-
-                    // MARK: Socials
-                    ForEach(artist.links, id: \.self) { link in
-                        Button {
-                            store.send(.didTapURL(link.url))
-                        } label: {
-                            LinkView(link)
-                        }
-                        .buttonStyle(.navigationLink)
-                    }
-                }
-                .listStyle(.plain)
-                // Replicating drop shadow at the top of the scroll,
-                // Doing it in normal ways is pretty buggy from what I can tell
-                .overlay(alignment: .top) {
-                    LinearGradient(
-                        colors: [
-                            Color(.systemBackground),
-                            .clear
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 3)
-                }
-                .contentMargins(3)
+        VStack(spacing: 1) {
+            Header(artist: store.artist) {
+                Text(store.artist.name)
+                    .font(.largeTitle)
+                    .fontWeight(.semibold)
+                    .padding(.leading)
             }
-            .sheet(
-                item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
-                content: { SafariView(store: $0).ignoresSafeArea(edges: .bottom) }
-            )
-            .toolbar {
-                Toggle("Favorite", isOn: $store.favoriteArtists[artist.id])
-                    .frame(square: 20)
-                    .toggleStyle(FavoriteToggleStyle())
+
+            List {
+                Text("REIMPLEMENT PERFORMANCES")
+//                ForEach(
+//                    store.event.schedule[for: store.artist.id].sorted(by: \.startTime)
+//                ) { performance in
+//                    Button {
+//                        store.send(.didTapPerformance(performance.id))
+//                    } label: {
+//                        PerformanceDetailRow(for: performance)
+//                    }
+//                    .buttonStyle(.navigationLink)
+//                }
+
+                if let bio = store.artist.bio, !bio.isEmpty {
+                    Text(bio)
+                }
+
+                // MARK: Socials
+                ForEach(store.artist.links, id: \.self) { link in
+                    Button {
+                        store.send(.didTapURL(link.url))
+                    } label: {
+                        LinkView(link)
+                    }
+                    .buttonStyle(.navigationLink)
+                }
             }
-        } else {
-            ProgressView()
+            .listStyle(.plain)
+            // Replicating drop shadow at the top of the scroll,
+            // Doing it in normal ways is pretty buggy from what I can tell
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [
+                        Color(.systemBackground),
+                        .clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 3)
+            }
+            .contentMargins(3)
+        }
+        .sheet(
+            item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
+            content: { SafariView(store: $0).ignoresSafeArea(edges: .bottom) }
+        )
+        .toolbar {
+            Toggle("Favorite", isOn: $store.favoriteArtists[store.artist.id])
+                .frame(square: 20)
+                .toggleStyle(FavoriteToggleStyle())
         }
     }
 
@@ -214,12 +208,12 @@ public struct ArtistDetailView: View {
         @Environment(\.showingArtistImages) var showingArtistImages
 
         public var body: some View {
-            if showingArtistImages && (artist.imageURL != nil || event.imageURL != nil) {
+            if showingArtistImages && (artist.imageURL != nil || event.info.imageURL != nil) {
                 ZStack(alignment: .bottom) {
                     CachedAsyncImage(url: artist.imageURL) {
                         $0.resizable()
                     } placeholder: {
-                        CachedAsyncImage(url: event.imageURL) {
+                        CachedAsyncImage(url: event.info.imageURL) {
                             $0.resizable()
                         } placeholder: {
                             ProgressView()
@@ -257,7 +251,7 @@ public struct ArtistDetailView: View {
 
 #Preview {
     NavigationStack {
-        ArtistDetailView(store: Store(initialState: ArtistDetail.State(id: "Subsonic"), reducer: {
+        ArtistDetailView(store: Store(initialState: ArtistDetail.State(artist: Event.testival.artists[0]), reducer: {
             ArtistDetail()
         }))
     }
@@ -265,7 +259,7 @@ public struct ArtistDetailView: View {
 
 #Preview {
     NavigationStack {
-        ArtistDetailView(store: Store(initialState: ArtistDetail.State(id: "Float On"), reducer: {
+        ArtistDetailView(store: Store(initialState: ArtistDetail.State(artist: Event.testival.artists[1]), reducer: {
             ArtistDetail()
         }))
     }
@@ -334,4 +328,16 @@ struct SafariView: UIViewControllerRepresentable {
         _ uiViewController: SFSafariViewController,
         context: UIViewControllerRepresentableContext<SafariView>
     ) {}
+}
+
+extension Event.Performance.ArtistReference {
+    var name: String {
+        switch self {
+        case .known(let id):
+            @SharedReader(.event) var event
+            return event.artists[id: id]?.name ?? id.uuidString
+        case .anonymous(let name):
+            return name
+        }
+    }
 }

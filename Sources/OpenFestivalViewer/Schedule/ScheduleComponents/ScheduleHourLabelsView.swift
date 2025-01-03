@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DayStartsAtNoonEnvironmentKey: EnvironmentKey {
-    static var defaultValue = false
+    static let defaultValue = false
 }
 
 public extension EnvironmentValues {
@@ -28,7 +28,7 @@ public struct ScheduleHourTag: Hashable {
 
 
 public struct HourLabelsWidthPreferenceKey: PreferenceKey {
-    public static var defaultValue: CGFloat = 43
+    public static let defaultValue: CGFloat = 43
     
     public static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()

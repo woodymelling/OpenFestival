@@ -47,54 +47,55 @@ public struct More {
 
 
     public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-
-            case .didTapExitEvent:
-                return .none
-
-            case .didTapRefreshEvent:
-                return .none
-
-            case .didTapNotifications:
-                break
-
-            case .didTapSiteMap:
-                guard let siteMapImageURL = state.event.siteMapImageURL else {
-                    return .none
-                }
-                state.destination = .siteMap(SiteMapFeature.State(url: siteMapImageURL))
-
-            case .didTapContactInfo:
-                guard state.event.contactNumbers.hasElements
-                else { return .none }
-
-                state.destination = .contactInfo(ContactInfoFeature.State(contactNumbers: state.event.contactNumbers))
-
-            case .didTapAddress:
-                guard let address = state.event.address else {
-                    return .none
-                }
-
-                state.destination = .address(
-                    AddressFeature.State(
-                        address: address,
-                        latitude: state.event.latitude ?? "",
-                        longitude: state.event.longitude ?? ""
-                    )
-                )
-
-            case .didTapWorkshops:
-                //                state.destination = .workshops(.init())
-                break
-
-            case .destination:
-
-                return .none
-            }
-            return .none
-        }
-        .ifLet(\.$destination, action: \.destination)
+        EmptyReducer()
+//        Reduce { state, action in
+//            switch action {
+//
+//            case .didTapExitEvent:
+//                return .none
+//
+//            case .didTapRefreshEvent:
+//                return .none
+//
+//            case .didTapNotifications:
+//                break
+//
+//            case .didTapSiteMap:
+//                guard let siteMapImageURL = state.event.info.siteMapImageURL else {
+//                    return .none
+//                }
+//                state.destination = .siteMap(SiteMapFeature.State(url: siteMapImageURL))
+//
+//            case .didTapContactInfo:
+//                guard state.event.info.contactNumbers.hasElements
+//                else { return .none }
+//
+//                state.destination = .contactInfo(ContactInfoFeature.State(contactNumbers: state.event.contactNumbers))
+//
+//            case .didTapAddress:
+//                guard let address = state.event.address else {
+//                    return .none
+//                }
+//
+//                state.destination = .address(
+//                    AddressFeature.State(
+//                        address: address,
+//                        latitude: state.event.latitude ?? "",
+//                        longitude: state.event.longitude ?? ""
+//                    )
+//                )
+//
+//            case .didTapWorkshops:
+//                //                state.destination = .workshops(.init())
+//                break
+//
+//            case .destination:
+//
+//                return .none
+//            }
+//            return .none
+//        }
+//        .ifLet(\.$destination, action: \.destination)
     }
 }
 
@@ -120,101 +121,102 @@ public struct MoreView: View {
     @Environment(\.isEventSpecificApplication) var isEventSpecificApplication
 
     public var body: some View {
-        List {
-//            Section {
-//                MoreButton(
-//                    "Workshops",
-//                    image: Image(systemName: "figure.yoga"),
-//                    color: eventColorScheme.workshopsColor
-//                ) {
-//                    store.send(.didTapWorkshops)
-//                }
-//            }
-
-            Section {
-                if store.event.siteMapImageURL != nil {
-                    MoreButton(
-                        "Site Map",
-                        systemName: "map.fill",
-                        color: eventColorScheme.otherColors[1]
-                    ) {
-                        store.send(.didTapSiteMap)
-                    }
-                }
-
-                if store.event.address != nil {
-                    MoreButton(
-                        "Address",
-                        systemName: "mappin",
-                        color: eventColorScheme.otherColors[2]
-                    ) {
-                        store.send(.didTapAddress)
-                    }
-                }
-            }
+        Text("Reimplement")
+//        List {
+////            Section {
+////                MoreButton(
+////                    "Workshops",
+////                    image: Image(systemName: "figure.yoga"),
+////                    color: eventColorScheme.workshopsColor
+////                ) {
+////                    store.send(.didTapWorkshops)
+////                }
+////            }
 //
 //            Section {
-//                MoreButton(
-//                    "Notifications",
-//                    systemName: "bell.badge.fill",
-//                    color: eventColorScheme.otherColors[3]
-//                ) {
-//                    store.send(.didTapNotifications)
+//                if store.event.siteMapImageURL != nil {
+//                    MoreButton(
+//                        "Site Map",
+//                        systemName: "map.fill",
+//                        color: eventColorScheme.otherColors[1]
+//                    ) {
+//                        store.send(.didTapSiteMap)
+//                    }
+//                }
+//
+//                if store.event.address != nil {
+//                    MoreButton(
+//                        "Address",
+//                        systemName: "mappin",
+//                        color: eventColorScheme.otherColors[2]
+//                    ) {
+//                        store.send(.didTapAddress)
+//                    }
 //                }
 //            }
-
-            Section {
-                if store.event.contactNumbers.hasElements {
-                    MoreButton(
-                        "Emergency Contact",
-                        systemName: "phone.fill",
-                        color: eventColorScheme.otherColors[4]
-                    ) {
-                        store.send(.didTapContactInfo)
-                    }
-                }
-            }
-
-            Section {
-                if !isEventSpecificApplication {
-                    Button(
-                        "Refresh Event",
-                        systemImage: "arrow.clockwise",
-                        action: {
-                            store.send(.didTapRefreshEvent)
-                        }
-                    )
-
-                    Button {
-                        store.send(.didTapExitEvent, animation: .default)
-                    } label: {
-                        Text("Exit \(store.event.name)")
-                    }
-                }
-            }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle("More")
-        //            .navigationDestinationWrapper(
-        //                item: $store.scope(state: \.destination?.workshops, action: \.destination.workshops),
-        //                destination: WorkshopsView.init
-        //            )
-        .navigationDestination(
-            item: $store.scope(state: \.destination?.siteMap, action: \.destination.siteMap),
-            destination: SiteMapView.init
-        )
-        .navigationDestination(
-            item: $store.scope(state: \.destination?.address, action: \.destination.address),
-            destination: AddressView.init
-        )
-        //            .navigationDestinationWrapper(
-        //                item: $store.scope(state: \.destination?.notifications, action: \.destination.notifications),
-        //                destination: NotificationsView.init
-        //            )
-        .navigationDestination(
-            item: $store.scope(state: \.destination?.contactInfo, action: \.destination.contactInfo),
-            destination: ContactInfoView.init
-        )
+////
+////            Section {
+////                MoreButton(
+////                    "Notifications",
+////                    systemName: "bell.badge.fill",
+////                    color: eventColorScheme.otherColors[3]
+////                ) {
+////                    store.send(.didTapNotifications)
+////                }
+////            }
+//
+//            Section {
+//                if store.event.contactNumbers.hasElements {
+//                    MoreButton(
+//                        "Emergency Contact",
+//                        systemName: "phone.fill",
+//                        color: eventColorScheme.otherColors[4]
+//                    ) {
+//                        store.send(.didTapContactInfo)
+//                    }
+//                }
+//            }
+//
+//            Section {
+//                if !isEventSpecificApplication {
+//                    Button(
+//                        "Refresh Event",
+//                        systemImage: "arrow.clockwise",
+//                        action: {
+//                            store.send(.didTapRefreshEvent)
+//                        }
+//                    )
+//
+//                    Button {
+//                        store.send(.didTapExitEvent, animation: .default)
+//                    } label: {
+//                        Text("Exit \(store.event.name)")
+//                    }
+//                }
+//            }
+//        }
+//        .listStyle(.insetGrouped)
+//        .navigationTitle("More")
+//        //            .navigationDestinationWrapper(
+//        //                item: $store.scope(state: \.destination?.workshops, action: \.destination.workshops),
+//        //                destination: WorkshopsView.init
+//        //            )
+//        .navigationDestination(
+//            item: $store.scope(state: \.destination?.siteMap, action: \.destination.siteMap),
+//            destination: SiteMapView.init
+//        )
+//        .navigationDestination(
+//            item: $store.scope(state: \.destination?.address, action: \.destination.address),
+//            destination: AddressView.init
+//        )
+//        //            .navigationDestinationWrapper(
+//        //                item: $store.scope(state: \.destination?.notifications, action: \.destination.notifications),
+//        //                destination: NotificationsView.init
+//        //            )
+//        .navigationDestination(
+//            item: $store.scope(state: \.destination?.contactInfo, action: \.destination.contactInfo),
+//            destination: ContactInfoView.init
+//        )
 
     }
 

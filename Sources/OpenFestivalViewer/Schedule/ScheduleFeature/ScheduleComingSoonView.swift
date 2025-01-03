@@ -40,7 +40,7 @@ struct ScheduleComingSoonView: View {
 //                }
 //            }
  
-            Color(.systemBackground)
+            Color.red
                 .opacity(0.6)
 //            .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.thinMaterial)
@@ -53,7 +53,7 @@ struct ScheduleComingSoonView: View {
                     ProgressView()
                 }
                 .frame(square: 200)
-                .foregroundColor(Color(.label))
+                .foregroundColor(Color(.red))
 //                .shadow(radius: 5, .quaternaryLabel)
                 
                 
@@ -75,7 +75,7 @@ import OpenFestivalModels
 
 struct ScheduleComingSoonView_Previews: PreviewProvider {
     static var previews: some View {
-        ScheduleComingSoonView(imageURL: Event.testival.imageURL)
+        ScheduleComingSoonView(imageURL: Event.testival.info.imageURL)
     }
 }
 

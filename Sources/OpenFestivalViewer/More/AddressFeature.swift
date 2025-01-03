@@ -11,7 +11,7 @@ import ComposableArchitecture
 @Reducer
 public struct AddressFeature {
     
-    @Dependency(\.openURL) var openURL
+
     
     @ObservableState
     public struct State: Equatable {
@@ -29,15 +29,17 @@ public struct AddressFeature {
         switch action {
         case .didTapOpenInAppleMaps:
             guard let url = URL(string: "http://maps.apple.com/?daddr=\(state.latitude),\(state.longitude)") else { return .none }
-            
+
             return .run { _ in
-               await openURL(url)
+                @Dependency(\.openURL) var openURL
+                await openURL(url)
             }
             
         case .didTapOpenInGoogleMaps:
             guard let url = URL(string: "https://www.google.com/maps/?q=\(state.latitude),\(state.longitude)") else { return .none }
             
             return .run { _ in
+                @Dependency(\.openURL) var openURL
                 await openURL(url)
             }
         }

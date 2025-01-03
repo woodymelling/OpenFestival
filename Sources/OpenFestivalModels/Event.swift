@@ -14,7 +14,7 @@ import Collections
 public typealias OpenFestivalIDType = UUID
 
 @MemberwiseInit(.public)
-public struct Organization {
+public struct Organization: Equatable, Identifiable {
     public var id: Tagged<Self, OpenFestivalIDType>
     public struct Info: Decodable, Equatable {
 
@@ -31,24 +31,60 @@ public struct Organization {
     public var events: [Event]
 }
 
-@MemberwiseInit(.public)
 public struct Event: Identifiable, Equatable, Sendable {
     public var id: Tagged<Event, OpenFestivalIDType>
-    public var name: String //
-    public var timeZone: TimeZone
 
-    public var imageURL: URL? = nil
-    public var siteMapImageURL: URL? = nil
-
-    public var address: String? = nil
-    public var latitude: String? = nil
-    public var longitude: String? = nil
-
-    public var contactNumbers: [ContactNumber] = []
+    public var info: Info
     public var artists: IdentifiedArrayOf<Artist>
     public var stages: Stages
     public var schedule: IdentifiedArrayOf<Schedule>
     public var colorScheme: ColorScheme?
+
+    public struct Info: Equatable, Sendable {
+        public var name: String //
+        public var timeZone: TimeZone
+
+        public var imageURL: URL? = nil
+        public var siteMapImageURL: URL? = nil
+
+        public var address: String? = nil
+        public var latitude: String? = nil
+        public var longitude: String? = nil
+
+        public var contactNumbers: [ContactNumber] = []
+    }
+
+    public init(
+        id: Tagged<Event, OpenFestivalIDType>,
+        name: String,
+        timeZone: TimeZone,
+        imageURL: URL? = nil,
+        siteMapImageURL: URL? = nil,
+        address: String? = nil,
+        latitude: String? = nil,
+        longitude: String? = nil,
+        contactNumbers: [ContactNumber] = [],
+        artists: IdentifiedArrayOf<Artist>,
+        stages: Stages,
+        schedule: IdentifiedArrayOf<Schedule>,
+        colorScheme: ColorScheme? = nil
+    ) {
+        self.id = id
+        self.info = Info(
+            name: name,
+            timeZone: timeZone,
+            imageURL: imageURL,
+            siteMapImageURL: siteMapImageURL,
+            address: address,
+            latitude: latitude,
+            longitude: longitude,
+            contactNumbers: contactNumbers
+        )
+        self.artists = artists
+        self.stages = stages
+        self.schedule = schedule
+        self.colorScheme = colorScheme
+    }
 }
 
 public extension Event {

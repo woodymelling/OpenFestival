@@ -62,8 +62,11 @@ extension Event.Performance {
     var title: String {
         @Shared(.event) var event
 
-        func name(for id: Event.Artist.ID) -> String {
-            event.artists[id: id]?.name ?? id.rawValue
+        func name(for artistReference: Event.Performance.ArtistReference) -> String {
+            switch artistReference {
+            case .known(let id): event.artists[id: id]?.name ?? id.uuidString
+            case .anonymous(let name): name
+            }
         }
 
         return if let customTitle {
@@ -140,9 +143,9 @@ struct PerformanceTimeStyle: FormatStyle {
     List {
         PerformanceDetailRow(
             for: .init(
-                id: "",
+                id: Event.Performance.ID(UUID(0)),
                 customTitle: nil,
-                artistIDs: [.init("")],
+                artistIDs: [.anonymous(name: "Farcaster")],
                 startTime: .now,
                 endTime: .now + 1.hours,
                 stageID: Event.testival.stages.first!.id

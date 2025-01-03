@@ -30,7 +30,7 @@ struct ScheduleStageSelector: View {
             }
             .frame(maxWidth: .infinity)
             .background(
-                Color(.systemBackground).edgesIgnoringSafeArea(.top)
+                Color.red.edgesIgnoringSafeArea(.top)
             )
             .shadow()
         }

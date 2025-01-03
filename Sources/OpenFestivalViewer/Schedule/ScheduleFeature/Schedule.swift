@@ -21,17 +21,19 @@ public struct Schedule {
         public init() {
             @Shared(.event) var event
 
-            let launchDate = determineDayScheduleAtLaunch(from: event.schedule)
-            let launchStage = determineLaunchStage(for: event, on: launchDate!)
-
-            if let launchDate, let launchStage {
-                self.selectedStage = launchStage
+            if let launchDate = determineDayScheduleAtLaunch(from: event.schedule) {
                 self.selectedDay = launchDate
-            } else {
-                self.showingComingSoonScreen = true
 
-                self.selectedStage = .init("")
-                self.selectedDay = .init("")
+                if let launchStage = determineLaunchStage(for: event, on: launchDate) {
+                    self.selectedStage = launchStage
+                } else {
+                    self.selectedStage = .init()
+                }
+            } else {
+//                self.showingComingSoonScreen = true
+
+                self.selectedStage = .init()
+                self.selectedDay = .init()
             }
         }
 
@@ -43,7 +45,7 @@ public struct Schedule {
         public var selection = true
 
         public var selectedStage: Event.Stage.ID
-        public var selectedDay: Event.Schedule.Day.ID
+        public var selectedDay: Event.Schedule.ID
         public var filteringFavorites: Bool = false
 
         public var showingPerformanceID: Event.Performance.ID?
@@ -62,7 +64,7 @@ public struct Schedule {
         var showTimeIndicator: Bool {
             @Dependency(\.date) var date
 
-            if let selectedDay = event.schedule.dayMetadatas[id: selectedDay],
+            if let selectedDay = event.schedule[id: selectedDay]?.metadata,
                selectedDay.date == CalendarDate(date()) {
                 return true
             } else {
@@ -95,19 +97,20 @@ public struct Schedule {
                 return .none
 
             case .didTapCard(let performanceID):
-                guard let performance = state.event.schedule[id: performanceID]
-                else { return .none }
-
-                switch performance.artistIDs.count {
-                case 1:
-                    state.destination = .artistDetail(ArtistDetail.State(id: performance.artistIDs.first!))
-                default:
-                    state.destination = .performanceDetail(PerformanceDetails.State(performanceID: performance.id))
-                    return .none
-
-                }
-
+                reportIssue("REIMPLEMENT")
                 return .none
+//                guard let performance = state.event.schedule[id: performanceID]
+//                else { return .none }
+//
+//                switch performance.artistIDs.count {
+//                case 1:
+//                    state.destination = .artistDetail(ArtistDetail.State(id: performance.artistIDs.first!))
+//                default:
+//                    state.destination = .performanceDetail(PerformanceDetails.State(performanceID: performance.id))
+//                    return .none
+//
+//                }
+//                return .none
 
             case .didSelectStage(let stageID):
                 state.selectedStage = stageID
@@ -189,30 +192,30 @@ public struct ScheduleView: View {
     }
 
     struct EventDaySelectorViewModifier: ViewModifier {
-        @Binding var selectedDay: Event.Schedule.Day.ID
+        @Binding var selectedDay: Event.Schedule.ID
         @Shared(.event) var event
 
 
-        func label(for day: Event.Schedule.Day.Metadata) -> String {
+        func label(for day: Event.Schedule.Metadata) -> String {
             if let customTitle = day.customTitle {
                 return customTitle
             } else if let calendarDay = day.date {
                 return calendarDay.date.formatted(.dateTime.weekday(.wide))
             } else {
-                return day.id.rawValue
+                return day.id.uuidString
             }
         }
 
-        var selectedDayMetadata: Event.Schedule.Day.Metadata? {
-            event.schedule.dayMetadatas[id: selectedDay]
+        var selectedDayMetadata: Event.Schedule.Metadata? {
+            event.schedule[id: selectedDay]?.metadata
         }
 
 
         func body(content: Content) -> some View {
             content
                 .toolbarTitleMenu {
-                    ForEach(event.schedule.dayMetadatas) { day in
-                        Button(label(for: day)) {
+                    ForEach(event.schedule) { day in
+                        Button(label(for: day.metadata)) {
                             selectedDay = day.id
                         }
                     }
@@ -240,15 +243,19 @@ struct ScheduleView_Previews: PreviewProvider {
 }
 
 
-func determineDayScheduleAtLaunch(from schedule: Event.Schedule) -> Event.Schedule.Day.ID? {
-    let days = schedule.dayMetadatas
-    return (days.first(where: { $0.date == .today}) ?? days.first)?.id
+func determineDayScheduleAtLaunch(from schedule: IdentifiedArrayOf<Event.Schedule>) -> Event.Schedule.ID? {
+    reportIssue("REIMPLEMENT")
+    return nil
+//    let days = schedule.dayMetadatas
+//    return (days.first(where: { $0.date == .today}) ?? days.first)?.id
 }
 
 
-func determineLaunchStage(for event: Event, on day: Event.Schedule.Day.ID) -> Event.Stage.ID? {
-    let stages = event.stages
-
-    return (stages.first { event.schedule[on: day, at: $0.id].hasElements } ??
-     stages.first)?.id
+func determineLaunchStage(for event: Event, on day: Event.Schedule.ID) -> Event.Stage.ID? {
+    reportIssue("REIMPLEMENT")
+    return nil
+//    let stages = event.stages
+//
+//    return (stages.first { event.schedule[on: day, at: $0.id].hasElements } ??
+//     stages.first)?.id
 }

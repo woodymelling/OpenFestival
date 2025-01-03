@@ -11,7 +11,7 @@ import OpenFestivalModels
 import Dependencies
 
 struct EventColorSchemeEnvironmentKey: EnvironmentKey {
-    static var defaultValue = {
+    static let defaultValue = {
         @Dependency(\.context) var context
 
         return switch context {
