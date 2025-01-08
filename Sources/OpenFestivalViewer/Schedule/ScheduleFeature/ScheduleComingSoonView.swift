@@ -72,10 +72,10 @@ struct ScheduleComingSoonView: View {
 }
 
 import OpenFestivalModels
-
-struct ScheduleComingSoonView_Previews: PreviewProvider {
-    static var previews: some View {
-        ScheduleComingSoonView(imageURL: Event.testival.info.imageURL)
-    }
-}
+//
+//struct ScheduleComingSoonView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        ScheduleComingSoonView(imageURL: Event.testival.info.imageURL)
+//    }
+//}
 

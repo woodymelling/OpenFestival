@@ -83,5 +83,8 @@ extension View {
 
 
 #Preview {
-    ScheduleGrid()
+    ScrollView {
+
+        ScheduleGrid()
+    }
 }

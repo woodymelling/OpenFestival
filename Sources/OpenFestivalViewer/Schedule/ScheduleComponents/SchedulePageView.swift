@@ -156,3 +156,54 @@ extension Range where Bound == Date {
         return upperBound.timeIntervalSince(lowerBound)
     }
 }
+
+
+import OpenFestivalModels
+
+struct HorizontalPageView<Content: View, ID: Hashable>: View {
+
+    var content: Content
+    @Binding var page: ID?
+
+    init(page: Binding<ID?>, @ViewBuilder content: () -> Content) {
+        self.content = content()
+        self._page = page
+    }
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 0) {
+                content
+                    .containerRelativeFrame(.horizontal)
+            }
+        }
+        .scrollTargetLayout()
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: $page)
+        .scrollIndicators(.never, axes: .horizontal)
+    }
+}
+
+#Preview {
+    @Previewable @State var scrollID: Int? = 0
+    ScrollView {
+        HorizontalPageView(page: $scrollID) {
+
+            ForEach(0..<5) { page in
+                SchedulePageView(
+                    Event.testival.schedule.first!.stageSchedules.values.first!,
+                    cardContent: { _ in
+                        EmptyView()
+                    }
+                )
+                .id(page)
+                .frame(height: 1000)
+                //                    .frame(maxWidth: .infinity)
+            }
+        }
+        .scrollClipDisabled()
+    }
+    .overlay {
+        Text("\(scrollID)").font(.title)
+    }
+}

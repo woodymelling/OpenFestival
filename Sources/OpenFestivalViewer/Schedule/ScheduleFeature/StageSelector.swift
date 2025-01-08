@@ -10,29 +10,30 @@ import IdentifiedCollections
 import OpenFestivalModels
 import ComposableArchitecture
 
-struct ScheduleStageSelector: View {
-    var stages: IdentifiedArrayOf<Event.Stage>
-    var selectedStage: Event.Stage.ID?
-    var onSelectStage: (Event.Stage.ID) -> Void
+extension ScheduleView {
+    struct StageSelector: View {
+        var stages: IdentifiedArrayOf<Event.Stage>
 
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            HStack {
-                ForEach(stages) { stage in
+        @Binding var selectedStage: Event.Stage.ID?
+
+        var body: some View {
+            ZStack(alignment: .bottom) {
+                HStack {
+                    ForEach(stages) { stage in
+                        Spacer()
+                        ScheduleHeaderButton(
+                            stage: stage,
+                            isSelected: selectedStage == stage.id,
+                            onSelect: {
+                                selectedStage = $0
+                            }
+                        )
+                    }
                     Spacer()
-                    ScheduleHeaderButton(
-                        stage: stage,
-                        isSelected: selectedStage == stage.id,
-                        onSelect: onSelectStage
-                    )
                 }
-                Spacer()
+                .frame(maxWidth: .infinity)
+                .shadow()
             }
-            .frame(maxWidth: .infinity)
-            .background(
-                Color.red.edgesIgnoringSafeArea(.top)
-            )
-            .shadow()
         }
     }
 }
@@ -92,7 +93,6 @@ struct ScheduleHeaderButton: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 #endif
                 onSelect(stage.id)
-
             }
         )
     }

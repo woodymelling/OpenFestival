@@ -197,8 +197,8 @@ public struct EventFileTree: FileTreeViewable {
                 name: input.0.name ?? "",
                 // TODO?
                 timeZone: try TimeZoneConversion().apply(input.0.timeZone) ?? TimeZone.current,
-                imageURL: input.0.imageURL,
-                siteMapImageURL: input.0.siteMapImageURL,
+                imageURL: input.0.imageURL.map { Event.ImageURL($0) },
+                siteMapImageURL: input.0.siteMapImageURL.map { Event.SiteMapImageURL($0) },
                 address: input.0.address,
                 // TODO:
                 latitude: nil,
@@ -255,8 +255,8 @@ public struct EventFileTree: FileTreeViewable {
                     name: output.info.name,
                     address: output.info.address,
                     timeZone: output.info.timeZone.identifier,
-                    imageURL: output.info.imageURL,
-                    siteMapImageURL: output.info.siteMapImageURL,
+                    imageURL: output.info.imageURL?.rawValue,
+                    siteMapImageURL: output.info.siteMapImageURL?.rawValue,
                     colorScheme: nil,
                     contactNumber: output.info.contactNumbers.map {
                         .init(phoneNumber: $0.phoneNumber, title: $0.title, description: $0.description)

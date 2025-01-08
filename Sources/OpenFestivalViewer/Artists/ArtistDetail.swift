@@ -213,7 +213,7 @@ public struct ArtistDetailView: View {
                     CachedAsyncImage(url: artist.imageURL) {
                         $0.resizable()
                     } placeholder: {
-                        CachedAsyncImage(url: event.info.imageURL) {
+                        CachedAsyncImage(url: event.info.imageURL?.rawValue) {
                             $0.resizable()
                         } placeholder: {
                             ProgressView()

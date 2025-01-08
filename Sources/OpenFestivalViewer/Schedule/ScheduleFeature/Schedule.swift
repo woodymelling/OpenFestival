@@ -44,15 +44,11 @@ public struct Schedule {
 
         public var selection = true
 
-        public var selectedStage: Event.Stage.ID
+        public var selectedStage: Event.Stage.ID?
         public var selectedDay: Event.Schedule.ID
         public var filteringFavorites: Bool = false
 
         public var showingPerformanceID: Event.Performance.ID?
-
-        public var showTutorialElements: Bool = false
-        public var showingLandscapeTutorial: Bool = false
-        public var showingFilterTutorial: Bool = false
 
         public var showingComingSoonScreen: Bool = false
 
@@ -63,6 +59,7 @@ public struct Schedule {
 
         var showTimeIndicator: Bool {
             @Dependency(\.date) var date
+
 
             if let selectedDay = event.schedule[id: selectedDay]?.metadata,
                selectedDay.date == CalendarDate(date()) {
@@ -156,15 +153,11 @@ public struct ScheduleView: View {
             }
         }
         .environment(\.dayStartsAtNoon, true)
-        .sheet(item: $store.scope(state: \.destination?.artistDetail, action: \.destination.artistDetail)) { store in
-            NavigationStack {
-                ArtistDetailView(store: store)
-            }
+        .navigationDestination(item: $store.scope(state: \.destination?.artistDetail, action: \.destination.artistDetail)) { store in
+            ArtistDetailView(store: store)
         }
-        .sheet(item: $store.scope(state: \.destination?.performanceDetail, action: \.destination.performanceDetail)) { store in
-            NavigationStack {
-                PerformanceDetailView(store: store)
-            }
+        .navigationDestination(item: $store.scope(state: \.destination?.performanceDetail, action: \.destination.performanceDetail)) { store in
+            PerformanceDetailView(store: store)
         }
     }
 
@@ -235,7 +228,7 @@ struct ScheduleView_Previews: PreviewProvider {
             ScheduleView(
                 store: .init(initialState: state) {
                     Schedule()
-                        ._printChanges()
+//                        ._printChanges()
                 }
             )
         }
@@ -243,19 +236,13 @@ struct ScheduleView_Previews: PreviewProvider {
 }
 
 
-func determineDayScheduleAtLaunch(from schedule: IdentifiedArrayOf<Event.Schedule>) -> Event.Schedule.ID? {
-    reportIssue("REIMPLEMENT")
-    return nil
-//    let days = schedule.dayMetadatas
-//    return (days.first(where: { $0.date == .today}) ?? days.first)?.id
+func determineDayScheduleAtLaunch(from schedules: IdentifiedArrayOf<Event.Schedule>) -> Event.Schedule.ID? {
+
+    return schedules.first?.metadata.id
 }
 
 
 func determineLaunchStage(for event: Event, on day: Event.Schedule.ID) -> Event.Stage.ID? {
-    reportIssue("REIMPLEMENT")
-    return nil
-//    let stages = event.stages
-//
-//    return (stages.first { event.schedule[on: day, at: $0.id].hasElements } ??
-//     stages.first)?.id
+
+    return event.stages.first?.id
 }

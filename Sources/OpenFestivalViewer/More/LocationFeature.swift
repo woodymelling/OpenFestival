@@ -7,17 +7,13 @@
 
 import SwiftUI
 import ComposableArchitecture
+import OpenFestivalModels
 
 @Reducer
-public struct AddressFeature {
-    
-
-    
+public struct LocationFeature {
     @ObservableState
     public struct State: Equatable {
-        var address: String
-        var latitude: String
-        var longitude: String
+        @Shared var location: Event.Location
     }
     
     public enum Action {
@@ -28,30 +24,35 @@ public struct AddressFeature {
     public func reduce(into state: inout State, action: Action) -> Effect<Action> {
         switch action {
         case .didTapOpenInAppleMaps:
-            guard let url = URL(string: "http://maps.apple.com/?daddr=\(state.latitude),\(state.longitude)") else { return .none }
+            reportIssue("REIMPLEMENT")
+            return .none
 
-            return .run { _ in
-                @Dependency(\.openURL) var openURL
-                await openURL(url)
-            }
+//            guard let url = URL(string: "http://maps.apple.com/?daddr=\(state.latitude),\(state.longitude)") else { return .none }
+//
+//            return .run { _ in
+//                @Dependency(\.openURL) var openURL
+//                await openURL(url)
+//            }
             
         case .didTapOpenInGoogleMaps:
-            guard let url = URL(string: "https://www.google.com/maps/?q=\(state.latitude),\(state.longitude)") else { return .none }
-            
-            return .run { _ in
-                @Dependency(\.openURL) var openURL
-                await openURL(url)
-            }
+            reportIssue("REIMPLEMENT")
+            return .none
+//            guard let url = URL(string: "https://www.google.com/maps/?q=\(state.latitude),\(state.longitude)") else { return .none }
+//            
+//            return .run { _ in
+//                @Dependency(\.openURL) var openURL
+//                await openURL(url)
+//            }
         }
     }
 }
 
 struct AddressView: View {
-    let store: StoreOf<AddressFeature>
+    let store: StoreOf<LocationFeature>
     
     var body: some View {
         List {
-            Text(store.address)
+            Text(store.location.address)
                 .font(.headline)
                 .textSelection(.enabled)
 
@@ -86,11 +87,9 @@ struct AddressView_Previews: PreviewProvider {
         AddressView(
             store: Store(
                 initialState: .init(
-                    address: "3901 Kootenay Hwy, Fairmont Hot Springs, BC V0B 1L1, Canada",
-                    latitude: "",
-                    longitude: ""
+                    location: Shared(Event.Location(address: "3901 Kootenay Hwy, Fairmont Hot Springs, BC V0B 1L1, Canada"))
                 ),
-                reducer: AddressFeature.init
+                reducer: LocationFeature.init
             )
         )
     }
