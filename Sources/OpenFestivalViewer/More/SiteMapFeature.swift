@@ -12,13 +12,14 @@ import ComposableArchitecture
 import Zoomable
 import Nuke
 import NukeUI
+import OpenFestivalModels
 
 @Reducer
 public struct SiteMapFeature {
 
     @ObservableState
     public struct State: Equatable {
-        var url: URL
+        @Shared var url: Event.SiteMapImageURL
     }
 
     public enum Action: Equatable {}
@@ -34,7 +35,7 @@ struct SiteMapView: View {
 
     var body: some View {
 
-        LazyImage(url: store.url) { state in
+        LazyImage(url: store.url.rawValue) { state in
             if let image = state.image {
                 image
                     .resizable()

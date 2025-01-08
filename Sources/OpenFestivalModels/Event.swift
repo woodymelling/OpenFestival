@@ -40,29 +40,33 @@ public struct Event: Identifiable, Equatable, Sendable {
     public var schedule: IdentifiedArrayOf<Schedule>
     public var colorScheme: ColorScheme?
 
+
+
     public struct Info: Equatable, Sendable {
         public var name: String //
         public var timeZone: TimeZone
 
-        public var imageURL: URL? = nil
-        public var siteMapImageURL: URL? = nil
+        public var imageURL: Event.ImageURL? = nil
+        public var siteMapImageURL: SiteMapImageURL? = nil
 
-        public var address: String? = nil
-        public var latitude: String? = nil
-        public var longitude: String? = nil
+        public var location: Location?
 
         public var contactNumbers: [ContactNumber] = []
     }
+
+    public enum EventImageURLTag {}
+    public typealias ImageURL = Tagged<EventImageURLTag, URL>
+
+    public enum SiteMapURLTag {}
+    public typealias SiteMapImageURL = Tagged<SiteMapURLTag, URL>
 
     public init(
         id: Tagged<Event, OpenFestivalIDType>,
         name: String,
         timeZone: TimeZone,
-        imageURL: URL? = nil,
-        siteMapImageURL: URL? = nil,
-        address: String? = nil,
-        latitude: String? = nil,
-        longitude: String? = nil,
+        imageURL: ImageURL? = nil,
+        siteMapImageURL: SiteMapImageURL? = nil,
+        location: Location? = nil,
         contactNumbers: [ContactNumber] = [],
         artists: IdentifiedArrayOf<Artist>,
         stages: Stages,
@@ -75,9 +79,7 @@ public struct Event: Identifiable, Equatable, Sendable {
             timeZone: timeZone,
             imageURL: imageURL,
             siteMapImageURL: siteMapImageURL,
-            address: address,
-            latitude: latitude,
-            longitude: longitude,
+            location: location,
             contactNumbers: contactNumbers
         )
         self.artists = artists
@@ -117,6 +119,19 @@ public extension Event {
         public var id: Tagged<Event, OpenFestivalIDType>
         public var name: String
         public var iconImageURL: URL?
+    }
+}
+
+public extension Event {
+    @MemberwiseInit(.public, _optionalsDefaultNil: true)
+    struct Location: Equatable, Hashable, Sendable {
+        public var address: String
+        public var directions: String?
+        public var city: String?
+        public var country: String?
+        public var postalCode: String?
+        public var latitude: Double?
+        public var longitude: Double?
     }
 }
 
@@ -267,6 +282,15 @@ extension UUID: @retroactive ExpressibleByIntegerLiteral {
         self.init(value)
     }
 }
+public extension Tagged where RawValue == URL {
+    init?(string: String) {
+        if let url = URL(string: string) {
+            self.init(url)
+        } else {
+            return nil
+        }
+    }
+}
 
 
 public extension Event {
@@ -287,8 +311,8 @@ public extension Event {
             id: Event.ID(1),
             name: "Testival",
             timeZone: .current,
-            siteMapImageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSite%20Map.webp?alt=media&token=48272d3c-ace0-4d5b-96a9-a5142f1c744a"),
-            address: "1234 Pine Ave, Somewhere in the forest",
+            siteMapImageURL: .init(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSite%20Map.webp?alt=media&token=48272d3c-ace0-4d5b-96a9-a5142f1c744a"),
+            location: Location(address: "1234 Pine Ave, Somewhere in the forest"),
             artists: [
                 Artist(
                     id: Artist.ID(0),
@@ -496,7 +520,7 @@ public extension Event {
                                 artistIDs: [.known(Artist.ID(8))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
                                 endTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
-                                stageID: Stage.ID(1)
+                                stageID: Stage.ID(2)
                             ),
                             Event.Performance(
                                 id: Performance.ID(10),
@@ -504,7 +528,7 @@ public extension Event {
                                 artistIDs: [.known(Artist.ID(9))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
                                 endTime: Date(year: 2024, month: 6, day: 12, hour: 23)!,
-                                stageID: Stage.ID(1)
+                                stageID: Stage.ID(2)
                             ),
                             Event.Performance(
                                 id: Performance.ID(11),
@@ -512,7 +536,7 @@ public extension Event {
                                 artistIDs: [.known(Artist.ID(10))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 23)!,
                                 endTime: Date(year: 2024, month: 6, day: 13, hour: 0, minute: 30)!,
-                                stageID: Stage.ID(1)
+                                stageID: Stage.ID(2)
                             ),
                             Event.Performance(
                                 id: Performance.ID(12),
@@ -520,7 +544,7 @@ public extension Event {
                                 artistIDs: [.known(Artist.ID(11)), .known(Artist.ID(10))],
                                 startTime: Date(year: 2024, month: 6, day: 13, hour: 0, minute: 30)!,
                                 endTime: Date(year: 2024, month: 6, day: 13, hour: 2)!,
-                                stageID: Stage.ID(1)
+                                stageID: Stage.ID(2)
                             )
                         ]
                     ]
