@@ -30,8 +30,6 @@ public struct Schedule {
                     self.selectedStage = .init()
                 }
             } else {
-//                self.showingComingSoonScreen = true
-
                 self.selectedStage = .init()
                 self.selectedDay = .init()
             }
@@ -59,7 +57,6 @@ public struct Schedule {
 
         var showTimeIndicator: Bool {
             @Dependency(\.date) var date
-
 
             if let selectedDay = event.schedule[id: selectedDay]?.metadata,
                selectedDay.date == CalendarDate(date()) {
@@ -134,15 +131,13 @@ public struct ScheduleView: View {
         self.store = store
     }
 
-    @SharedReader(.deviceOrientation) var deviceOrientation
+    @SharedReader(.interfaceOrientation) var interfaceOrientation
 
     public var body: some View {
         Group {
-            switch deviceOrientation {
-            case .portrait:
+            if interfaceOrientation.isPortrait {
                 SingleStageAtOnceView(store: store)
-
-            case .landscape:
+            } else {
                 AllStagesAtOnceView(store: store)
             }
         }

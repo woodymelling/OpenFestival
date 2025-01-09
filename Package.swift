@@ -22,7 +22,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/woodymelling/swift-file-tree", from: "0.2.1"),
 
-        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.11.0"),
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.17.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.4.1"),
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "1.0.0"),
