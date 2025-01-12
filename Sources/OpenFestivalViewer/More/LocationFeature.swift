@@ -52,9 +52,11 @@ struct AddressView: View {
     
     var body: some View {
         List {
-            Text(store.location.address)
-                .font(.headline)
-                .textSelection(.enabled)
+            if let location = store.location.address {
+                Text(location)
+                    .font(.headline)
+                    .textSelection(.enabled)
+            }
 
             Button { store.send(.didTapOpenInAppleMaps) } label: {
                 Label {

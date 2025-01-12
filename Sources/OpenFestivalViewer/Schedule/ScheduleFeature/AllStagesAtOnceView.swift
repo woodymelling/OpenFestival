@@ -22,7 +22,7 @@ extension ScheduleView {
                 $0[$1.element.id] = $1.offset
             }
 
-            guard let stageSchedules = store.event.schedule[id: store.selectedDay]?.stageSchedules
+            guard let stageSchedules = store.event.schedule[day: store.selectedDay]?.stageSchedules
             else { return [] }
 
             let performancesWithColumns: [(Int, [Event.Performance])] = stageSchedules.compactMap { stageID, performances in

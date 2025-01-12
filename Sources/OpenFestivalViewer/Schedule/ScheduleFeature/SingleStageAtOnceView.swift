@@ -35,7 +35,7 @@ extension ScheduleView {
         }
 
         var orderedStageSchedules: [(Event.Stage.ID, [Event.Performance])] {
-            guard let daySchedule = store.event.schedule[id: store.selectedDay]
+            guard let daySchedule = store.event.schedule[day: store.selectedDay]
             else { return [] }
 
             return stageOrder.compactMap { stageID in
@@ -73,7 +73,7 @@ extension ScheduleView {
             }
             .scrollPosition($store.highlightedPerformance) { id, size in
                 @Shared(.event) var event
-                guard let performance = event.schedule[performanceID: id]
+                guard let performance = event.schedule[id: id]
                 else { return nil }
 
                 return CGPoint(
@@ -100,7 +100,7 @@ extension ScheduleView {
     }
 }
 
-extension IdentifiedArrayOf<Event.Schedule> {
+extension IdentifiedArrayOf<Event.DailySchedule> {
     subscript(performanceID id: Event.Performance.ID) -> Event.Performance? {
         for schedule in self {
             for stageSchedule in schedule.stageSchedules.values {

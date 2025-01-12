@@ -99,7 +99,7 @@ public enum EventTag: Hashable, Sendable {
         case eventInfo
         case contactInfo
         case stages
-        case schedule(Event.Schedule.ID)
+        case schedule(Event.DailySchedule.ID)
         case artist(Event.Artist.ID)
     }
 
@@ -159,7 +159,7 @@ public struct EventFileTree: FileTreeViewable {
             let stageIDForName = Dictionary(uniqueKeysWithValues: stages.map { ($0.name, $0.id) } )
 
             let schedule = input.2.map {
-                Event.Schedule(
+                Event.DailySchedule(
                     id: $0.id,
                     date: $0.metadata.date,
                     customTitle: $0.metadata.customTitle,
@@ -192,6 +192,7 @@ public struct EventFileTree: FileTreeViewable {
                 )
             }
 
+
             return Event(
                 id: .init(),
                 name: input.0.name ?? "",
@@ -199,10 +200,10 @@ public struct EventFileTree: FileTreeViewable {
                 timeZone: try TimeZoneConversion().apply(input.0.timeZone) ?? TimeZone.current,
                 imageURL: input.0.imageURL.map { Event.ImageURL($0) },
                 siteMapImageURL: input.0.siteMapImageURL.map { Event.SiteMapImageURL($0) },
-                address: input.0.address,
-                // TODO:
-                latitude: nil,
-                longitude: nil,
+                location: Event.Location(
+                    address: input.0.address
+                    // TODO: More here
+                ),
                 contactNumbers: input.0.contactNumber.map {
                     .init(
                         id: .init(),
@@ -213,7 +214,7 @@ public struct EventFileTree: FileTreeViewable {
                 },
                 artists: IdentifiedArray(uniqueElements: artists),
                 stages: IdentifiedArray(uniqueElements: input.1),
-                schedule: IdentifiedArray(uniqueElements: schedule),
+                schedule: Event.Schedule(Performances: IdentifiedArray(uniqueElements: schedule)),
                 colorScheme: nil // TODO:
             )
         }
@@ -253,7 +254,7 @@ public struct EventFileTree: FileTreeViewable {
             return (
                 EventInfoDTO(
                     name: output.info.name,
-                    address: output.info.address,
+                    address: output.info.location?.address,
                     timeZone: output.info.timeZone.identifier,
                     imageURL: output.info.imageURL?.rawValue,
                     siteMapImageURL: output.info.siteMapImageURL?.rawValue,

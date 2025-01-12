@@ -37,9 +37,8 @@ public struct Event: Identifiable, Equatable, Sendable {
     public var info: Info
     public var artists: IdentifiedArrayOf<Artist>
     public var stages: Stages
-    public var schedule: IdentifiedArrayOf<Schedule>
+    public var schedule: Schedule
     public var colorScheme: ColorScheme?
-
 
 
     public struct Info: Equatable, Sendable {
@@ -70,7 +69,7 @@ public struct Event: Identifiable, Equatable, Sendable {
         contactNumbers: [ContactNumber] = [],
         artists: IdentifiedArrayOf<Artist>,
         stages: Stages,
-        schedule: IdentifiedArrayOf<Schedule>,
+        schedule: Schedule,
         colorScheme: ColorScheme? = nil
     ) {
         self.id = id
@@ -125,7 +124,7 @@ public extension Event {
 public extension Event {
     @MemberwiseInit(.public, _optionalsDefaultNil: true)
     struct Location: Equatable, Hashable, Sendable {
-        public var address: String
+        public var address: String?
         public var directions: String?
         public var city: String?
         public var country: String?
@@ -135,60 +134,6 @@ public extension Event {
     }
 }
 
-public extension Event {
-    typealias StageDaySchedule = IdentifiedArrayOf<Performance>
-
-    struct Schedule: Identifiable, Hashable, Sendable {
-        public init(
-            id: Tagged<Self, OpenFestivalIDType>,
-            date: CalendarDate? = nil,
-            customTitle: String? = nil,
-            stageSchedules: [Stage.ID : [Performance]]
-        ) {
-            self.metadata = Metadata(
-                id: id,
-                date: date,
-                customTitle: customTitle
-            )
-
-            self.stageSchedules = stageSchedules
-        }
-
-        public init(
-            metadata: Metadata,
-            stageSchedules: [Stage.ID : [Performance]]
-        ) {
-            self.metadata = metadata
-            self.stageSchedules = stageSchedules
-        }
-
-        public struct Metadata: Identifiable, Equatable, Hashable, Sendable {
-            public init(
-                id: Tagged<Schedule, OpenFestivalIDType>,
-                date: CalendarDate? = nil,
-                customTitle: String? = nil
-            ) {
-                self.id = id
-                self.date = date
-                self.customTitle = customTitle
-            }
-            
-            public var id: Tagged<Schedule, OpenFestivalIDType>
-            public var date: CalendarDate?
-            public var customTitle: String?
-        }
-
-        public var id: Metadata.ID { metadata.id }
-        public var metadata: Metadata
-
-        public var stageSchedules: [Stage.ID : [Performance]]
-
-        public var name: String {
-            metadata.customTitle ?? metadata.date?.description ?? "Unknown Schedule"
-        }
-    }
-
-}
 
 public extension Event {
     @MemberwiseInit(.public)
@@ -430,7 +375,7 @@ public extension Event {
 
             ],
             schedule: [
-                Schedule(
+                DailySchedule(
                     id: .init(0),
                     date: CalendarDate(year: 2024, month: 6, day: 16),
                     customTitle: nil,

@@ -44,7 +44,7 @@ public struct Schedule {
         public var selection = true
 
         public var selectedStage: Event.Stage.ID?
-        public var selectedDay: Event.Schedule.ID
+        public var selectedDay: Event.DailySchedule.ID
         public var filteringFavorites: Bool = false
 
         
@@ -59,7 +59,7 @@ public struct Schedule {
         var showTimeIndicator: Bool {
             @Dependency(\.date) var date
 
-            if let selectedDay = event.schedule[id: selectedDay]?.metadata,
+            if let selectedDay = event.schedule[day: selectedDay]?.metadata,
                selectedDay.date == CalendarDate(date()) {
                 return true
             } else {
@@ -184,11 +184,11 @@ public struct ScheduleView: View {
     }
 
     struct EventDaySelectorViewModifier: ViewModifier {
-        @Binding var selectedDay: Event.Schedule.ID
+        @Binding var selectedDay: Event.DailySchedule.ID
         @Shared(.event) var event
 
 
-        func label(for day: Event.Schedule.Metadata) -> String {
+        func label(for day: Event.DailySchedule.Metadata) -> String {
             if let customTitle = day.customTitle {
                 return customTitle
             } else if let calendarDay = day.date {
@@ -198,8 +198,8 @@ public struct ScheduleView: View {
             }
         }
 
-        var selectedDayMetadata: Event.Schedule.Metadata? {
-            event.schedule[id: selectedDay]?.metadata
+        var selectedDayMetadata: Event.DailySchedule.Metadata? {
+            event.schedule[day: selectedDay]?.metadata
         }
 
 
@@ -235,13 +235,15 @@ struct ScheduleView_Previews: PreviewProvider {
 }
 
 
-func determineDayScheduleAtLaunch(from schedules: IdentifiedArrayOf<Event.Schedule>) -> Event.Schedule.ID? {
+func determineDayScheduleAtLaunch(from schedule: Event.Schedule) -> Event.DailySchedule.ID? {
+    fatalError()
+//    return nil
 
-    return schedules.first?.metadata.id
+//    return schedule.first?.metadata.id
 }
 
 
-func determineLaunchStage(for event: Event, on day: Event.Schedule.ID) -> Event.Stage.ID? {
+func determineLaunchStage(for event: Event, on day: Event.DailySchedule.ID) -> Event.Stage.ID? {
 
     return event.stages.first?.id
 }

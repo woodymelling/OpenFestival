@@ -12,8 +12,8 @@ import Collections
 enum StringlyTyped {
 
     struct Schedule: Hashable, Identifiable {
-        var id: Event.Schedule.ID { metadata.id }
-        var metadata: Event.Schedule.Metadata
+        var id: Event.DailySchedule.ID { metadata.id }
+        var metadata: Event.DailySchedule.Metadata
         var stageSchedules: [String : [Performance]]
 
         struct Performance: Hashable, Identifiable {
