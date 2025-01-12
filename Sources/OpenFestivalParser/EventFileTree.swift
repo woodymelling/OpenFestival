@@ -214,7 +214,7 @@ public struct EventFileTree: FileTreeViewable {
                 },
                 artists: IdentifiedArray(uniqueElements: artists),
                 stages: IdentifiedArray(uniqueElements: input.1),
-                schedule: Event.Schedule(Performances: IdentifiedArray(uniqueElements: schedule)),
+                schedule: Event.Schedule(performances: IdentifiedArray(uniqueElements: schedule)),
                 colorScheme: nil // TODO:
             )
         }

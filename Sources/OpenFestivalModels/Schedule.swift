@@ -26,21 +26,21 @@ public extension Event {
 
         public typealias PerformanceStore = IdentifiedArrayOf<Performance>
 
-        private var Performances: PerformanceStore
+        private var performances: PerformanceStore
 
         private var artistIndex: [Artist.ID : Set<Performance.ID>]
         private var schedulePageIndex: [PageKey : Set<Performance.ID>]
         public let dayStartsAtNoon: Bool
 
         public init(
-            Performances: IdentifiedArrayOf<DailySchedule>
+            performances: IdentifiedArrayOf<DailySchedule>
         ) {
             self.dayStartsAtNoon = true
             var artistIndex: [Artist.ID : Set<Performance.ID>] = [:]
             var schedulePageIndex: [PageKey : Set<Performance.ID>] = [:]
             var items = PerformanceStore()
 
-            for Performance in Performances {
+            for performance in performances {
 
 //                items[id: Performance.id] = Performance
 //
@@ -63,14 +63,14 @@ public extension Event {
 
             self.artistIndex = artistIndex
             self.schedulePageIndex = schedulePageIndex
-            self.Performances = items
+            self.performances = items
         }
 
         public subscript(artistID artistID: Artist.ID) -> OrderedSet<Performance> {
-            guard let PerformanceIds = artistIndex[artistID] else { return .init() }
+            guard let performanceIds = artistIndex[artistID] else { return .init() }
 
-            return PerformanceIds.reduce(into: OrderedSet()) { partialResult, PerformanceID in
-                if let Performance = Performances[id: PerformanceID] {
+            return performanceIds.reduce(into: OrderedSet()) { partialResult, PerformanceID in
+                if let Performance = performances[id: PerformanceID] {
                     partialResult.append(Performance)
                 }
             }
@@ -78,10 +78,10 @@ public extension Event {
 
         public subscript(page schedulePage: PageKey) -> IdentifiedArrayOf<Performance> {
             get {
-                guard let PerformanceIds = schedulePageIndex[schedulePage] else { return .init() }
+                guard let performanceIds = schedulePageIndex[schedulePage] else { return .init() }
 
-                return IdentifiedArray(uncheckedUniqueElements: PerformanceIds.reduce(into: OrderedSet()) { partialResult, PerformanceID in
-                    if let Performance = Performances[id: PerformanceID] {
+                return IdentifiedArray(uncheckedUniqueElements: performanceIds.reduce(into: OrderedSet()) { partialResult, PerformanceID in
+                    if let Performance = performances[id: PerformanceID] {
                         partialResult.append(Performance)
                     }
                 })
@@ -98,7 +98,7 @@ public extension Event {
         }
 
         public subscript(id id: Performance.ID) -> Performance? {
-            Performances[id: id]
+            performances[id: id]
         }
 
 
