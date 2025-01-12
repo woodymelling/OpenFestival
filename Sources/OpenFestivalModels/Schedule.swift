@@ -18,87 +18,56 @@ public extension Event {
     /// at the cost of additional space complexity, and an O(N) index generation at each update
     struct Schedule: Equatable, RandomAccessCollection, Sendable {
 
-        @MemberwiseInit(.public)
-        public struct PageKey: Hashable, Codable, Sendable {
-            public var date: CalendarDate
-            public var stageID: Stage.ID
-        }
-
-        public typealias PerformanceStore = IdentifiedArrayOf<Performance>
-
-        private var performances: PerformanceStore
-
+        private var performances: [Performance.ID: Performance]
         private var artistIndex: [Artist.ID : Set<Performance.ID>]
-        private var schedulePageIndex: [PageKey : Set<Performance.ID>]
+        private var dailySchedules: IdentifiedArrayOf<DailySchedule>
+
         public let dayStartsAtNoon: Bool
 
-        public init(
-            performances: IdentifiedArrayOf<DailySchedule>
-        ) {
-            self.dayStartsAtNoon = true
-            var artistIndex: [Artist.ID : Set<Performance.ID>] = [:]
-            var schedulePageIndex: [PageKey : Set<Performance.ID>] = [:]
-            var items = PerformanceStore()
+        public init(dailySchedules: IdentifiedArrayOf<DailySchedule>) {
 
-            for performance in performances {
+            var artistIndex: [Artist.ID: Set<Performance.ID>] = [:]
+            var performances: [Performance.ID: Performance] = [:]
 
-//                items[id: Performance.id] = Performance
-//
-//                // Populate schedule page index
-//                schedulePageIndex.insert(
-//                    key: Performance.schedulePageIdentifier(dayStartsAtNoon: dayStartsAtNoon, timeZone: timeZone),
-//                    value: Performance.id
-//                )
-//
-//                // Populate artistPage index
-//                switch Performance.type {
-//                case .artistSet(let artistID):
-//                    artistIndex.insert(key: artistID, value: Performance.id)
-//                case .groupSet(let artistIDs):
-//                    for artistID in artistIDs {
-//                        artistIndex.insert(key: artistID, value: Performance.id)
-//                    }
-//                }
+
+            for performance in dailySchedules.flatMap(\.stageSchedules).flatMap(\.value) {
+                performances[performance.id] = performance
+
+                for artistRef in performance.artistIDs {
+                    switch artistRef {
+                    case .known(let artistID):
+                        artistIndex[artistID, default: []].insert(performance.id)
+                    case .anonymous:
+                        // Possibly skip, or handle differently (e.g. store them in a separate dictionary)
+                        break
+                    }
+                }
             }
 
+            self.dailySchedules = dailySchedules
+            self.performances = performances
             self.artistIndex = artistIndex
-            self.schedulePageIndex = schedulePageIndex
-            self.performances = items
+            self.dayStartsAtNoon = true
         }
 
         public subscript(artistID artistID: Artist.ID) -> OrderedSet<Performance> {
             guard let performanceIds = artistIndex[artistID] else { return .init() }
 
-            return performanceIds.reduce(into: OrderedSet()) { partialResult, PerformanceID in
-                if let Performance = performances[id: PerformanceID] {
-                    partialResult.append(Performance)
+            return performanceIds.reduce(into: OrderedSet()) { partialResult, performanceID in
+                if let performance = performances[performanceID] {
+                    partialResult.append(performance)
                 }
-            }
-        }
-
-        public subscript(page schedulePage: PageKey) -> IdentifiedArrayOf<Performance> {
-            get {
-                guard let performanceIds = schedulePageIndex[schedulePage] else { return .init() }
-
-                return IdentifiedArray(uncheckedUniqueElements: performanceIds.reduce(into: OrderedSet()) { partialResult, PerformanceID in
-                    if let Performance = performances[id: PerformanceID] {
-                        partialResult.append(Performance)
-                    }
-                })
             }
         }
 
         public subscript(day day: DailySchedule.ID) -> DailySchedule? {
             get {
-                fatalError()
-//                IdentifiedArray(uniqueElements: self.Performances.filter {
-//                    $0.isOnDate(day.date, dayStartsAtNoon: false)
-//                })
+                dailySchedules[id: day]
             }
         }
 
         public subscript(id id: Performance.ID) -> Performance? {
-            performances[id: id]
+            performances[id]
         }
 
 
@@ -106,25 +75,19 @@ public extension Event {
         public typealias Element = DailySchedule
 
         public var startIndex: Index {
-            fatalError()
-//            return Performances.startIndex
+            dailySchedules.startIndex
         }
 
         public var endIndex: Index {
-            fatalError()
-//            return Performances.endIndex
+            dailySchedules.endIndex
         }
 
         public subscript(position: Index) -> Element {
-            get {
-                fatalError()
-//                Performances[position]
-            }
+            get { dailySchedules[position] }
         }
 
         public func index(after i: Index) -> Index {
-            fatalError()
-//            Performances.index(after: i)
+            dailySchedules.index(after: i)
         }
     }
 
