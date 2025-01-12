@@ -43,36 +43,47 @@ extension ScheduleView {
             }
         }
 
+        @Environment(\.dayStartsAtNoon) var dayStartsAtNoon
 
         public var body: some View {
-            ScrollViewReader { reader in
-                ScrollView {
-                    HorizontalPageView(page: $store.selectedStage) {
-                        ForEach(orderedStageSchedules, id: \.0) { (stageID, schedule) in
-                            SchedulePageView(schedule) { performance in
-                                ScheduleCardView(
-                                    performance,
-                                    isSelected: false,
-                                    isFavorite: false
-                                )
-                                .onTapGesture { store.send(.didTapCard(performance.id)) }
-                                .tag(performance.id)
-                                .id(performance.id)
-                            }
-                            .tag(stageID)
-                            .overlay {
-                                if store.showTimeIndicator {
-                                    TimeIndicatorView()
-                                }
+            ScrollView {
+                HorizontalPageView(page: $store.selectedStage) {
+                    ForEach(orderedStageSchedules, id: \.0) { (stageID, schedule) in
+                        SchedulePageView(schedule) { performance in
+                            ScheduleCardView(
+                                performance,
+                                isSelected: false,
+                                isFavorite: false
+                            )
+                            .onTapGesture { store.send(.didTapCard(performance.id)) }
+                            .id(performance.id)
+                        }
+                        .tag(stageID)
+                        .overlay {
+                            if store.showTimeIndicator {
+                                TimeIndicatorView()
                             }
                         }
                     }
-                    .scrollClipDisabled()
-                    .animation(.default, value: store.selectedStage)
-                    .frame(height: 1500)
                 }
+                .animation(.default, value: store.selectedStage)
+                .frame(height: 1500)
+                .scrollClipDisabled()
+                .scrollTargetLayout()
             }
-            .scrollClipDisabled()
+            .scrollPosition($store.highlightedPerformance) { id, size in
+                @Shared(.event) var event
+                guard let performance = event.schedule[performanceID: id]
+                else { return nil }
+
+                return CGPoint(
+                    x: 0,
+                    y: performance.startTime.toY(
+                        containerHeight: size.height,
+                        dayStartsAtNoon: dayStartsAtNoon
+                    )
+                )
+            }
             .overlay {
                 if store.showingComingSoonScreen {
                     ScheduleComingSoonView()
@@ -89,33 +100,21 @@ extension ScheduleView {
     }
 }
 
-struct ScrollViewWithEdgeDetection<Content: View>: View {
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    var content: Content
-
-    var body: some View {
-        ScrollView {
-            content
-                .background {
-                    VStack {
-                        Text("Top")
-                            .tag(ScrollViewEdge.top)
-                        Spacer()
-                        Text("Bottom")
-                            .tag(ScrollViewEdge.bottom)
-                    }
+extension IdentifiedArrayOf<Event.Schedule> {
+    subscript(performanceID id: Event.Performance.ID) -> Event.Performance? {
+        for schedule in self {
+            for stageSchedule in schedule.stageSchedules.values {
+                if let performance = stageSchedule.first(where: { $0.id == id }) {
+                    return performance
                 }
+            }
         }
 
+        return nil
     }
 }
 
-enum ScrollViewEdge {
-    case top, bottom
-}
+let firstPerformance = Event.testival.schedule.first!.stageSchedules.first!.value.first!
 
 #Preview {
     NavigationStack {

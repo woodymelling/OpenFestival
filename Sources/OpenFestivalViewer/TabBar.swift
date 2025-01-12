@@ -17,7 +17,7 @@ public struct EventViewer {
     @ObservableState
     public struct State {
         public init(event: Event) {
-            self.event = event
+            self.$event.withLock { $0 = event }
         }
 
         @Shared(.event) var event
@@ -51,7 +51,7 @@ public struct EventViewer {
                 return .none
 
             case .sourceEventDidUpdate(let event):
-                state.event = event
+                state.$event.withLock { $0 = event }
                 return .none
 
             case .tabBar, .delegate:
@@ -292,13 +292,23 @@ struct TabBarView: View {
 
 
 
-public extension PersistenceReaderKey where Self == PersistenceKeyDefault<InMemoryKey<Event>> {
+public extension SharedReaderKey where Self == InMemoryKey<Event>.Default {
     static var event: Self {
-        PersistenceKeyDefault(
-            .inMemory("activeEvent"),
-            .empty,
-            previewValue: .testival
-        )
+
+        @Dependency(\.context) var context
+        return switch context {
+        case .preview, .test:
+            Self[
+                .inMemory("activeEvent"),
+                default: .testival
+            ]
+        case .live:
+
+            Self[
+                .inMemory("activeEvent"),
+                default: .empty
+            ]
+        }
     }
 }
 

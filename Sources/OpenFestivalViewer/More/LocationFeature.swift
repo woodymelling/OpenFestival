@@ -87,7 +87,7 @@ struct AddressView_Previews: PreviewProvider {
         AddressView(
             store: Store(
                 initialState: .init(
-                    location: Shared(Event.Location(address: "3901 Kootenay Hwy, Fairmont Hot Springs, BC V0B 1L1, Canada"))
+                    location: Shared(value: Event.Location(address: "3901 Kootenay Hwy, Fairmont Hot Springs, BC V0B 1L1, Canada"))
                 ),
                 reducer: LocationFeature.init
             )

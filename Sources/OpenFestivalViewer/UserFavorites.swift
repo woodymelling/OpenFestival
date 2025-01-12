@@ -42,8 +42,8 @@ public extension Set {
     }
 }
 
-public extension PersistenceKey where Self == PersistenceKeyDefault<FileStorageKey<FavoriteArtists>> {
+public extension SharedKey where Self == FileStorageKey<FavoriteArtists>.Default {
     static var favoriteArtists: Self {
-        .init(.fileStorage(.libraryDirectory.appending(path: "userFavorites.json")), [])
+        Self[.fileStorage(.libraryDirectory.appending(path: "userFavorites.json")), default: []]
     }
 }

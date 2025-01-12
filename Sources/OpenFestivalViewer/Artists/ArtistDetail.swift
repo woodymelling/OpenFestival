@@ -56,11 +56,11 @@ public struct ArtistDetail {
         Reduce { state, action in
             switch action {
             case .didTapPerformance(let performance):
-                state.highlightingPerformance = performance
+                state.$highlightingPerformance.withLock { $0 = performance }
                 return .none
 
             case .favoriteArtistButtonTapped:
-                state.favoriteArtists.toggle(state.artist.id)
+                state.$favoriteArtists.withLock { $0 .toggle(state.artist.id) }
                 return .none
 
             case .didTapURL(let url):

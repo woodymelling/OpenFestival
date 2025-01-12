@@ -39,22 +39,19 @@ extension InterfaceOrientation {
     }
 }
 
-struct InterfaceOrientationReaderKey: PersistenceReaderKey, Hashable {
+struct InterfaceOrientationReaderKey: SharedReaderKey, Hashable {
     typealias Value = InterfaceOrientation
 
     public let id = UUID()
-    func load(initialValue: InterfaceOrientation?) -> InterfaceOrientation? {
-        #if canImport(UIKit)
-        getCurrentWindowSceneOrientation()
-        #else
-        nil
-        #endif
+    func load(context: LoadContext<InterfaceOrientation>, continuation: LoadContinuation<InterfaceOrientation>) {
+        continuation.resume(with: .success(getCurrentWindowSceneOrientation()))
     }
 
+
     func subscribe(
-        initialValue: InterfaceOrientation?,
-        didSet: @escaping (InterfaceOrientation?) -> Void
-    ) -> Shared<InterfaceOrientation>.Subscription {
+        context: LoadContext<InterfaceOrientation>,
+        subscriber: SharedSubscriber<InterfaceOrientation>
+    ) -> SharedSubscription {
         let cancellable = NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
             .compactMap { ($0.object as? UIDevice)?.orientation }
             .compactMap { InterfaceOrientation -> InterfaceOrientation? in
@@ -63,7 +60,7 @@ struct InterfaceOrientationReaderKey: PersistenceReaderKey, Hashable {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: {
-                    didSet($0)
+                    subscriber.yield($0)
                 }
             )
 
@@ -89,11 +86,9 @@ struct InterfaceOrientationReaderKey: PersistenceReaderKey, Hashable {
 }
 
 
-extension PersistenceReaderKey where Self == PersistenceKeyDefault<InterfaceOrientationReaderKey> {
+extension SharedReaderKey where Self == InterfaceOrientationReaderKey.Default {
     static var interfaceOrientation: Self {
-        .init(
-            InterfaceOrientationReaderKey(),
-            .portrait
-        )
+        Self[InterfaceOrientationReaderKey(), default: .portrait]
+
     }
 }

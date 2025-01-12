@@ -39,6 +39,7 @@ public struct Schedule {
 
         @Shared(.event) var event
         @Shared(.favoriteArtists) var favoriteArtists = Set()
+        @Shared(.highlightedPerformance) var highlightedPerformance
 
         public var selection = true
 
@@ -46,7 +47,7 @@ public struct Schedule {
         public var selectedDay: Event.Schedule.ID
         public var filteringFavorites: Bool = false
 
-        public var showingPerformanceID: Event.Performance.ID?
+        
 
         public var showingComingSoonScreen: Bool = false
 
@@ -133,6 +134,8 @@ public struct ScheduleView: View {
 
     @SharedReader(.interfaceOrientation) var interfaceOrientation
 
+    @State var scrolledEvent: Event.Performance.ID?
+
     public var body: some View {
         Group {
             if interfaceOrientation.isPortrait {
@@ -141,6 +144,7 @@ public struct ScheduleView: View {
                 AllStagesAtOnceView(store: store)
             }
         }
+        .scrollPosition(id: $scrolledEvent)
         .modifier(EventDaySelectorViewModifier(selectedDay: $store.selectedDay))
         .toolbar {
             ToolbarItem {
