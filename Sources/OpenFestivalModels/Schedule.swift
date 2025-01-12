@@ -11,7 +11,6 @@ import OrderedCollections
 
 
 public extension Event {
-//    typealias Schedule = IdentifiedArrayOf<DailySchedule>
 
     /// A  collection of Performances indexed for each artist, and each schedule page.
     /// This allows for O(1) access to all Performances associated with an artist or with a stage/date combination,
@@ -53,17 +52,17 @@ public extension Event {
         public subscript(artistID artistID: Artist.ID) -> OrderedSet<Performance> {
             guard let performanceIds = artistIndex[artistID] else { return .init() }
 
-            return performanceIds.reduce(into: OrderedSet()) { partialResult, performanceID in
-                if let performance = performances[performanceID] {
-                    partialResult.append(performance)
+            let performances = performanceIds.reduce(into: Set<Performance>()) { partialResult, performanceID in
+                if let performance = self.performances[performanceID] {
+                    partialResult.insert(performance)
                 }
             }
+
+            return performances.sorted(by: \.startTime)
         }
 
         public subscript(day day: DailySchedule.ID) -> DailySchedule? {
-            get {
-                dailySchedules[id: day]
-            }
+            dailySchedules[id: day]
         }
 
         public subscript(id id: Performance.ID) -> Performance? {
@@ -83,7 +82,7 @@ public extension Event {
         }
 
         public subscript(position: Index) -> Element {
-            get { dailySchedules[position] }
+            dailySchedules[position]
         }
 
         public func index(after i: Index) -> Index {
@@ -144,7 +143,16 @@ public extension Event {
 }
 extension Event.Schedule: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: Event.DailySchedule...) {
-        // TODO:
-        fatalError("")
+        self.init(dailySchedules: IdentifiedArray(uniqueElements: elements))
     }
 }
+
+
+extension Set {
+    func sorted(by key: (Element) -> some Comparable) -> OrderedSet<Element> {
+        OrderedSet(self.sorted(by: { key($0) < key($1) }))
+    }
+}
+
+
+
