@@ -10,7 +10,8 @@ import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
 import NukeUI
- 
+import OrderedCollections
+
 @Reducer
 public struct ArtistDetail {
     //
@@ -29,6 +30,19 @@ public struct ArtistDetail {
 
         var isFavorite: Bool {
             favoriteArtists.contains(artist.id)
+        }
+
+        var performances: OrderedSet<Event.Performance> {
+            event.schedule[artistID: artist.id]
+        }
+
+        var artistBioMarkdown: AttributedString? {
+            artist.bio?.nilIfEmpty.flatMap {
+                try? AttributedString(
+                    markdown: $0,
+                    options: .init(failurePolicy: .returnPartiallyParsedIfPossible)
+                )
+            }
         }
 
         @Presents var destination: Destination.State?
@@ -83,57 +97,50 @@ public struct ArtistDetailView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 1) {
-            Header(artist: store.artist) {
+
+        StretchyHeaderList(
+            title: {
                 Text(store.artist.name)
                     .font(.largeTitle)
                     .fontWeight(.semibold)
-                    .padding(.leading)
-            }
+            },
+            stretchyContent: {
+                CachedAsyncImage(url: store.artist.imageURL) {
+                    $0.resizable()
+                } placeholder: {
+                    CachedAsyncImage(url: store.event.info.imageURL?.rawValue) {
+                        $0.resizable()
+                    } placeholder: {
+                        ProgressView()
+                    }
+                }
 
-            List {
-                Text("REIMPLEMENT PERFORMANCES")
-//                ForEach(
-//                    store.event.schedule[for: store.artist.id].sorted(by: \.startTime)
-//                ) { performance in
-//                    Button {
-//                        store.send(.didTapPerformance(performance.id))
-//                    } label: {
-//                        PerformanceDetailRow(for: performance)
-//                    }
-//                    .buttonStyle(.navigationLink)
-//                }
+            },
+            listContent: {
+                ForEach(store.performances) { performance in
+                    NavigationLinkButton {
+                        store.send(.didTapPerformance(performance.id))
+                    } label: {
+                        PerformanceDetailRow(for: performance)
+                    }
+                }
 
-                if let bio = store.artist.bio, !bio.isEmpty {
+
+                if let bio = store.artistBioMarkdown {
                     Text(bio)
                 }
 
                 // MARK: Socials
                 ForEach(store.artist.links, id: \.self) { link in
-                    Button {
+                    NavigationLinkButton {
                         store.send(.didTapURL(link.url))
                     } label: {
                         LinkView(link)
                     }
-                    .buttonStyle(.navigationLink)
                 }
             }
-            .listStyle(.plain)
-            // Replicating drop shadow at the top of the scroll,
-            // Doing it in normal ways is pretty buggy from what I can tell
-            .overlay(alignment: .top) {
-                LinearGradient(
-                    colors: [
-                        Color(.systemBackground),
-                        .clear
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 3)
-            }
-            .contentMargins(3)
-        }
+        )
+        .listStyle(.plain)
         .sheet(
             item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
             content: { SafariView(store: $0).ignoresSafeArea(edges: .bottom) }
@@ -263,7 +270,7 @@ public struct ArtistDetailView: View {
             ArtistDetail()
         }))
     }
-}
+} 
 
 struct FavoriteToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -293,16 +300,12 @@ extension View {
     }
 }
 
-#Preview {
-    struct Preview: View {
-        @State var isOn: Bool = true
-        var body: some View {
-            Toggle("Favorite", isOn: $isOn)
-                .toggleStyle(FavoriteToggleStyle())
-        }
-    }
+#Preview("Heart") {
+    @Previewable @State var isOn = false
 
-    return Preview()
+    Toggle("Favorite", isOn: $isOn)
+        .toggleStyle(FavoriteToggleStyle())
+        .frame(width: 20, height: 20)
 }
 
 
@@ -339,5 +342,12 @@ extension Event.Performance.ArtistReference {
         case .anonymous(let name):
             return name
         }
+    }
+}
+
+
+extension Collection {
+    var nilIfEmpty: Self? {
+        self.isEmpty ? nil : self
     }
 }

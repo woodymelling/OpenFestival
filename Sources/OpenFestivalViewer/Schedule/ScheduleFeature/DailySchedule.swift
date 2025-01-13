@@ -46,9 +46,6 @@ public struct Schedule {
         public var selectedStage: Event.Stage.ID?
         public var selectedDay: Event.DailySchedule.ID
         public var filteringFavorites: Bool = false
-
-        
-
         public var showingComingSoonScreen: Bool = false
 
         var isFiltering: Bool {
