@@ -73,7 +73,6 @@ let package = Package(
             name: "OpenFestivalViewer",
             dependencies: [
                 "OpenFestivalModels",
-                "OpenFestivalParser",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
                 .product(name: "Zoomable", package: "Zoomable"),
                 .product(name: "Nuke", package: "Nuke"),
