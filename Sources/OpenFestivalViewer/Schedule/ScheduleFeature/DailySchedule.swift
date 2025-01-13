@@ -236,10 +236,14 @@ struct ScheduleView_Previews: PreviewProvider {
 
 
 func determineDayScheduleAtLaunch(from schedule: Event.Schedule) -> Event.DailySchedule.ID? {
-    fatalError()
-//    return nil
+    @Dependency(\.date) var date
 
-//    return schedule.first?.metadata.id
+    if let todaysSchedule = schedule.first(where: { $0.metadata.date == CalendarDate(date()) }) {
+        return todaysSchedule.id
+    } else {
+        // TODO: maybe need to sort this
+        return schedule.first?.id
+    }
 }
 
 
