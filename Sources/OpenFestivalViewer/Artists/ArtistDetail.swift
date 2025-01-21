@@ -9,8 +9,8 @@ import Foundation
 import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
-import NukeUI
 import OrderedCollections
+import ImageCaching
 
 @Reducer
 public struct ArtistDetail {
@@ -96,25 +96,23 @@ public struct ArtistDetailView: View {
         self.store = store
     }
 
+    @Environment(\.eventColorScheme) var eventColorScheme
+
+    var meshColors: [Color] {
+        let performanceColors = store.performances.map { eventColorScheme.stageColors[$0.stageID] }
+        var colors = [Color.accentColor]
+
+        return [Color.accentColor] + performanceColors + performanceColors
+    }
+
     public var body: some View {
 
-        StretchyHeaderList(
-            title: {
-                Text(store.artist.name)
-                    .font(.largeTitle)
-                    .fontWeight(.semibold)
-            },
-            stretchyContent: {
-                CachedAsyncImage(url: store.artist.imageURL) {
-                    $0.resizable()
-                } placeholder: {
-                    CachedAsyncImage(url: store.event.info.imageURL?.rawValue) {
-                        $0.resizable()
-                    } placeholder: {
-                        ProgressView()
-                    }
-                }
+//        ArtistImage(artist: store.artist)
 
+        StretchyHeaderList(
+            title: Text(store.artist.name),
+            stretchyContent: {
+                ArtistImage(artist: store.artist)
             },
             listContent: {
                 ForEach(store.performances) { performance in
@@ -131,15 +129,21 @@ public struct ArtistDetailView: View {
                 }
 
                 // MARK: Socials
-                ForEach(store.artist.links, id: \.self) { link in
-                    NavigationLinkButton {
-                        store.send(.didTapURL(link.url))
-                    } label: {
-                        LinkView(link)
+                if store.artist.links.hasElements {
+                    Section("Links") {
+                        ForEach(store.artist.links, id: \.self) { link in
+                            NavigationLinkButton {
+                                store.send(.didTapURL(link.url))
+                            } label: {
+                                LinkView(link)
+                            }
+                        }
                     }
                 }
             }
         )
+        .ignoresSafeArea(.all)
+        .environment(\.meshBaseColors, meshColors)
         .listStyle(.plain)
         .sheet(
             item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
@@ -150,7 +154,32 @@ public struct ArtistDetailView: View {
                 .frame(square: 20)
                 .toggleStyle(FavoriteToggleStyle())
         }
+        
     }
+
+
+    struct ArtistImage: View {
+        let artist: Event.Artist
+        @Shared(.event) var event
+
+        var body: some View {
+            CachedAsyncImage(
+                requests: [
+                    ImageRequest(url: artist.imageURL, processors: [.resize(width: 440)]).withPipeline(.artist)
+                ]
+            ) {
+                $0.resizable()
+            } placeholder: {
+                AnimatedMeshView()
+                    .overlay(.thinMaterial)
+                    .opacity(0.25)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+
+
 
     struct LinkView: View {
         struct LinkType {
@@ -198,60 +227,17 @@ public struct ArtistDetailView: View {
             }
         }
     }
+}
 
+extension ImagePipeline {
+    static var artist: ImagePipeline {
+        ImagePipeline(configuration: .withDataCache)
+    }
 
-    public struct Header<Content: View>: View {
-        public init(artist: Event.Artist, @ViewBuilder content: @escaping () -> Content) {
-            self.artist = artist
-            self.content = content
-        }
-
-        var artist: Event.Artist
-        var content: () -> Content
-
-        private let initialHeight = UIScreen.main.bounds.height / 2.5
-
-        @Shared(.event) var event
-        @Environment(\.showingArtistImages) var showingArtistImages
-
-        public var body: some View {
-            if showingArtistImages && (artist.imageURL != nil || event.info.imageURL != nil) {
-                ZStack(alignment: .bottom) {
-                    CachedAsyncImage(url: artist.imageURL) {
-                        $0.resizable()
-                    } placeholder: {
-                        CachedAsyncImage(url: event.info.imageURL?.rawValue) {
-                            $0.resizable()
-                        } placeholder: {
-                            ProgressView()
-                        }
-                    }
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: initialHeight)
-                    .frame(maxWidth: .infinity)
-                    .mask(Rectangle().ignoresSafeArea(edges: .top))
-                    .overlay(
-                        LinearGradient(
-                            colors: [
-                                Color.black,
-                                Color.clear
-                            ],
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                    )
-                    .navigationBarTitleDisplayMode(.inline)
-                    .overlay(alignment: .bottomLeading) {
-                        content()
-                    }
-                }
-            } else {
-                Text("We need this to conditionally apply the navigation title")
-                    .frame(height: 0)
-                    .hidden()
-                    .accessibilityHidden(true)
-                    .navigationTitle(artist.name)
-            }
+    static var event: ImagePipeline {
+        return ImagePipeline {
+            $0.imageCache = ImageCache()
+            $0.dataCache = try? DataCache(name: "com.openFestival.eventImageCache")
         }
     }
 }
@@ -270,7 +256,16 @@ public struct ArtistDetailView: View {
             ArtistDetail()
         }))
     }
-} 
+}
+
+
+#Preview {
+    NavigationStack {
+        ArtistDetailView(store: Store(initialState: ArtistDetail.State(artist: Event.testival.artists[5]), reducer: {
+            ArtistDetail()
+        }))
+    }
+}
 
 struct FavoriteToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {

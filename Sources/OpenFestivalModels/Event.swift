@@ -182,7 +182,7 @@ public extension Event {
         @MemberwiseInit(.public)
         public struct Link: Equatable, Hashable, Sendable {
             public var url: URL
-            public var label: String?
+            public var label: String? = nil
         }
     }
 
@@ -261,6 +261,16 @@ public extension Event {
             artists: [
                 Artist(
                     id: Artist.ID(0),
+                    name: "Cantos",
+                    bio: "**Cantos** is an electronic music producer and DJ who fuses a sense of otherworldly mysticism with cutting-edge sonic craft. Exploring everything from deep and funky house to techno, drum & bass, and garage, Cantos delivers powerful, underground sets rooted in soundsystem culture. High production quality and immersive, dancefloor-focused energy define each performance, creating unforgettable experiences that meld the ancient and the futuristic into a single, pulsing groove.",
+                    imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FIMG_9907_Original.png?alt=media&token=3c2c0140-a28a-40bc-9f50-f77954b2294d"),
+                    links: [
+                        Event.Artist.Link(url: URL(string: "https://soundcloud.com/cantos_music")!),
+                        Event.Artist.Link(url: URL(string: "https://www.instagram.com/cantos/")!)
+                    ]
+                ),
+                Artist(
+                    id: Artist.ID(40),
                     name: "Boids",
                     bio: "**Boids** is an experimental electronic music project blending elements of technology, nature, math, and art. Drawing inspiration from the complex patterns of flocking behavior, boids creates immersive soundscapes that evolve through algorithmic structures and organic, flowing rhythms. With a foundation in house music, the project explores new auditory dimensions while maintaining a connection to the dance floor, inviting listeners to explore both the natural world and the mathematical systems that underpin it.",
                     imageURL: URL(string: "https://firebasestorage.googleapis.com/v0/b/festivl.appspot.com/o/userContent%2FSubsonic.webp?alt=media&token=8b732938-f9c7-4216-8fb5-3ff4acad9384"),
@@ -398,7 +408,7 @@ public extension Event {
                                 stageID: Stage.ID(0)
                             ),
                             Event.Performance(
-                                id: Performance.ID(2),
+                                id: Performance.ID(12),
                                 customTitle: nil,
                                 artistIDs: [.known(Artist.ID(2))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
@@ -407,7 +417,7 @@ public extension Event {
                             ),
                             // Additional performances for other artists
                             Event.Performance(
-                                id: Performance.ID(3),
+                                id: Performance.ID(14),
                                 customTitle: nil,
                                 artistIDs: [.known(Artist.ID(0))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 21, minute: 30)!,
@@ -419,7 +429,7 @@ public extension Event {
                             Event.Performance(
                                 id: Performance.ID(4),
                                 customTitle: nil,
-                                artistIDs: [.known(Artist.ID(3))],
+                                artistIDs: [.known(Artist.ID(0))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 20)!,
                                 endTime: Date(year: 2024, month: 6, day: 12, hour: 22)!,
                                 stageID: Stage.ID(1)
@@ -478,7 +488,7 @@ public extension Event {
                             Event.Performance(
                                 id: Performance.ID(11),
                                 customTitle: nil,
-                                artistIDs: [.known(Artist.ID(10))],
+                                artistIDs: [.known(Artist.ID(12))],
                                 startTime: Date(year: 2024, month: 6, day: 12, hour: 23)!,
                                 endTime: Date(year: 2024, month: 6, day: 13, hour: 0, minute: 30)!,
                                 stageID: Stage.ID(2)
@@ -502,8 +512,8 @@ public extension Event {
                 stageColors: .init(
                     [
                         (Stage.ID(0), .red),
-                        (Stage.ID(1), .orange),
-                        (Stage.ID(2), .yellow)
+                        (Stage.ID(1), .purple),
+                        (Stage.ID(2), .green)
                     ]
                 ),
                 otherColors: [

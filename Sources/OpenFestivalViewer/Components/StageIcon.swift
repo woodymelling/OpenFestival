@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import OpenFestivalModels
 import ComposableArchitecture
+import ImageCaching
 
 public struct StageIconView: View {
     public init(stageID: Event.Stage.ID) {
@@ -59,7 +60,6 @@ struct DefaultStageIcon: View {
     }
 }
 
-import NukeUI
 
 public struct CachedAsyncIcon<Content: View>: View {
     public init(
@@ -80,18 +80,14 @@ public struct CachedAsyncIcon<Content: View>: View {
     @State var hasTransparency = true
 
     public var body: some View {
-        LazyImage(url: url) { state in
-            if let image = state.image {
-                image
-                    .resizable()
-                    .renderingMode(hasTransparency ? .template : .original)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(alignment: .center)
-            } else if state.error != nil {
-                placeholder()
-            } else {
-                placeholder()
-            }
+        CachedAsyncImage(url: url) {
+            $0.resizable()
+                .renderingMode(hasTransparency ? .template : .original)
+                .aspectRatio(contentMode: .fit)
+                .frame(alignment: .center)
+            
+        } placeholder: {
+            placeholder()
         }
     }
 }

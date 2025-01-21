@@ -108,7 +108,7 @@ public struct TabBar {
             self.workshops = .init()
         }
 
-        var selectedTab: Tab = .schedule
+        var selectedTab: Tab = .artists
 
         @Shared(.highlightedPerformance) var highlightedPerformance
 
@@ -212,6 +212,7 @@ struct TabBarView: View {
     @Environment(\.showingArtistImages) var showingArtistImages
 
     @AppStorage("tabViewCustomizations") var tabViewCustomization: TabViewCustomization
+
     var body: some View {
         TabView(selection: $store.selectedTab) {
             Tab("Schedule", systemImage: "calendar", value: .schedule) {
@@ -284,11 +285,13 @@ struct TabBarView: View {
             .customizationID("com.OpenFestival.notifications")
 
         }
-        .tabViewStyle(.sidebarAdaptable)
+//        .tabViewStyle(.sidebarAdaptable)
         .tabViewCustomization($tabViewCustomization)
         .onAppear { store.send(.onAppear) }
     }
 }
+
+
 
 
 
@@ -320,3 +323,6 @@ public extension SharedReaderKey where Self == InMemoryKey<Event>.Default {
         }
     )
 }
+
+
+
