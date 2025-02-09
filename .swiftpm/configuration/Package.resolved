@@ -1,5 +1,4 @@
 {
-  "originHash" : "95c39b32076409b320343e6e6dc3d27e75052f8d018b34a798935f4497f3b4c4",
   "pins" : [
     {
       "identity" : "asyncswiftgit",
@@ -105,17 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-dependencies",
       "state" : {
-        "revision" : "0fc0255e780bf742abeef29dec80924f5f0ae7b9",
-        "version" : "1.4.1"
-      }
-    },
-    {
-      "identity" : "swift-file-tree",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/woodymelling/swift-file-tree",
-      "state" : {
-        "revision" : "faae9447e388c5b93bd8409fe8f75f59a68d8837",
-        "version" : "0.2.2"
+        "revision" : "d7472be6b3c89251ce4c0db07d32405b43426781",
+        "version" : "1.3.7"
       }
     },
     {
@@ -141,8 +131,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/gohanlon/swift-memberwise-init-macro",
       "state" : {
-        "revision" : "a536a4fe46fdb52e9156b0473b5da63096d5218d",
-        "version" : "0.4.0"
+        "revision" : "1cebd0e59ae64836dc4168045fe0f666d1dbe99a",
+        "version" : "0.5.0"
       }
     },
     {
@@ -157,10 +147,10 @@
     {
       "identity" : "swift-parsing",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/woodymelling/swift-parsing",
+      "location" : "https://github.com/pointfreeco/swift-parsing",
       "state" : {
-        "revision" : "c0249cbebab111490fcf0735b8f05fc51911f084",
-        "version" : "0.1.0"
+        "revision" : "a0e7d73f462c1c38c59dc40a3969ac40cea42950",
+        "version" : "0.13.0"
       }
     },
     {
@@ -184,10 +174,10 @@
     {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-syntax",
+      "location" : "https://github.com/swiftlang/swift-syntax",
       "state" : {
-        "revision" : "2bc86522d115234d1f588efe2bcb4ce4be8f8b82",
-        "version" : "510.0.3"
+        "revision" : "515f79b522918f83483068d99c68daeb5116342d",
+        "version" : "600.0.0-prerelease-2024-08-20"
       }
     },
     {
@@ -222,8 +212,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
       "state" : {
-        "revision" : "770f990d3e4eececb57ac04a6076e22f8c97daeb",
-        "version" : "1.4.2"
+        "revision" : "c6809a193975cab4d5308c64bd1d51e0df467928",
+        "version" : "1.2.3"
       }
     },
     {
@@ -245,5 +235,5 @@
       }
     }
   ],
-  "version" : 3
+  "version" : 2
 }
