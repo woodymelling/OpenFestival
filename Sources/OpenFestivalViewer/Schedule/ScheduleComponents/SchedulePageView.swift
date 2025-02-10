@@ -90,6 +90,8 @@ extension SchedulePageView {
 
 }
 
+
+
 public extension TimelineCard {
     func xOrigin(containerWidth: CGFloat, groupMapping: [Int:Int]) -> CGFloat {
         guard groupMapping.count > 1 else { return 0 }
@@ -185,15 +187,16 @@ struct HorizontalPageView<Content: View, ID: Hashable>: View {
 }
 
 #Preview {
-    @Previewable @State var scrollID: Int? = 0
+    @Previewable @State var scrollID: Event.Performance.ID? = 0
     ScrollView {
         HorizontalPageView(page: $scrollID) {
 
             ForEach(0..<5) { page in
                 SchedulePageView(
                     Event.testival.schedule.first!.stageSchedules.values.first!,
-                    cardContent: { _ in
-                        EmptyView()
+                    cardContent: { performance in
+                        ScheduleCardView(performance, isSelected: false, isFavorite: false)
+                            .id(performance.id)
                     }
                 )
                 .id(page)
@@ -202,8 +205,38 @@ struct HorizontalPageView<Content: View, ID: Hashable>: View {
             }
         }
         .scrollClipDisabled()
+        .environment(\.dayStartsAtNoon, true)
     }
+    .scrollPosition(id: $scrollID)
     .overlay {
         Text("\(scrollID)").font(.title)
+    }
+}
+
+#Preview {
+    @Previewable @State var scrollID: Event.Performance.ID? = 0
+    ScrollView {
+        SchedulePageView(
+            Event.testival.schedule.first!.stageSchedules.values.first!,
+            cardContent: { performance in
+                ScheduleCardView(performance, isSelected: false, isFavorite: false)
+                    .id(performance.id)
+            }
+        )
+        .frame(height: 1000)
+        .environment(\.dayStartsAtNoon, true)
+    }
+    .scrollPosition(id: $scrollID, anchor: .center)
+    .overlay {
+        VStack {
+
+            Text("\(scrollID)").font(.title)
+            Button("Scroll") {
+                withAnimation {
+                    
+                    scrollID = .init(integerLiteral: 0)
+                }
+            }
+        }
     }
 }

@@ -8,6 +8,8 @@
 import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
+import OrderedCollections
+import ImageCaching
 
 @Reducer
 public struct ArtistList {
@@ -82,7 +84,7 @@ public struct ArtistListView: View {
                 ArtistRow(artist: artist)
             }
         }
-        .searchable(text: $store.searchText)
+        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
         .navigationTitle("Artists")
@@ -94,29 +96,42 @@ public struct ArtistListView: View {
     }
 
     public struct ArtistRow: View {
+
+        init(artist: Event.Artist) {
+            self.artist = artist
+        }
+
         var artist: Event.Artist
 
-        @SharedReader(.event) var activeEvent
+        @SharedReader(.event) var event
         @SharedReader(.favoriteArtists) var favoriteArtists
         @Environment(\.showingArtistImages) var showArtistImage
 
-        var performances: [Event.Performance] {
-            []
-//            return activeEvent.schedule[for: artist.id]
+        var performances: OrderedSet<Event.Performance> {
+            event.schedule[artistID: artist.id]
         }
+
+        private var imageSize: CGFloat = 60
 
         public var body: some View {
             HStack(spacing: 10) {
                 if showArtistImage {
-                    CachedAsyncImage(url: artist.imageURL) {
+                    CachedAsyncImage(
+                        requests: [
+                            ImageRequest(
+                                url: artist.imageURL,
+                                processors: [.resize(size: CGSize(square: imageSize))]
+                            ).withPipeline(.artist)
+                        ]
+                    ) {
                         $0.resizable()
+                            .aspectRatio(contentMode: .fill)
                     } placeholder: {
                         Image(systemName: "person.fill")
                             .resizable()
                             .frame(square: 30)
                     }
-                    .aspectRatio(contentMode: .fill)
-                    .frame(square: 60)
+                    .frame(square: imageSize)
                     .clipped()
                 }
 

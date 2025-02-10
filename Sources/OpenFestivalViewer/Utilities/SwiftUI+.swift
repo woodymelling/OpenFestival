@@ -13,3 +13,9 @@ extension View {
         self.frame(width: sideLength, height: sideLength, alignment: .center)
     }
 }
+
+extension CGSize {
+    init(square edgeSize: CGFloat) {
+        self.init(width: edgeSize, height: edgeSize)
+    }
+}

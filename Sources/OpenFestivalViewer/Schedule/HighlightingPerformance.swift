@@ -9,7 +9,7 @@ import Foundation
 import ComposableArchitecture
 import OpenFestivalModels
 
-extension PersistenceKey where Self == InMemoryKey<Event.Performance.ID?> {
+extension SharedKey where Self == InMemoryKey<Event.Performance.ID?> {
     static var highlightedPerformance: Self {
         .inMemory("highlightingPerformance")
     }

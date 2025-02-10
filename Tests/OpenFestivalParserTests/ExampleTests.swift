@@ -16,7 +16,6 @@ struct EventDecodingTests {
     func testival() async throws {
         let url = URL.resourcesFolder.appending(component: "Testival").appendingPathComponent("2024")
         try await withDependencies {
-            $0.fileManagerClient = .liveValue
             $0.calendar = .current
             $0.timeZone = .current
             $0.date = .constant(.now)

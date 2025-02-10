@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Woodrow Melling on 6/15/24.
 //
@@ -14,58 +14,53 @@ import UIKit
 #endif
 import ComposableArchitecture
 
-public enum DeviceOrientation {
-    case portrait
-    case landscape
 
-    static func deviceOrientationPublisher() -> AnyPublisher<DeviceOrientation, Never> {
-        #if canImport(UIKit)
-        NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
-            .compactMap { ($0.object as? UIDevice)?.orientation }
-            .compactMap { deviceOrientation -> DeviceOrientation? in
-                DeviceOrientation(deviceOrientation)
-            }
-            .eraseToAnyPublisher()
+import SwiftUI
 
-        #else
-        Just(DeviceOrientation.landscape).eraseToAnyPublisher()
-        #endif
-
-    }
-
-    #if canImport(UIKit)
-    init(_ deviceOrientation: UIDeviceOrientation) {
-        if deviceOrientation.isLandscape {
-            self = .landscape
-        } else {
-            self = .portrait
+extension InterfaceOrientation {
+    init?(_ orientation: UIInterfaceOrientation) {
+        switch orientation {
+        case .portrait: self = .portrait
+        case .landscapeLeft: self = .landscapeLeft
+        case .landscapeRight: self = .landscapeRight
+        case .portraitUpsideDown: self = .portraitUpsideDown
+        case .unknown: return nil
+        @unknown default: return nil
         }
     }
-    #endif
+
+    var isPortrait: Bool {
+        switch self {
+        case .landscapeLeft, .landscapeRight: return false
+        case .portrait, .portraitUpsideDown: return true
+        default:
+            return false
+        }
+    }
 }
 
-struct DeviceOrientationReaderKey: PersistenceReaderKey, Hashable {
-    typealias Value = DeviceOrientation
+struct InterfaceOrientationReaderKey: SharedReaderKey, Hashable {
+    typealias Value = InterfaceOrientation
 
     public let id = UUID()
-    func load(initialValue: DeviceOrientation?) -> DeviceOrientation? {
-        #if canImport(UIKit)
-        DeviceOrientation(UIDevice.current.orientation)
-        #else
-        nil
-        #endif
+    func load(context: LoadContext<InterfaceOrientation>, continuation: LoadContinuation<InterfaceOrientation>) {
+        continuation.resume(with: .success(getCurrentWindowSceneOrientation()))
     }
 
+
     func subscribe(
-        initialValue: DeviceOrientation?,
-        didSet: @escaping (DeviceOrientation?) -> Void
-    ) -> Shared<DeviceOrientation>.Subscription {
-        let cancellable = DeviceOrientation
-            .deviceOrientationPublisher()
+        context: LoadContext<InterfaceOrientation>,
+        subscriber: SharedSubscriber<InterfaceOrientation>
+    ) -> SharedSubscription {
+        let cancellable = NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
+            .compactMap { ($0.object as? UIDevice)?.orientation }
+            .compactMap { InterfaceOrientation -> InterfaceOrientation? in
+                getCurrentWindowSceneOrientation()
+            }
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: {
-                    didSet($0)
+                    subscriber.yield($0)
                 }
             )
 
@@ -73,14 +68,27 @@ struct DeviceOrientationReaderKey: PersistenceReaderKey, Hashable {
             cancellable.cancel()
         }
     }
+
+    private func getCurrentWindowSceneOrientation() -> InterfaceOrientation? {
+        let scenes = UIApplication.shared.connectedScenes
+
+        guard let windowScene = scenes.first as? UIWindowScene else {
+            reportIssue("Cannot determine window scene")
+            return nil
+        }
+
+        if scenes.count > 1 {
+            reportIssue("More than one window scene, cannot accurately determine orientation")
+        }
+
+        return InterfaceOrientation(windowScene.interfaceOrientation)
+    }
 }
 
 
-extension PersistenceReaderKey where Self == PersistenceKeyDefault<DeviceOrientationReaderKey> {
-    static var deviceOrientation: Self {
-        .init(
-            DeviceOrientationReaderKey(),
-            .portrait
-        )
+extension SharedReaderKey where Self == InterfaceOrientationReaderKey.Default {
+    static var interfaceOrientation: Self {
+        Self[InterfaceOrientationReaderKey(), default: .portrait]
+
     }
 }

@@ -7,11 +7,9 @@
 
 import SwiftUI
 import PDFKit
-//import Kingfisher
+import ImageCaching
 import ComposableArchitecture
 import Zoomable
-import Nuke
-import NukeUI
 import OpenFestivalModels
 
 @Reducer
@@ -34,27 +32,9 @@ struct SiteMapView: View {
     let store: StoreOf<SiteMapFeature>
 
     var body: some View {
-
-        LazyImage(url: store.url.rawValue) { state in
-            if let image = state.image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-//                    .zoomable()
-            } else if state.error != nil {
-                Color.red // Indicates an error
-            } else {
-                ProgressView()
-            }
+        CachedAsyncImage(url: store.url.rawValue) {
+            ProgressView()
         }
-//        LazyImage(url: store.url) {
-//            $0
-//                .resizable()
-//                .aspectRatio(contentMode: .fit)
-//                .zoomable()
-//        } placeholder: {
-//            ProgressView()
-//        }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Site Map")
     }

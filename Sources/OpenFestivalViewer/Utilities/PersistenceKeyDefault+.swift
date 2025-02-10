@@ -1,4 +1,4 @@
-//
+
 //  File.swift
 //  
 //
@@ -7,14 +7,16 @@
 
 import Foundation
 import ComposableArchitecture
+import Sharing
 
-extension PersistenceKeyDefault {
-    public init(
-        _ key: Base,
-        _ value: Base.Value,
-        testValue: Base.Value? = nil,
-        previewValue: Base.Value? = nil
-    ) {
+extension _SharedKeyDefault {
+
+    public static subscript(
+      _ key: Base,
+      default value: @autoclosure @escaping @Sendable () -> Base.Value,
+      previewValue: @autoclosure @escaping @Sendable () -> Base.Value,
+      testValue: @autoclosure @escaping @Sendable () -> Base.Value? = nil
+    ) -> Self {
         @Dependency(\.context) var context
         let defaultValue = switch context {
         case .live: value
@@ -22,6 +24,6 @@ extension PersistenceKeyDefault {
         case .preview: previewValue
         }
 
-        self.init(key, defaultValue ?? value)
+        return Self[key, default: defaultValue() ?? value()]
     }
 }

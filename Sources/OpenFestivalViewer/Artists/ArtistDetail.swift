@@ -9,8 +9,9 @@ import Foundation
 import ComposableArchitecture
 import OpenFestivalModels
 import SwiftUI
-import NukeUI
- 
+import OrderedCollections
+import ImageCaching
+
 @Reducer
 public struct ArtistDetail {
     //
@@ -29,6 +30,19 @@ public struct ArtistDetail {
 
         var isFavorite: Bool {
             favoriteArtists.contains(artist.id)
+        }
+
+        var performances: OrderedSet<Event.Performance> {
+            event.schedule[artistID: artist.id]
+        }
+
+        var artistBioMarkdown: AttributedString? {
+            artist.bio?.nilIfEmpty.flatMap {
+                try? AttributedString(
+                    markdown: $0,
+                    options: .init(failurePolicy: .returnPartiallyParsedIfPossible)
+                )
+            }
         }
 
         @Presents var destination: Destination.State?
@@ -56,11 +70,11 @@ public struct ArtistDetail {
         Reduce { state, action in
             switch action {
             case .didTapPerformance(let performance):
-                state.highlightingPerformance = performance
+                state.$highlightingPerformance.withLock { $0 = performance }
                 return .none
 
             case .favoriteArtistButtonTapped:
-                state.favoriteArtists.toggle(state.artist.id)
+                state.$favoriteArtists.withLock { $0 .toggle(state.artist.id) }
                 return .none
 
             case .didTapURL(let url):
@@ -82,58 +96,55 @@ public struct ArtistDetailView: View {
         self.store = store
     }
 
+    @Environment(\.eventColorScheme) var eventColorScheme
+
+    var meshColors: [Color] {
+        let performanceColors = store.performances.map { eventColorScheme.stageColors[$0.stageID] }
+        var colors = [Color.accentColor]
+
+        return [Color.accentColor] + performanceColors + performanceColors
+    }
+
     public var body: some View {
-        VStack(spacing: 1) {
-            Header(artist: store.artist) {
-                Text(store.artist.name)
-                    .font(.largeTitle)
-                    .fontWeight(.semibold)
-                    .padding(.leading)
-            }
 
-            List {
-                Text("REIMPLEMENT PERFORMANCES")
-//                ForEach(
-//                    store.event.schedule[for: store.artist.id].sorted(by: \.startTime)
-//                ) { performance in
-//                    Button {
-//                        store.send(.didTapPerformance(performance.id))
-//                    } label: {
-//                        PerformanceDetailRow(for: performance)
-//                    }
-//                    .buttonStyle(.navigationLink)
-//                }
+//        ArtistImage(artist: store.artist)
 
-                if let bio = store.artist.bio, !bio.isEmpty {
+        StretchyHeaderList(
+            title: Text(store.artist.name),
+            stretchyContent: {
+                ArtistImage(artist: store.artist)
+            },
+            listContent: {
+                ForEach(store.performances) { performance in
+                    NavigationLinkButton {
+                        store.send(.didTapPerformance(performance.id))
+                    } label: {
+                        PerformanceDetailRow(for: performance)
+                    }
+                }
+
+
+                if let bio = store.artistBioMarkdown {
                     Text(bio)
                 }
 
                 // MARK: Socials
-                ForEach(store.artist.links, id: \.self) { link in
-                    Button {
-                        store.send(.didTapURL(link.url))
-                    } label: {
-                        LinkView(link)
+                if store.artist.links.hasElements {
+                    Section("Links") {
+                        ForEach(store.artist.links, id: \.self) { link in
+                            NavigationLinkButton {
+                                store.send(.didTapURL(link.url))
+                            } label: {
+                                LinkView(link)
+                            }
+                        }
                     }
-                    .buttonStyle(.navigationLink)
                 }
             }
-            .listStyle(.plain)
-            // Replicating drop shadow at the top of the scroll,
-            // Doing it in normal ways is pretty buggy from what I can tell
-            .overlay(alignment: .top) {
-                LinearGradient(
-                    colors: [
-                        Color(.systemBackground),
-                        .clear
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 3)
-            }
-            .contentMargins(3)
-        }
+        )
+        .ignoresSafeArea(.all)
+        .environment(\.meshBaseColors, meshColors)
+        .listStyle(.plain)
         .sheet(
             item: $store.scope(state: \.destination?.inAppBrowser, action: \.destination.inAppBrowser),
             content: { SafariView(store: $0).ignoresSafeArea(edges: .bottom) }
@@ -143,7 +154,32 @@ public struct ArtistDetailView: View {
                 .frame(square: 20)
                 .toggleStyle(FavoriteToggleStyle())
         }
+        
     }
+
+
+    struct ArtistImage: View {
+        let artist: Event.Artist
+        @Shared(.event) var event
+
+        var body: some View {
+            CachedAsyncImage(
+                requests: [
+                    ImageRequest(url: artist.imageURL, processors: [.resize(width: 440)]).withPipeline(.artist)
+                ]
+            ) {
+                $0.resizable()
+            } placeholder: {
+                AnimatedMeshView()
+                    .overlay(.thinMaterial)
+                    .opacity(0.25)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+
+
 
     struct LinkView: View {
         struct LinkType {
@@ -191,60 +227,17 @@ public struct ArtistDetailView: View {
             }
         }
     }
+}
 
+extension ImagePipeline {
+    static var artist: ImagePipeline {
+        ImagePipeline(configuration: .withDataCache)
+    }
 
-    public struct Header<Content: View>: View {
-        public init(artist: Event.Artist, @ViewBuilder content: @escaping () -> Content) {
-            self.artist = artist
-            self.content = content
-        }
-
-        var artist: Event.Artist
-        var content: () -> Content
-
-        private let initialHeight = UIScreen.main.bounds.height / 2.5
-
-        @Shared(.event) var event
-        @Environment(\.showingArtistImages) var showingArtistImages
-
-        public var body: some View {
-            if showingArtistImages && (artist.imageURL != nil || event.info.imageURL != nil) {
-                ZStack(alignment: .bottom) {
-                    CachedAsyncImage(url: artist.imageURL) {
-                        $0.resizable()
-                    } placeholder: {
-                        CachedAsyncImage(url: event.info.imageURL?.rawValue) {
-                            $0.resizable()
-                        } placeholder: {
-                            ProgressView()
-                        }
-                    }
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: initialHeight)
-                    .frame(maxWidth: .infinity)
-                    .mask(Rectangle().ignoresSafeArea(edges: .top))
-                    .overlay(
-                        LinearGradient(
-                            colors: [
-                                Color.black,
-                                Color.clear
-                            ],
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                    )
-                    .navigationBarTitleDisplayMode(.inline)
-                    .overlay(alignment: .bottomLeading) {
-                        content()
-                    }
-                }
-            } else {
-                Text("We need this to conditionally apply the navigation title")
-                    .frame(height: 0)
-                    .hidden()
-                    .accessibilityHidden(true)
-                    .navigationTitle(artist.name)
-            }
+    static var event: ImagePipeline {
+        return ImagePipeline {
+            $0.imageCache = ImageCache()
+            $0.dataCache = try? DataCache(name: "com.openFestival.eventImageCache")
         }
     }
 }
@@ -260,6 +253,15 @@ public struct ArtistDetailView: View {
 #Preview {
     NavigationStack {
         ArtistDetailView(store: Store(initialState: ArtistDetail.State(artist: Event.testival.artists[1]), reducer: {
+            ArtistDetail()
+        }))
+    }
+}
+
+
+#Preview {
+    NavigationStack {
+        ArtistDetailView(store: Store(initialState: ArtistDetail.State(artist: Event.testival.artists[5]), reducer: {
             ArtistDetail()
         }))
     }
@@ -293,16 +295,12 @@ extension View {
     }
 }
 
-#Preview {
-    struct Preview: View {
-        @State var isOn: Bool = true
-        var body: some View {
-            Toggle("Favorite", isOn: $isOn)
-                .toggleStyle(FavoriteToggleStyle())
-        }
-    }
+#Preview("Heart") {
+    @Previewable @State var isOn = false
 
-    return Preview()
+    Toggle("Favorite", isOn: $isOn)
+        .toggleStyle(FavoriteToggleStyle())
+        .frame(width: 20, height: 20)
 }
 
 
@@ -339,5 +337,12 @@ extension Event.Performance.ArtistReference {
         case .anonymous(let name):
             return name
         }
+    }
+}
+
+
+extension Collection {
+    var nilIfEmpty: Self? {
+        self.isEmpty ? nil : self
     }
 }

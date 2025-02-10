@@ -52,7 +52,7 @@ struct DayScheduleConversionTests {
                 ]
             ]
         ))
-        let schedule = Event.Schedule.Day(
+        let schedule = Event.DailySchedule.Day(
             id: .init("2024-06-12"),
             date: day,
             customTitle: nil,
@@ -139,7 +139,7 @@ struct DayScheduleConversionTests {
                 ]
             ]
         ))
-        let schedule = Event.Schedule.Day(
+        let schedule = Event.DailySchedule.Day(
             id: "2024-06-12",
             date: CalendarDate(year: 2024, month: 6, day: 12),
             customTitle: nil,

@@ -10,51 +10,59 @@ import ComposableArchitecture
 import OpenFestivalModels
 import Zoomable
 
-struct AllStagesAtOnceView: View {
-    let store: StoreOf<Schedule>
+extension ScheduleView {
 
-    var schedule: [TimelineWrapper<Event.Performance>] {
-        return []
-//        @SharedReader(.event) var event
-//
-//        let orderedStageIndexes: [Event.Stage.ID : Int] = event.stages.enumerated().reduce(into: [:]) {
-//            $0[$1.element.id] = $1.offset
-//        }
-//
-//        return []
-//
-//        let performances = store.event.schedule[on: store.selectedDay]
-//
-//        return performances.compactMap {
-//            guard let column: Int = orderedStageIndexes[$0.stageID]
-//            else { return nil }
-//
-//            return TimelineWrapper(
-//                groupWidth: column..<column,
-//                item: $0
-//            )
-//        }
-    }
+    struct AllStagesAtOnceView: View {
+        let store: StoreOf<Schedule>
 
-    var body: some View {
-        ScrollView {
-            SchedulePageView(schedule) { performance in
-                ScheduleCardView(
-                    performance.item,
-                    isSelected: false,
-                    isFavorite: false
-                )
-                .onTapGesture { store.send(.didTapCard(performance.id)) }
-                .tag(performance.id)
+        var schedule: [TimelineWrapper<Event.Performance>] {
+            @SharedReader(.event) var event
+
+            let orderedStageIndexes: [Event.Stage.ID : Int] = event.stages.enumerated().reduce(into: [:]) {
+                $0[$1.element.id] = $1.offset
             }
-            .frame(height: 1500)
+
+            guard let stageSchedules = store.event.schedule[day: store.selectedDay]?.stageSchedules
+            else { return [] }
+
+            let performancesWithColumns: [(Int, [Event.Performance])] = stageSchedules.compactMap { stageID, performances in
+                guard let column: Int = orderedStageIndexes[stageID]
+                else { return nil }
+
+                return (column, performances)
+            }
+
+            return performancesWithColumns.flatMap { column, performances in
+                return performances.map {
+                    TimelineWrapper(
+                        groupWidth: column..<column,
+                        item: $0
+                    )
+                }
+            }
         }
-        .zoomable()
+
+        var body: some View {
+            ScrollView {
+                SchedulePageView(schedule) { performance in
+                    ScheduleCardView(
+                        performance.item,
+                        isSelected: false,
+                        isFavorite: false
+                    )
+                    .onTapGesture { store.send(.didTapCard(performance.id)) }
+                    .tag(performance.id)
+                }
+                .frame(height: 1500)
+            }
+            .zoomable()
+        }
     }
 }
 
+
 #Preview {
-    AllStagesAtOnceView(
+    ScheduleView.AllStagesAtOnceView(
         store: Store(
             initialState: Schedule.State(),
             reducer: {

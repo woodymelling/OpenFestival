@@ -47,9 +47,7 @@ struct ScheduleComingSoonView: View {
             
             
             VStack {
-                CachedAsyncImage(url: imageURL) {
-                    $0.resizable()
-                } placeholder: {
+                CachedAsyncIcon(url: imageURL) {
                     ProgressView()
                 }
                 .frame(square: 200)

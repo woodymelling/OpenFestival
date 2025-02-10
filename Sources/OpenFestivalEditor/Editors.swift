@@ -42,7 +42,7 @@ struct ArtistEditorView: View {
 struct ScheduleEditor {
     @ObservableState
     struct State: Equatable {
-        @Shared var schedule: Event.Schedule
+        @Shared var schedule: Event.DailySchedule
     }
 }
 

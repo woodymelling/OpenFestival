@@ -21,7 +21,7 @@ struct PerformanceConversionTests {
         let expectedResult = TimelessStagelessPerformance(
             startTime: ScheduleTime(hour: 22)!,
             endTime: nil,
-            artistIDs: [Event.Artist.ID("Prism Sound")]
+            : [Event.Artist.ID("Prism Sound")]
         )
 
         let result = try conversion.apply(dto)
