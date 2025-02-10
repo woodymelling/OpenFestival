@@ -245,6 +245,8 @@ public struct EventFileTree: FileTreeViewable {
                                     stageName: stageName
                                 )
                             }
+                            .sorted(by: { $0.startTime < $1.startTime })
+
 
                             return (stageName, stringlyTypedPerformances)
                         })
