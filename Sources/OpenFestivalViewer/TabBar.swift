@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Woodrow Melling on 6/14/24.
 //
@@ -32,7 +32,7 @@ public struct EventViewer {
         case tabBar(TabBar.Action)
 
         case onAppear
-        
+
         case sourceEventDidUpdate(Event)
         case delegate(Delegate)
 
@@ -62,6 +62,7 @@ public struct EventViewer {
         .ifLet(\.tabBar, action: \.tabBar) {
             TabBar()
         }
+        ._printChanges()
     }
 }
 
@@ -88,7 +89,7 @@ public struct EventViewerView: View {
 
 @Reducer
 public struct TabBar {
-    enum Tab {
+    enum Feature: Hashable, Codable {
         case schedule, artists, contactInfo, siteMap, location, explore, workshops, notifications
     }
 
@@ -108,7 +109,7 @@ public struct TabBar {
             self.workshops = .init()
         }
 
-        var selectedTab: Tab = .artists
+        var selectedTab: TabLocation<Feature> = .tabBar(.artists)
 
         @Shared(.highlightedPerformance) var highlightedPerformance
 
@@ -150,7 +151,7 @@ public struct TabBar {
                         $0.map { .didHighlightCard($0) }
                     }
                 }
-                
+
             case .didHighlightCard(let performanceID):
                 reportIssue("Need to Reimplement")
                 //                @SharedReader(.event) var event
@@ -164,7 +165,7 @@ public struct TabBar {
                 //                state.schedule.destination = nil
                 //                state.schedule.showingPerformanceID = performanceID
                 return .none
-                
+
             case .binding,
                     .schedule,
                     .artistList,
@@ -206,88 +207,82 @@ public struct TabBar {
     }
 }
 
+import CustomizableTabView
+
 struct TabBarView: View {
     @Bindable var store: StoreOf<TabBar>
 
     @Environment(\.showingArtistImages) var showingArtistImages
 
-    @AppStorage("tabViewCustomizations") var tabViewCustomization: TabViewCustomization
+
+    @Shared(
+        .fileStorage(.documentsDirectory.appending(component: "tab-customization.json"))
+    )
+    var tabCustomization: TabCustomization<TabBar.Feature> = .init(
+        items: [
+            .schedule,
+            .artists,
+            .explore,
+            .workshops,
+            .siteMap,
+            .location,
+            .contactInfo,
+            .notifications
+        ],
+        maxVisible: 5
+    )
+
+    @State var selectedFeature: TabLocation<TabBar.Feature> = .more(.schedule)
 
     var body: some View {
-        TabView(selection: $store.selectedTab) {
-            Tab("Schedule", systemImage: "calendar", value: .schedule) {
-                NavigationStack {
-                    ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
-                }
+        CustomizableTabView(
+            selection: $selectedFeature,
+            customization: Binding($tabCustomization)
+        ) {
+            NavigationStackTab("Schedule", systemImage: "calendar", value: TabBar.Feature.schedule) {
+                ScheduleView(store: store.scope(state: \.schedule, action: \.schedule))
             }
-            .customizationID("com.OpenFestival.schedule")
 
-            Tab("Artists", systemImage: "person.3", value: .artists) {
-
-                NavigationStack {
-                    ArtistListView(store: store.scope(state: \.artistList, action: \.artistList))
-                }
+            NavigationStackTab("Artists", systemImage: "person.3", value: TabBar.Feature.artists) {
+                ArtistListView(store: store.scope(state: \.artistList, action: \.artistList))
             }
-            .customizationID("com.OpenFestival.artists")
 
             if showingArtistImages {
-                Tab("Explore", systemImage: "sparkle.magnifyingglass", value: .explore) {
-                    NavigationStack {
-                        ExploreView(store: store.scope(state: \.explore, action: \.explore))
-                    }
+                NavigationStackTab("Explore", systemImage: "sparkle.magnifyingglass", value: TabBar.Feature.explore) {
+                    ExploreView(store: store.scope(state: \.explore, action: \.explore))
                 }
-                .customizationID("com.OpenFestival.explore")
             }
 
             if let store = store.scope(state: \.workshops, action: \.workshops) {
-                Tab("Workshops", systemImage: "figure.yoga", value: .workshops) {
-                    NavigationStack {
-                        WorkshopsView(store: store)
-                    }
+                NavigationStackTab("Workshops", systemImage: "figure.yoga", value: TabBar.Feature.workshops) {
+                    WorkshopsView(store: store)
                 }
-                .customizationID("com.OpenFestival.workshops")
             }
 
             if let store = store.scope(state: \.siteMap, action: \.siteMap) {
-                Tab("Site Map", systemImage: "map", value: .siteMap) {
-                    NavigationStack {
-                        SiteMapView(store: store)
-                    }
+                NavigationStackTab("Site Map", systemImage: "map", value: TabBar.Feature.siteMap) {
+                    SiteMapView(store: store)
                 }
-                .customizationID("com.OpenFestival.siteMap")
             }
 
             if let store = store.scope(state: \.location, action: \.location) {
-                Tab("Location", systemImage: "mappin.and.ellipse", value: .location) {
-
-                    NavigationStack {
-                        AddressView(store: store)
-                    }
+                NavigationStackTab("Location", systemImage: "mappin.and.ellipse", value: TabBar.Feature.location) {
+                    AddressView(store: store)
                 }
-                .customizationID("com.OpenFestival.location")
             }
 
             if let store = store.scope(state: \.contactInfo, action: \.contactInfo) {
-                Tab("Contact Info", systemImage: "phone", value: .contactInfo) {
-                    NavigationStack {
-                        ContactInfoView(store: store)
-                    }
+                NavigationStackTab("Contact Info", systemImage: "phone", value: TabBar.Feature.contactInfo) {
+                    ContactInfoView(store: store)
                 }
-                .customizationID("com.OpenFestival.contactInfo")
             }
 
-            Tab("Notifications", systemImage: "bell.badge", value: .notifications) {
-                NavigationStack {
-                    NotificationsView(store: store.scope(state: \.notifications, action: \.notifications))
-                }
-
+            NavigationStackTab("Notifications", systemImage: "bell.badge", value: TabBar.Feature.notifications) {
+                NotificationsView(store: store.scope(state: \.notifications, action: \.notifications))
             }
-            .customizationID("com.OpenFestival.notifications")
-
         }
-//        .tabViewStyle(.sidebarAdaptable)
-        .tabViewCustomization($tabViewCustomization)
         .onAppear { store.send(.onAppear) }
+
     }
 }
 

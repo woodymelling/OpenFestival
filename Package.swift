@@ -22,6 +22,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/woodymelling/swift-file-tree", from: "0.2.1"),
         .package(url: "https://github.com/woodymelling/swift-image-caching", branch: "trunk"),
+        .package(url: "https://github.com/woodymelling/swiftui-customizable-tab-view", branch: "main"),
 
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.17.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
@@ -76,7 +77,8 @@ let package = Package(
                 "OpenFestivalModels",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
                 .product(name: "Zoomable", package: "Zoomable"),
-                .product(name: "ImageCaching", package: "swift-image-caching")
+                .product(name: "ImageCaching", package: "swift-image-caching"),
+                .product(name: "CustomizableTabView", package: "swiftui-customizable-tab-view")
             ],
             resources: [
                 .process("Media")
