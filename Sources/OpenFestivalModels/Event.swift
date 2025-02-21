@@ -8,7 +8,6 @@
 import Foundation
 import Tagged
 import IdentifiedCollections
-import MemberwiseInit
 import Collections
 
 public typealias OpenFestivalIDType = UUID
