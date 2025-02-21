@@ -37,7 +37,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
 
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
-        .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0"),
         .package(url: "https://github.com/kean/Nuke", from: "12.8.0"),
         .package(url: "https://github.com/ryohey/Zoomable", branch: "main"),
         .package(url: "https://github.com/bdewey/AsyncSwiftGit/", from: "0.4.0")
@@ -66,7 +65,6 @@ let package = Package(
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "Collections", package: "swift-collections"),
-                .product(name: "MemberwiseInit", package: "swift-memberwise-init-macro"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "Tagged", package: "swift-tagged")
             ]
