@@ -257,9 +257,11 @@ public extension Event {
 
             private let stageColors: [Stage.ID : Color]
 
+            #if canImport(SwiftUI)
             public subscript(stageID: Stage.ID) -> Color {
                 return self.stageColors[stageID] ?? .blue
             }
+            #endif
         }
 
     }
@@ -279,7 +281,6 @@ public extension Tagged where RawValue == URL {
         }
     }
 }
-
 
 public extension Event {
     static var empty: Self {
@@ -547,30 +548,12 @@ public extension Event {
                         ]
                     ]
                 )
-            ]
-            ,
-            colorScheme: .init(
-                mainColor: .accentColor,
-                workshopsColor: .accentColor,
-                stageColors: .init(
-                    [
-                        (Stage.ID(0), .red),
-                        (Stage.ID(1), .purple),
-                        (Stage.ID(2), .green)
-                    ]
-                ),
-                otherColors: [
-                    .blue,
-                    .cyan,
-                    .green,
-                    .yellow,
-                    .orange,
-                    .red
-                ]
-            )
+            ],
+            colorScheme: nil
         )
     }
 }
+
 
 import Foundation
 
