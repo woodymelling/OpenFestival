@@ -13,7 +13,6 @@ import Collections
 
 public typealias OpenFestivalIDType = UUID
 
-@MemberwiseInit(.public)
 public struct Organization: Equatable, Identifiable {
     public var id: Tagged<Self, OpenFestivalIDType>
     public struct Info: Decodable, Equatable {
@@ -51,6 +50,15 @@ public struct Event: Identifiable, Equatable, Sendable {
         public var location: Location?
 
         public var contactNumbers: [ContactNumber] = []
+
+        public init(name: String, timeZone: TimeZone, imageURL: Event.ImageURL? = nil, siteMapImageURL: SiteMapImageURL? = nil, location: Location? = nil, contactNumbers: [ContactNumber]) {
+            self.name = name
+            self.timeZone = timeZone
+            self.imageURL = imageURL
+            self.siteMapImageURL = siteMapImageURL
+            self.location = location
+            self.contactNumbers = contactNumbers
+        }
     }
 
     public enum EventImageURLTag {}
@@ -89,7 +97,6 @@ public struct Event: Identifiable, Equatable, Sendable {
 }
 
 public extension Event {
-    @MemberwiseInit(.public)
     struct ContactNumber: Identifiable, Equatable, Codable, Hashable, Sendable {
         public var id: Tagged<Self, OpenFestivalIDType>
         public var phoneNumber: String
@@ -113,16 +120,20 @@ public extension Event {
 public extension Event {
     typealias Stages = IdentifiedArrayOf<Stage>
 
-    @MemberwiseInit(.public)
     struct Stage: Identifiable, Equatable, Hashable, Sendable {
         public var id: Tagged<Event, OpenFestivalIDType>
         public var name: String
         public var iconImageURL: URL?
+
+        public init(id: Tagged<Event, OpenFestivalIDType>, name: String, iconImageURL: URL? = nil) {
+            self.id = id
+            self.name = name
+            self.iconImageURL = iconImageURL
+        }
     }
 }
 
 public extension Event {
-    @MemberwiseInit(.public, _optionalsDefaultNil: true)
     struct Location: Equatable, Hashable, Sendable {
         public var address: String?
         public var directions: String?
@@ -131,12 +142,21 @@ public extension Event {
         public var postalCode: String?
         public var latitude: Double?
         public var longitude: Double?
+
+        public init(address: String? = nil, directions: String? = nil, city: String? = nil, country: String? = nil, postalCode: String? = nil, latitude: Double? = nil, longitude: Double? = nil) {
+            self.address = address
+            self.directions = directions
+            self.city = city
+            self.country = country
+            self.postalCode = postalCode
+            self.latitude = latitude
+            self.longitude = longitude
+        }
     }
 }
 
 
 public extension Event {
-    @MemberwiseInit(.public)
     struct Performance: Identifiable, Equatable, Hashable, Sendable {
         public var id: Tagged<Performance, OpenFestivalIDType>
         public var customTitle: String?
@@ -144,6 +164,15 @@ public extension Event {
         public var startTime: Date
         public var endTime: Date
         public var stageID: Stage.ID
+
+        public init(id: Tagged<Performance, OpenFestivalIDType>, customTitle: String? = nil, artistIDs: OrderedSet<ArtistReference>, startTime: Date, endTime: Date, stageID: Stage.ID) {
+            self.id = id
+            self.customTitle = customTitle
+            self.artistIDs = artistIDs
+            self.startTime = startTime
+            self.endTime = endTime
+            self.stageID = stageID
+        }
 
         public enum ArtistReference: Hashable, Sendable {
             case known(Artist.ID)
@@ -159,6 +188,12 @@ import SwiftUI
 public extension Event {
 
     struct Artist: Identifiable, Equatable, Hashable, Sendable {
+        public var id: Tagged<Self, UUID>
+        public var name: String
+        public var bio: String?
+        public var imageURL: URL?
+        public var links: [Link]
+
         public init(
             id: Tagged<Self, UUID>,
             name: String,
@@ -173,20 +208,17 @@ public extension Event {
             self.links = links
         }
 
-        public var id: Tagged<Self, UUID>
-        public var name: String
-        public var bio: String?
-        public var imageURL: URL?
-        public var links: [Link]
-
-        @MemberwiseInit(.public)
         public struct Link: Equatable, Hashable, Sendable {
             public var url: URL
             public var label: String? = nil
+
+            public init(url: URL, label: String? = nil) {
+                self.url = url
+                self.label = label
+            }
         }
     }
 
-    @MemberwiseInit(.public)
     struct ColorScheme: Equatable, Sendable {
 #if canImport(SwiftUI)
         public typealias Color = SwiftUI.Color
@@ -198,6 +230,18 @@ public extension Event {
         public var workshopsColor: Color
         public var stageColors: StageColorStore
         public var otherColors: [Color]
+
+        public init(
+            mainColor: Color,
+            workshopsColor: Color,
+            stageColors: StageColorStore,
+            otherColors: [Color]
+        ) {
+            self.mainColor = mainColor
+            self.workshopsColor = workshopsColor
+            self.stageColors = stageColors
+            self.otherColors = otherColors
+        }
 
         public struct StageColorStore: Equatable, Sendable {
             public init(_ colors: [(Stage.ID, Color)]) {

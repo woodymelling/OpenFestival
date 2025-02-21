@@ -22,6 +22,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/woodymelling/swift-file-tree", from: "0.2.1"),
         .package(url: "https://github.com/woodymelling/swift-image-caching", branch: "trunk"),
+        .package(url: "https://github.com/woodymelling/swiftui-customizable-tab-view", branch: "main"),
 
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.17.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
@@ -36,7 +37,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.4"),
 
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
-        .package(url: "https://github.com/gohanlon/swift-memberwise-init-macro", from: "0.2.0"),
         .package(url: "https://github.com/kean/Nuke", from: "12.8.0"),
         .package(url: "https://github.com/ryohey/Zoomable", branch: "main"),
         .package(url: "https://github.com/bdewey/AsyncSwiftGit/", from: "0.4.0")
@@ -65,7 +65,6 @@ let package = Package(
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "Collections", package: "swift-collections"),
-                .product(name: "MemberwiseInit", package: "swift-memberwise-init-macro"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "Tagged", package: "swift-tagged")
             ]
@@ -76,7 +75,8 @@ let package = Package(
                 "OpenFestivalModels",
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
                 .product(name: "Zoomable", package: "Zoomable"),
-                .product(name: "ImageCaching", package: "swift-image-caching")
+                .product(name: "ImageCaching", package: "swift-image-caching"),
+                .product(name: "CustomizableTabView", package: "swiftui-customizable-tab-view")
             ],
             resources: [
                 .process("Media")
